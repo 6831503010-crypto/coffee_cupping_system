@@ -1001,7 +1001,7 @@ function render(){
     contentEl.innerHTML=reviewView();
     actionsEl.innerHTML=`
       <button class="btn secondary" onclick="backToFlavor()" ${finalized?"disabled":""}>← Back to Flavor Test</button>
-      <button class="btn primary" onclick="finalizeEvaluation()" ${finalized?"disabled":""}>Finalize Evaluation</button>`;
+      <button class="btn primary" onclick="finalizeEvaluation()" ${finalized?"disabled":""}>Finish Evaluation</button>`;
   }
 
   applyValidationHighlights();
@@ -1163,10 +1163,20 @@ function editFlavor(id){
   render();
   scrollToFormTop();
 }
+// function finalizeEvaluation(){
+//   finalized=true;
+//   document.getElementById("successBox").style.display="block";
+//   render();
+// }
 function finalizeEvaluation(){
-  finalized=true;
-  document.getElementById("successBox").style.display="block";
+  finalized = true;
+  document.getElementById("successBox").style.display = "block";
   render();
+
+  // Return to the landing page after finalizing
+  setTimeout(() => {
+    window.location.href = "index.html";
+  }, 1000);
 }
 function escapeHtml(str){
   return String(str??"").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
