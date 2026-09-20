@@ -593,7 +593,7 @@ TEAM RULE:
   flex-wrap:wrap;
 }
 .sample-count-field{
-  width:min(100%,260px);
+  width:min(100%,300px);
   text-align:left;
 }
 .sample-count-field label{
@@ -614,6 +614,95 @@ TEAM RULE:
 .sample-count-field input[type="number"]:focus{
   border-color:var(--mocha);
   box-shadow:0 0 0 3px rgba(122,81,56,.16);
+}
+/* Custom sample-count stepper */
+
+.sample-stepper {
+  display: grid;
+  grid-template-columns: 48px minmax(120px, 1fr) 48px;
+  gap: 10px;
+  align-items: center;
+}
+
+.sample-stepper input[type="number"] {
+  width: 100%;
+  height: 48px;
+  text-align: center;
+
+  border: 1px solid var(--line);
+  border-radius: 12px;
+
+  background: #ffffff;
+  color: var(--espresso);
+
+  padding: 0 12px;
+
+  font: inherit;
+  font-weight: 800;
+  font-size: 16px;
+
+  outline: none;
+
+  /* Firefox */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+/* Remove default browser number arrows */
+.sample-stepper input[type="number"]::-webkit-inner-spin-button,
+.sample-stepper input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.sample-stepper input[type="number"]:focus {
+  border-color: var(--mocha);
+  box-shadow: 0 0 0 3px rgba(122, 81, 56, 0.16);
+}
+
+.sample-stepper-btn {
+  width: 48px;
+  height: 48px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid var(--espresso);
+  border-radius: 12px;
+
+  background: var(--espresso);
+  color: #ffffff;
+
+  font: inherit;
+  font-size: 24px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.sample-stepper-btn:hover:not(:disabled) {
+  background: var(--roast);
+  border-color: var(--roast);
+  transform: translateY(-1px);
+}
+
+.sample-stepper-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.sample-stepper-btn:disabled {
+  background: #ffffff;
+  color: #b7aaa1;
+  border-color: var(--line);
+
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 .sample-count-error{
   min-height:20px;

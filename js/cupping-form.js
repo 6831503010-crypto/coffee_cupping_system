@@ -80,7 +80,9 @@ const ruleEl=document.getElementById("ruleBox");
 const panelEl=document.getElementById("panel");
 const sampleSetupEl=document.getElementById("sampleSetup");
 const sampleCountInputEl=document.getElementById("sampleCountInput");
-const sampleCountErrorEl=document.getElementById("sampleCountError");
+const sampleCountErrorEl = document.getElementById("sampleCountError");
+const decreaseSampleBtn = document.getElementById("decreaseSampleBtn");
+const increaseSampleBtn = document.getElementById("increaseSampleBtn");
 const cuppingProgressEl=document.getElementById("cuppingProgress");
 
 function scrollToFormTop(){
@@ -194,6 +196,50 @@ contentEl.addEventListener("change",()=>{
   refreshCurrentSampleValidation();
 });
 
+function updateSampleStepperButtons() {
+  const raw = sampleCountInputEl.value.trim();
+  const count = Number(raw);
+
+  const valid =
+    raw !== "" &&
+    Number.isInteger(count) &&
+    count >= 1 &&
+    count <= 10;
+
+  // Minus is only usable when we have a valid value greater than 1
+  decreaseSampleBtn.disabled = !valid || count <= 1;
+
+  // Plus stays usable when empty/invalid so it can bring the user back to 1
+  increaseSampleBtn.disabled = valid && count >= 10;
+}
+
+
+function changeSampleCount(change) {
+  const raw = sampleCountInputEl.value.trim();
+  let count = Number(raw);
+
+  // If blank or invalid, start from 1
+  if (
+    raw === "" ||
+    !Number.isInteger(count) ||
+    count < 1 ||
+    count > 10
+  ) {
+    count = 1;
+  } else {
+    count += change;
+  }
+
+  // Never allow the buttons to go outside 1–10
+  count = Math.max(1, Math.min(10, count));
+
+  sampleCountInputEl.value = count;
+
+  // Remove an old validation message after the user corrects the field
+  sampleCountErrorEl.textContent = "";
+
+  updateSampleStepperButtons();
+}
 
 function startCupping(){
   const raw=sampleCountInputEl.value.trim();
@@ -226,6 +272,11 @@ function startCupping(){
 sampleCountInputEl.addEventListener("keydown", event=>{
   if(event.key==="Enter") startCupping();
 });
+sampleCountInputEl.addEventListener("input", () => {
+  sampleCountErrorEl.textContent = "";
+  updateSampleStepperButtons();
+});
+updateSampleStepperButtons();
 
 function scoreSelect(name, value, label){
   return `
