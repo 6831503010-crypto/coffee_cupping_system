@@ -137,6 +137,72 @@ TEAM RULE:
     gap:10px;
   }
 
+    /* Grouped Aroma Qualities */
+
+    .aroma-quality-groups {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .aroma-quality-group {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #ffffff;
+      padding: 12px;
+    }
+
+    .aroma-quality-parent {
+      margin: 0;
+      background: rgba(59, 36, 24, 0.04);
+      border-color: #d8cbc2;
+      font-weight: 850;
+    }
+
+        .aroma-quality-parent:has(input:checked) {
+          background: rgba(59, 36, 24, 0.05);
+          border-color: var(--espresso);
+          color: var(--espresso);
+        }
+
+    .aroma-quality-children {
+      display: grid;
+      gap: 8px;
+
+      margin-top: 10px;
+      margin-left: 18px;
+
+      padding-left: 12px;
+
+      border-left: 2px solid var(--latte);
+    }
+
+    .aroma-quality-child {
+      padding: 10px 12px;
+      font-weight: 700;
+    }
+
+    .aroma-quality-child:has(input:checked) {
+      border-color: var(--mocha);
+      background: rgba(122, 81, 56, 0.08);
+    }
+
+
+    /* Tablet */
+    @media (max-width: 900px) {
+      .aroma-quality-groups {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+
+    /* Mobile */
+    @media (max-width: 520px) {
+      .aroma-quality-groups {
+        grid-template-columns: 1fr;
+      }
+    }
+
   .aroma-quality-option{
     display:flex;
     align-items:center;

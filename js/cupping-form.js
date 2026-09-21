@@ -8,31 +8,90 @@ let SAMPLE_COUNT = 0;
 const scoreOptions = [];
 for(let s=6; s<=10.0001; s+=0.25) scoreOptions.push(s.toFixed(2));
 
-const aromaQualityOptions = [
-  "Floral",
-  "Fruity",
-  "Berry",
-  "Dried Fruit",
-  "Citrus Fruit",
-  "Roasted",
-  "Cereal",
-  "Burnt",
-  "Tobacco",
-  "Sour/Fermented",
-  "Sour",
-  "Fermented",
-  "Nutty/Cocoa",
-  "Nutty",
-  "Cocoa",
-  "Green/Vegetative",
-  "Spice",
-  "Sweet",
-  "Vanilla/Vanillin",
-  "Brown Sugar",
-  "Other",
-  "Chemical",
-  "Musty/Earthy",
-  "Woody"
+// const aromaQualityOptions = [
+//   "Floral",
+//   "Fruity",
+//   "Berry",
+//   "Dried Fruit",
+//   "Citrus Fruit",
+//   "Roasted",
+//   "Cereal",
+//   "Burnt",
+//   "Tobacco",
+//   "Sour/Fermented",
+//   "Sour",
+//   "Fermented",
+//   "Nutty/Cocoa",
+//   "Nutty",
+//   "Cocoa",
+//   "Green/Vegetative",
+//   "Spice",
+//   "Sweet",
+//   "Vanilla/Vanillin",
+//   "Brown Sugar",
+//   "Other",
+//   "Chemical",
+//   "Musty/Earthy",
+//   "Woody"
+// ];
+const aromaQualityGroups = [
+  {
+    parent: "Floral",
+    children: []
+  },
+  {
+    parent: "Fruity",
+    children: [
+      "Berry",
+      "Dried Fruit",
+      "Citrus Fruit"
+    ]
+  },
+  {
+    parent: "Roasted",
+    children: [
+      "Cereal",
+      "Burnt",
+      "Tobacco"
+    ]
+  },
+  {
+    parent: "Sour/Fermented",
+    children: [
+      "Sour",
+      "Fermented"
+    ]
+  },
+  {
+    parent: "Nutty/Cocoa",
+    children: [
+      "Nutty",
+      "Cocoa"
+    ]
+  },
+  {
+    parent: "Green/Vegetative",
+    children: []
+  },
+  {
+    parent: "Spice",
+    children: []
+  },
+  {
+    parent: "Sweet",
+    children: [
+      "Vanilla/Vanillin",
+      "Brown Sugar"
+    ]
+  },
+  {
+    parent: "Other",
+    children: [
+      "Chemical",
+      "Musty/Earthy",
+      "Woody"
+    ]
+  }
 ];
 
 const mainTasteOptions = [
@@ -49,7 +108,7 @@ function createSamples(count){
   return Array.from({length:count}, (_,i)=>({
     id:i+1,
     aroma:{
-      dry:null, break:null, color:null, qualityScore:"", qualities:[], notes:"", complete:false
+      dry:null, break:null, color:null, qualityScore:"", qualities:[], complete:false
     },
     flavor:{
       flavor:"", aftertaste:"", acidity:"", body:"", balance:"", overall:"",
@@ -59,8 +118,7 @@ function createSamples(count){
       sweetness:[false,false,false,false,false],
       flavorQualities:[],
       mainTastes:[],
-      defectType:"",
-      notes:""
+      defectType:""
     }
   }));
 }
@@ -324,38 +382,120 @@ function choice3(name, selected){
   </div>`;
 }
 
+// function aromaQualityChecks(selectedValues = []){
+//   return `
+//     <div class="aroma-quality-grid">
+//       ${aromaQualityOptions.map((quality, index)=>`
+//         <label class="aroma-quality-option">
+//           <input
+//             type="checkbox"
+//             name="aromaQuality"
+//             value="${quality}"
+//             ${selectedValues.includes(quality) ? "checked" : ""}
+//           >
+//           <span>${quality}</span>
+//         </label>
+//       `).join("")}
+//     </div>
+//   `;
+// }
 function aromaQualityChecks(selectedValues = []){
   return `
-    <div class="aroma-quality-grid">
-      ${aromaQualityOptions.map((quality, index)=>`
-        <label class="aroma-quality-option">
-          <input
-            type="checkbox"
-            name="aromaQuality"
-            value="${quality}"
-            ${selectedValues.includes(quality) ? "checked" : ""}
-          >
-          <span>${quality}</span>
-        </label>
+    <div class="aroma-quality-groups">
+
+      ${aromaQualityGroups.map(group => `
+        <div class="aroma-quality-group">
+
+          <label class="aroma-quality-option aroma-quality-parent">
+            <input
+              type="checkbox"
+              name="aromaQuality"
+              value="${group.parent}"
+              ${selectedValues.includes(group.parent) ? "checked" : ""}
+            >
+            <span>${group.parent}</span>
+          </label>
+
+          ${group.children.length ? `
+            <div class="aroma-quality-children">
+
+              ${group.children.map(child => `
+                <label class="aroma-quality-option aroma-quality-child">
+                  <input
+                    type="checkbox"
+                    name="aromaQuality"
+                    value="${child}"
+                    ${selectedValues.includes(child) ? "checked" : ""}
+                  >
+                  <span>${child}</span>
+                </label>
+              `).join("")}
+
+            </div>
+          ` : ""}
+
+        </div>
       `).join("")}
+
     </div>
   `;
 }
 
+// function flavorQualityChecks(selectedValues = []){
+//   return `
+//     <div class="aroma-quality-grid">
+//       ${aromaQualityOptions.map(quality=>`
+//         <label class="aroma-quality-option">
+//           <input
+//             type="checkbox"
+//             name="flavorQuality"
+//             value="${quality}"
+//             ${selectedValues.includes(quality) ? "checked" : ""}
+//           >
+//           <span>${quality}</span>
+//         </label>
+//       `).join("")}
+//     </div>
+//   `;
+// }
 function flavorQualityChecks(selectedValues = []){
   return `
-    <div class="aroma-quality-grid">
-      ${aromaQualityOptions.map(quality=>`
-        <label class="aroma-quality-option">
-          <input
-            type="checkbox"
-            name="flavorQuality"
-            value="${quality}"
-            ${selectedValues.includes(quality) ? "checked" : ""}
-          >
-          <span>${quality}</span>
-        </label>
+    <div class="aroma-quality-groups">
+
+      ${aromaQualityGroups.map(group => `
+        <div class="aroma-quality-group">
+
+          <label class="aroma-quality-option aroma-quality-parent">
+            <input
+              type="checkbox"
+              name="flavorQuality"
+              value="${group.parent}"
+              ${selectedValues.includes(group.parent) ? "checked" : ""}
+            >
+            <span>${group.parent}</span>
+          </label>
+
+          ${group.children.length ? `
+            <div class="aroma-quality-children">
+
+              ${group.children.map(child => `
+                <label class="aroma-quality-option aroma-quality-child">
+                  <input
+                    type="checkbox"
+                    name="flavorQuality"
+                    value="${child}"
+                    ${selectedValues.includes(child) ? "checked" : ""}
+                  >
+                  <span>${child}</span>
+                </label>
+              `).join("")}
+
+            </div>
+          ` : ""}
+
+        </div>
       `).join("")}
+
     </div>
   `;
 }
@@ -414,11 +554,6 @@ function aromaView(s){
         ${aromaQualityChecks(s.aroma.qualities)}
       </section>
 
-      <section class="section full">
-        <h4>Notes</h4>
-        <label for="aromaNotes">Additional aroma notes</label>
-        <textarea id="aromaNotes" placeholder="Write observations for Sample ${s.id}...">${escapeHtml(s.aroma.notes)}</textarea>
-      </section>
     </div>`;
 }
 
@@ -618,18 +753,18 @@ function flavorView(s){
       </section>
 
       <section class="section" data-validation-id="acidityIntensity">
-  <h4>Acidity Intensity</h4>
-  <label>Select intensity (1–5)<span class="required-mark" aria-hidden="true">*</span></label>
-  ${scale5("acidityIntensity", s.flavor.acidityIntensity)}
-  <div class="help">1 = Low · 5 = High</div>
-</section>
+        <h4>Acidity Intensity</h4>
+        <label>Select intensity (1–5)<span class="required-mark" aria-hidden="true">*</span></label>
+        ${scale5("acidityIntensity", s.flavor.acidityIntensity)}
+        <div class="help">1 = Low · 5 = High</div>
+      </section>
 
-<section class="section" data-validation-id="bodyLevel">
-  <h4>Body Level</h4>
-  <label>Select body level (1–5)<span class="required-mark" aria-hidden="true">*</span></label>
-  ${scale5("bodyLevel", s.flavor.bodyLevel)}
-  <div class="help">1 = Thin · 5 = Heavy</div>
-</section>
+      <section class="section" data-validation-id="bodyLevel">
+        <h4>Body Level</h4>
+        <label>Select body level (1–5)<span class="required-mark" aria-hidden="true">*</span></label>
+        ${scale5("bodyLevel", s.flavor.bodyLevel)}
+        <div class="help">1 = Thin · 5 = Heavy</div>
+      </section>
 
       <section class="section full">
         <div class="section-score-header">
@@ -717,11 +852,6 @@ function flavorView(s){
         ${mainTasteChecks(s.flavor.mainTastes)}
       </section>
 
-      <section class="section full">
-        <h4>Notes</h4>
-        <label for="flavorNotes">Flavor-stage notes</label>
-        <textarea id="flavorNotes" placeholder="Write tasting observations for Sample ${s.id}...">${escapeHtml(s.flavor.notes)}</textarea>
-      </section>
     </div>`;
 }
 
@@ -761,9 +891,9 @@ function flavorView(s){
                 <b>Aroma Quality</b>
                 <span>
                   ${s.aroma.qualityScore
-        ? `${formatScore(s.aroma.qualityScore)} / 10`
-        : "—"
-      }
+                      ? `${formatScore(s.aroma.qualityScore)} / 10`
+                      : "—"
+                    }
                 </span>
               </div>
 
@@ -772,9 +902,9 @@ function flavorView(s){
                 <b>Dry Aroma</b>
                 <span>
                   ${s.aroma.dry
-        ? `${formatScore(s.aroma.dry)} / 5`
-        : "—"
-      }
+                      ? `${formatScore(s.aroma.dry)} / 5`
+                      : "—"
+                    }
                 </span>
               </div>
 
@@ -783,9 +913,9 @@ function flavorView(s){
                 <b>Break Aroma</b>
                 <span>
                   ${s.aroma.break
-        ? `${formatScore(s.aroma.break)} / 5`
-        : "—"
-      }
+                      ? `${formatScore(s.aroma.break)} / 5`
+                      : "—"
+                    }
                 </span>
               </div>
 
@@ -812,12 +942,7 @@ function flavorView(s){
             </div>
           </div>
 
-          ${s.aroma.notes.trim() ? `
-            <div class="review-notes">
-              <b>Aroma Notes</b>
-              <p>${escapeHtml(s.aroma.notes)}</p>
-            </div>
-          ` : ""}
+
 
 
           <div class="review-score-group">
@@ -830,9 +955,9 @@ function flavorView(s){
                 <b>Flavor</b>
                 <span>
                   ${s.flavor.flavor
-        ? `${formatScore(s.flavor.flavor)} / 10`
-        : "—"
-      }
+                      ? `${formatScore(s.flavor.flavor)} / 10`
+                      : "—"
+                    }
                 </span>
               </div>
 
@@ -841,9 +966,9 @@ function flavorView(s){
                 <b>Aftertaste</b>
                 <span>
                   ${s.flavor.aftertaste
-        ? `${formatScore(s.flavor.aftertaste)} / 10`
-        : "—"
-      }
+                      ? `${formatScore(s.flavor.aftertaste)} / 10`
+                      : "—"
+                    }
                 </span>
               </div>
 
@@ -852,9 +977,9 @@ function flavorView(s){
                 <b>Acidity</b>
                 <span>
                   ${s.flavor.acidity
-        ? `${formatScore(s.flavor.acidity)} / 10`
-        : "—"
-      }
+                      ? `${formatScore(s.flavor.acidity)} / 10`
+                      : "—"
+                    }
                 </span>
               </div>
 
@@ -863,9 +988,9 @@ function flavorView(s){
                 <b>Body</b>
                 <span>
                   ${s.flavor.body
-        ? `${formatScore(s.flavor.body)} / 10`
-        : "—"
-      }
+                      ? `${formatScore(s.flavor.body)} / 10`
+                      : "—"
+                    }
                 </span>
               </div>
 
@@ -874,8 +999,8 @@ function flavorView(s){
                 <b>Uniformity</b>
                 <span>
                   ${formatScore(
-        calculateCupScore(s.flavor.uniformity)
-      )} / 10
+                      calculateCupScore(s.flavor.uniformity)
+                    )} / 10
                 </span>
               </div>
 
@@ -884,8 +1009,8 @@ function flavorView(s){
                 <b>Clean Cup</b>
                 <span>
                   ${formatScore(
-        calculateCupScore(s.flavor.cleanCup)
-      )} / 10
+                      calculateCupScore(s.flavor.cleanCup)
+                    )} / 10
                 </span>
               </div>
 
@@ -894,9 +1019,9 @@ function flavorView(s){
                 <b>Balance</b>
                 <span>
                   ${s.flavor.balance
-        ? `${formatScore(s.flavor.balance)} / 10`
-        : "—"
-      }
+                      ? `${formatScore(s.flavor.balance)} / 10`
+                      : "—"
+                    }
                 </span>
               </div>
 
@@ -905,8 +1030,8 @@ function flavorView(s){
                 <b>Sweetness</b>
                 <span>
                   ${formatScore(
-        calculateCupScore(s.flavor.sweetness)
-      )} / 10
+                      calculateCupScore(s.flavor.sweetness)
+                    )} / 10
                 </span>
               </div>
 
@@ -915,34 +1040,34 @@ function flavorView(s){
                 <b>Overall</b>
                 <span>
                   ${s.flavor.overall
-        ? `${formatScore(s.flavor.overall)} / 10`
-        : "—"
-      }
+                      ? `${formatScore(s.flavor.overall)} / 10`
+                      : "—"
+                    }
                 </span>
               </div>
 
 
               ${getDefectiveCupCount(s) > 0
-        ? `
-                    <div class="kv">
-                      <b>Defects</b>
+                  ? `
+                              <div class="kv">
+                                <b>Defects</b>
 
-                      <span>
-                        ${getDefectiveCupCount(s)} cup(s) ×
+                                <span>
+                                  ${getDefectiveCupCount(s)} cup(s) ×
 
-                        ${s.flavor.defectType === "taint"
-          ? "Taint (2)"
-          : "Fault (4)"
-        }
+                                  ${s.flavor.defectType === "taint"
+                    ? "Taint (2)"
+                    : "Fault (4)"
+                  }
 
-                        = -${formatScore(
-          calculateDefectDeduction(s)
-        )}
-                      </span>
-                    </div>
-                  `
-        : ""
-      }
+                                  = -${formatScore(
+                    calculateDefectDeduction(s)
+                  )}
+                                </span>
+                              </div>
+                            `
+                  : ""
+                }
 
             </div>
 
@@ -972,12 +1097,7 @@ function flavorView(s){
             </div>
           </div>
 
-          ${s.flavor.notes.trim() ? `
-            <div class="review-notes">
-              <b>Flavor Notes</b>
-              <p>${escapeHtml(s.flavor.notes)}</p>
-            </div>
-          ` : ""}
+
 
 
           <div class="review-score-group">
@@ -1028,11 +1148,47 @@ function render(){
     ruleEl.textContent=aromaLocked ? "Aroma is locked. Continue to the Flavor Test." : "Complete Aroma for every sample. Once confirmed, all Aroma data is locked.";
     contentEl.innerHTML=aromaView(s);
     actionsEl.innerHTML=`
-      <button class="btn secondary" onclick="prevSample()" ${activeSample===1?"disabled":""}>← Previous sample</button>
+      ${SAMPLE_COUNT > 1 ? `
+        <button
+          class="btn secondary"
+          onclick="prevSample()"
+          ${activeSample===1 ? "disabled" : ""}
+        >
+          ← Previous sample
+        </button>
+      ` : `<div></div>`}
+
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        ${!aromaLocked ? `<button class="btn ghost" onclick="nextSample()">Save & next sample →</button>
-        <button class="btn primary" onclick="confirmAroma()">Confirm Aroma Stage 🔒</button>` :
-        `<button class="btn primary" onclick="goFlavor()">Continue to Flavor Test →</button>`}
+
+        ${!aromaLocked ? `
+
+          ${SAMPLE_COUNT > 1 ? `
+            <button
+              class="btn ghost"
+              onclick="nextSample()"
+            >
+              Save & next sample →
+            </button>
+          ` : ""}
+
+          <button
+            class="btn primary"
+            onclick="confirmAroma()"
+          >
+            Confirm Aroma Stage 🔒
+          </button>
+
+        ` : `
+
+          <button
+            class="btn primary"
+            onclick="goFlavor()"
+          >
+            Continue to Flavor Test →
+          </button>
+
+        `}
+
       </div>`;
   } else if(stage==="flavor"){
     eyebrowEl.textContent="Step 2 of 3";
@@ -1040,11 +1196,35 @@ function render(){
     ruleEl.textContent="This stage is flexible. Move between samples and edit these fields until finalization.";
     contentEl.innerHTML=flavorView(s);
     actionsEl.innerHTML=`
-      <button class="btn secondary" onclick="prevSample()" ${activeSample===1?"disabled":""}>← Previous sample</button>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn ghost" onclick="nextSample()">Save & next sample →</button>
-        <button class="btn primary" onclick="goReview()">Review & Finalize →</button>
-      </div>`;
+        ${SAMPLE_COUNT > 1 ? `
+          <button
+            class="btn secondary"
+            onclick="prevSample()"
+            ${activeSample===1 ? "disabled" : ""}
+          >
+            ← Previous sample
+          </button>
+        ` : `<div></div>`}
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+
+          ${SAMPLE_COUNT > 1 ? `
+            <button
+              class="btn ghost"
+              onclick="nextSample()"
+            >
+              Save & next sample →
+            </button>
+          ` : ""}
+
+          <button
+            class="btn primary"
+            onclick="goReview()"
+          >
+            Review & Finalize →
+          </button>
+
+        </div>`;
   } else {
     eyebrowEl.textContent="Step 3 of 3";
     titleEl.textContent="Review & Finalize";
@@ -1068,7 +1248,6 @@ function saveVisible(){
     s.aroma.qualities = [
       ...document.querySelectorAll('input[name="aromaQuality"]:checked')
     ].map(input => input.value);
-    s.aroma.notes = document.getElementById("aromaNotes")?.value ?? s.aroma.notes;
     s.aroma.complete = aromaIsComplete(s);
   }
   if(stage==="flavor"){
@@ -1100,11 +1279,11 @@ function saveVisible(){
       ...document.querySelectorAll('input[name="mainTaste"]:checked')
     ].map(input => input.value);
 
-    const notes=document.getElementById("flavorNotes"); if(notes) s.flavor.notes=notes.value;
-    ["uniformity","cleanCup","sweetness"].forEach(group=>{
-      const vals=[...document.querySelectorAll(`[data-group="${group}"]`)].map(x=>x.checked);
-      if(vals.length) s.flavor[group]=vals;
-    });
+    // const notes=document.getElementById("flavorNotes"); if(notes) s.flavor.notes=notes.value;
+    // ["uniformity","cleanCup","sweetness"].forEach(group=>{
+    //   const vals=[...document.querySelectorAll(`[data-group="${group}"]`)].map(x=>x.checked);
+    //   if(vals.length) s.flavor[group]=vals;
+    // });
   }
 }
 
@@ -1148,8 +1327,14 @@ function nextSample(){
   saveVisible();
   activeSample = activeSample < SAMPLE_COUNT ? activeSample+1 : 1;
   render();
+  scrollToFormTop();
 }
-function prevSample(){ saveVisible(); if(activeSample>1) activeSample--; render(); }
+function prevSample() {
+  saveVisible();
+  if (activeSample > 1) activeSample--;
+  render();
+  scrollToFormTop();
+}
 
 function confirmAroma(){
   saveVisible();
