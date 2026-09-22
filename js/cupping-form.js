@@ -1399,20 +1399,54 @@ function editFlavor(id){
   render();
   scrollToFormTop();
 }
-// function finalizeEvaluation(){
-//   finalized=true;
-//   document.getElementById("successBox").style.display="block";
+
+// function finalizeEvaluation() {
+//   finalized = true;
+//   document.getElementById("successBox").style.display = "block";
 //   render();
+
+//   // Return to the landing page after finalizing
+//   setTimeout(() => {
+//     window.location.href = "index.html";
+//   }, 1000);
 // }
+
+const HISTORY_KEY = "aromaArtisans.cuppingHistory.v1";
+
+function saveEvaluationToHistory(){
+  const records = (() => {
+    try{
+      const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    }catch{
+      return [];
+    }
+  })();
+
+  const record = {
+    id: `session-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+    completedAt: new Date().toISOString(),
+    samples: samples.map(sample => ({
+      ...sample,
+      finalScore: Number(calculateFinalScore(sample))
+    }))
+  };
+
+  records.unshift(record);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(records.slice(0, 50)));
+}
+
 function finalizeEvaluation(){
+  saveVisible();
+  saveEvaluationToHistory();
+
   finalized = true;
   document.getElementById("successBox").style.display = "block";
   render();
 
-  // Return to the landing page after finalizing
   setTimeout(() => {
-    window.location.href = "index.html";
-  }, 1000);
+    window.location.href = "history.html";
+  }, 900);
 }
 function escapeHtml(str){
   return String(str??"").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));

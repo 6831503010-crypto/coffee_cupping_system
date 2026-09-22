@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History — Coffee Cupping System</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/pages/history.css">
+</head>
+<body>
+  <div class="history-shell">
+    <header class="history-header">
+      <div>
+        <a class="back-link" href="index.html">← Back to Home</a>
+        <p class="eyebrow">CUPPING HISTORY</p>
+        <h1>Session History</h1>
+        <p class="history-subtitle">Review completed coffee cupping sessions and sample scores.</p>
+      </div>
+      <div class="history-actions">
+        <a class="btn primary btn-link" href="cupping-form.html">New Cupping</a>
+        <button class="btn ghost" id="clearHistoryBtn" type="button">Clear History</button>
+      </div>
+    </header>
+
+    <section class="history-summary" aria-label="History summary">
+      <div class="summary-card">
+        <strong id="sessionCount">0</strong>
+        <span id="sessionCountLabel">Sessions</span>
+      </div>
+
+      <div class="summary-card">
+        <strong id="sampleCount">0</strong>
+        <span id="sampleCountLabel">Samples</span>
+      </div>
+      <div class="summary-card"><strong id="latestDate">—</strong><span>Latest session</span></div>
+    </section>
+
+    <main id="historyList" class="history-list"></main>
+  </div>
+  <script src="js/pages/history.js"></script>
+</body>
+</html>
