@@ -136,7 +136,8 @@ const titleEl=document.getElementById("stageTitle");
 const eyebrowEl=document.getElementById("stageEyebrow");
 const ruleEl=document.getElementById("ruleBox");
 const panelEl=document.getElementById("panel");
-const sampleSetupEl=document.getElementById("sampleSetup");
+const sampleSetupEl = document.getElementById("sampleSetup");
+const backHomeLink = document.getElementById("backHomeLink");
 const sampleCountInputEl=document.getElementById("sampleCountInput");
 const sampleCountErrorEl = document.getElementById("sampleCountError");
 const decreaseSampleBtn = document.getElementById("decreaseSampleBtn");
@@ -318,7 +319,8 @@ function startCupping(){
   validationState={stage:null,errorsBySample:{}};
 
   sampleCountErrorEl.textContent="";
-  sampleSetupEl.style.display="none";
+  sampleSetupEl.style.display = "none";
+  backHomeLink.style.display = "none";
   cuppingProgressEl.style.display="block";
   panelEl.style.display="block";
   document.getElementById("successBox").style.display="none";
@@ -585,9 +587,13 @@ function formatScore(value) {
     return sample.flavor.uniformity.filter(value => !value).length;
   }
 
+  function cupLabel(count) {
+    return count <= 1 ? "cup" : "cups";
+  }
+
   function getDefectPoints(defectType) {
-    if (defectType === "taint") return 2;
-    if (defectType === "fault") return 4;
+    if (defectType === "taint") return -2;
+    if (defectType === "fault") return -4;
     return 0;
   }
 
@@ -610,8 +616,10 @@ function formatScore(value) {
     );
   }
 
-  function calculateFinalScore(sample) {
-    return (calculateBaseScore(sample) - calculateDefectDeduction(sample)).toFixed(2);
+function calculateFinalScore(sample) {
+  console.log("Base Score:", calculateBaseScore(sample));
+  console.log("Defect Deduction:", calculateDefectDeduction(sample).toFixed(2));
+  return (calculateBaseScore(sample) + calculateDefectDeduction(sample)).toFixed(2);
   }
 
   function cupChecks(name, values) {
@@ -694,13 +702,26 @@ function formatScore(value) {
 
       const defectiveCupCount = getDefectiveCupCount(sample);
       const defectSection = document.getElementById("defectSection");
-      const defectCupCountEl = document.getElementById("defectCupCount");
+      const defectCupSummary = document.getElementById("defectCupSummary");
+      const defectDeductionCupCount = document.getElementById("defectDeductionCupCount");
+      const defectDeductionCupLabel = document.getElementById("defectDeductionCupLabel");
 
       if (defectSection) {
         defectSection.style.display = defectiveCupCount > 0 ? "block" : "none";
       }
-      if (defectCupCountEl) {
-        defectCupCountEl.textContent = defectiveCupCount;
+      if (defectCupSummary) {
+        defectCupSummary.textContent =
+          `${defectiveCupCount} defective ${cupLabel(defectiveCupCount)}`;
+      }
+
+      if (defectDeductionCupCount) {
+        defectDeductionCupCount.textContent =
+          defectiveCupCount;
+      }
+
+      if (defectDeductionCupLabel) {
+        defectDeductionCupLabel.textContent =
+          cupLabel(defectiveCupCount);
       }
 
       if (defectiveCupCount === 0) {
@@ -796,8 +817,9 @@ function flavorView(s){
         style="display:${getDefectiveCupCount(s) > 0 ? "block" : "none"}">
         <div class="section-score-header">
           <h4>Defects</h4>
-          <div class="section-score">
-            <span id="defectCupCount">${getDefectiveCupCount(s)}</span> defective cup(s)
+          <div class="section-score" id="defectCupSummary">
+            ${getDefectiveCupCount(s)}
+            defective ${cupLabel(getDefectiveCupCount(s))}
           </div>
         </div>
 
@@ -821,9 +843,24 @@ function flavorView(s){
         </div>
 
         <div class="defect-deduction">
-          Deduction: ${getDefectiveCupCount(s)} cup(s) ×
-          ${s.flavor.defectType === "taint" ? "2" : s.flavor.defectType === "fault" ? "4" : "0"}
-          = <span id="defectDeduction">${calculateDefectDeduction(s)}</span> points
+          Deduction:
+          <span id="defectDeductionCupCount">
+            ${getDefectiveCupCount(s)}
+          </span>
+          <span id="defectDeductionCupLabel">
+            ${cupLabel(getDefectiveCupCount(s))}
+          </span>
+          ×
+          ${s.flavor.defectType === "taint"
+            ? "Taint(-2)"
+            : s.flavor.defectType === "fault"
+              ? "Fault(-4)"
+              : "0"}
+          =
+          <span id="defectDeduction">
+            ${calculateDefectDeduction(s)}
+          </span>
+          points
         </div>
       </section>
 
@@ -1045,30 +1082,28 @@ function flavorView(s){
                     }
                 </span>
               </div>
-
-
               ${getDefectiveCupCount(s) > 0
-                  ? `
-                              <div class="kv">
-                                <b>Defects</b>
+              ? `
+                  <div class="kv">
+                    <b>Defects</b>
 
-                                <span>
-                                  ${getDefectiveCupCount(s)} cup(s) ×
+                    <span>
+                      ${getDefectiveCupCount(s)}
+                      ${getDefectiveCupCount(s) <= 1 ? "cup" : "cups"} ×
 
-                                  ${s.flavor.defectType === "taint"
-                    ? "Taint (2)"
-                    : "Fault (4)"
-                  }
+                      ${s.flavor.defectType === "taint"
+                        ? "Taint (-2)"
+                        : "Fault (-4)"
+                      }
 
-                                  = -${formatScore(
-                    calculateDefectDeduction(s)
-                  )}
-                                </span>
-                              </div>
-                            `
-                  : ""
-                }
-
+                      = -${formatScore(
+                        Math.abs(calculateDefectDeduction(s))
+                      )}
+                    </span>
+                  </div>
+                `
+              : ""
+            }
             </div>
 
           </div>

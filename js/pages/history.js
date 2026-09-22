@@ -14,30 +14,93 @@ function formatDate(value){
   if(Number.isNaN(d.getTime())) return "Unknown date";
   return d.toLocaleString(undefined,{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
 }
-function n(value){
-  const x=Number(value);
-  return Number.isFinite(x) ? x.toFixed(2) : "—";
+// function n(value){
+//   const x=Number(value);
+//   return Number.isFinite(x) ? x.toFixed(2) : "—";
+// }
+function formatScore(value){
+  const x = Number(value);
+
+  if(!Number.isFinite(x)){
+    return "—";
+  }
+
+  return Number.isInteger(x)
+    ? String(x)
+    : x.toFixed(2);
+}
+function getDefectiveCupCount(flavor){
+  if(!Array.isArray(flavor.uniformity)){
+    return 0;
+  }
+
+  return flavor.uniformity.filter(value => !value).length;
+}
+
+function getDefectPoints(defectType){
+  if(defectType === "taint") return 2;
+  if(defectType === "fault") return 4;
+
+  return 0;
+}
+
+function getDefectDeduction(flavor){
+  return (
+    getDefectiveCupCount(flavor) *
+    getDefectPoints(flavor.defectType)
+  );
+}
+
+function getDefectLabel(defectType){
+  if(defectType === "taint") return "Taint";
+  if(defectType === "fault") return "Fault";
+
+  return "None";
 }
 function text(value){
   return Array.isArray(value) ? value.join(", ") : (value ?? "—");
 }
+// function avg(record){
+//   const values=(record.samples||[]).map(s=>Number(s.finalScore)).filter(Number.isFinite);
+//   return values.length ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : "—";
+// }
 function avg(record){
-  const values=(record.samples||[]).map(s=>Number(s.finalScore)).filter(Number.isFinite);
-  return values.length ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : "—";
+  const values = (record.samples || [])
+    .map(s => Number(s.finalScore))
+    .filter(Number.isFinite);
+
+  if(!values.length){
+    return "—";
+  }
+
+  const average =
+    values.reduce((a,b) => a + b, 0) / values.length;
+
+  return formatScore(average);
 }
 function sampleMarkup(s){
   const a=s.aroma||{}, f=s.flavor||{};
   return `
     <article class="sample-card">
       <h3>Sample ${s.id}</h3>
-      <div class="score-row"><span>Aroma quality</span><strong>${n(a.qualityScore)}</strong></div>
-      <div class="score-row"><span>Flavor</span><strong>${n(f.flavor)}</strong></div>
-      <div class="score-row"><span>Aftertaste</span><strong>${n(f.aftertaste)}</strong></div>
-      <div class="score-row"><span>Acidity</span><strong>${n(f.acidity)}</strong></div>
-      <div class="score-row"><span>Body</span><strong>${n(f.body)}</strong></div>
-      <div class="score-row"><span>Balance</span><strong>${n(f.balance)}</strong></div>
-      <div class="score-row"><span>Overall</span><strong>${n(f.overall)}</strong></div>
-      <div class="score-row"><span>Final score</span><strong>${n(s.finalScore)} / 100</strong></div>
+      <div class="score-row"><span>Aroma quality</span><strong>${formatScore(a.qualityScore)}</strong></div>
+      <div class="score-row"><span>Flavor</span><strong>${formatScore(f.flavor)}</strong></div>
+      <div class="score-row"><span>Aftertaste</span><strong>${formatScore(f.aftertaste)}</strong></div>
+      <div class="score-row"><span>Acidity</span><strong>${formatScore(f.acidity)}</strong></div>
+      <div class="score-row"><span>Body</span><strong>${formatScore(f.body)}</strong></div>
+      <div class="score-row"><span>Balance</span><strong>${formatScore(f.balance)}</strong></div>
+      <div class="score-row">
+        <span>Defect</span>
+        <strong>
+          ${
+            getDefectiveCupCount(f) > 0
+              ? `${getDefectiveCupCount(f)} cup${getDefectiveCupCount(f) === 1 ? "" : "s"} × ${getDefectLabel(f.defectType)}(-${getDefectPoints(f.defectType)}) = -${formatScore(getDefectDeduction(f))}`
+              : "None"
+          }
+        </strong>
+      </div>
+      <div class="score-row"><span>Overall</span><strong>${formatScore(f.overall)}</strong></div>
+      <div class="score-row"><span>Final score</span><strong>${formatScore(s.finalScore)} / 100</strong></div>
       <button class="details-toggle" type="button">Show details</button>
       <div class="details">
         <div class="sample-notes"><strong>Aroma:</strong> ${text(a.qualities)}<br></div>
@@ -87,7 +150,7 @@ function render(){
           </div>
         </div>
 
-        <div class="session-total"><strong>${avg(r)}</strong><span>Average score</span></div>
+        <!--<div class="session-total"><strong>${avg(r)}</strong><span>Average score</span></div>--!>
       </div>
       <div class="sample-grid">${(r.samples||[]).map(sampleMarkup).join("")}</div>
       <div class="history-card-footer">
@@ -103,10 +166,28 @@ function render(){
       btn.textContent=open?"Hide details":"Show details";
     });
   });
+
+  // list.querySelectorAll("[data-delete]").forEach(btn => {
+  //   btn.addEventListener("click",()=>{
+  //     const id=btn.dataset.delete;
+  //     writeHistory(readHistory().filter(r=>r.id!==id));
+  //     render();
+  //   });
+  // });
   list.querySelectorAll("[data-delete]").forEach(btn=>{
     btn.addEventListener("click",()=>{
-      const id=btn.dataset.delete;
-      writeHistory(readHistory().filter(r=>r.id!==id));
+      const id = btn.dataset.delete;
+
+      const confirmed = confirm(
+        "Are you sure you want to delete this cupping session? This action cannot be undone."
+      );
+
+      if(!confirmed) return;
+
+      writeHistory(
+        readHistory().filter(record => record.id !== id)
+      );
+
       render();
     });
   });
