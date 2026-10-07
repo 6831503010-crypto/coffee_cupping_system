@@ -1,8 +1,25 @@
-# Coffee Cupping System
+## Full-stack migration
+
+The project is being migrated from the current HTML/CSS/JavaScript prototype to:
+
+- Angular — frontend
+- Spring Boot REST API — backend
+- MySQL — database
+
+During the migration, the existing prototype remains the visual and behavioral
+source of truth.
+
+New application code will be developed under:
+
+````text
+frontend/
+backend/
+
+## Coffee Cupping System
 
 A shared repository for the Coffee Cupping System prototype.
 
-The current cupping form is the **visual source of truth** for the project.  
+The current cupping form is the **visual source of truth** for the project.
 The landing page and future pages should reuse the same shared theme so the system looks like one product.
 
 ## Current pages
@@ -19,12 +36,12 @@ Every page must load:
 
 ```html
 <link rel="stylesheet" href="css/theme.css">
-```
+````
 
 For files inside subfolders, adjust the relative path, for example:
 
 ```html
-<link rel="stylesheet" href="../css/theme.css">
+<link rel="stylesheet" href="../css/theme.css" />
 ```
 
 `css/theme.css` is the shared source of truth for:
@@ -54,8 +71,8 @@ and load it **after** `theme.css`.
 Example:
 
 ```html
-<link rel="stylesheet" href="css/theme.css">
-<link rel="stylesheet" href="css/pages/landing.css">
+<link rel="stylesheet" href="css/theme.css" />
+<link rel="stylesheet" href="css/pages/landing.css" />
 ```
 
 Use the shared CSS variables instead of hard-coded brand colors.
