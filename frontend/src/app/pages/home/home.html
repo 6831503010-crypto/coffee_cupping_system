@@ -1,0 +1,113 @@
+<header class="site-header">
+  <a class="brand" routerLink="/" aria-label="Coffee Cupping System home" (click)="closeMenu()">
+    <span class="bean" aria-hidden="true"></span>
+
+    <span class="brand-text">
+      <strong>Coffee Cupping</strong>
+      <strong>System</strong>
+    </span>
+  </a>
+
+  <nav class="site-nav" id="siteNav" aria-label="Primary navigation" [class.open]="menuOpen()">
+    <a routerLink="/" (click)="closeMenu()">HOME</a>
+
+    <a href="#about" (click)="closeMenu()">ABOUT</a>
+
+    <a routerLink="/history" (click)="closeMenu()">HISTORY</a>
+  </nav>
+
+  <button class="menu-toggle" type="button" aria-label="Open navigation" [attr.aria-expanded]="menuOpen()"
+    aria-controls="siteNav" (click)="toggleMenu()">
+    ☰
+  </button>
+</header>
+
+<main>
+  <section class="landing-hero">
+
+    <div class="hero-art">
+      <img src="images/coffee-hero-screenshot.png" alt="Artisan coffee in a glass cup">
+    </div>
+
+    <div class="hero-copy">
+      <p class="hero-eyebrow">
+        COFFEE CUPPING SYSTEM
+      </p>
+
+      <h1>
+        Rich &amp;<br>
+        aromatic.
+      </h1>
+
+      <p class="hero-description">
+        A focused workspace for recording and reviewing professional coffee
+        cupping sessions. Start a new evaluation or explore your completed
+        session history.
+      </p>
+
+      <div class="hero-actions">
+
+        <a class="landing-btn primary" routerLink="/cupping">
+          Start Cupping
+        </a>
+
+        <a class="landing-btn secondary" routerLink="/history">
+          View History
+        </a>
+
+      </div>
+
+      <div class="hero-contact">
+        <span>STRUCTURED EVALUATION</span>
+        <span>•</span>
+        <span>SESSION RECORDS</span>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="landing-intro" id="about">
+
+    <div>
+      <p class="section-kicker">ABOUT</p>
+
+      <h2>
+        One place for every cupping session.
+      </h2>
+    </div>
+
+    <p>
+      The detailed Aroma and Flavor evaluation stays inside the existing
+      Cupping Form, so the landing page stays focused and uncluttered.
+      This landing page is intentionally simple: it gives you a clear
+      starting point and a direct path to your saved history.
+    </p>
+
+  </section>
+
+  <section class="landing-cta">
+
+    <div>
+      <p class="section-kicker">
+        READY TO CUP?
+      </p>
+
+      <h2>
+        Start your next evaluation.
+      </h2>
+    </div>
+
+    <a class="landing-btn primary" routerLink="/cupping">
+      Create Session →
+    </a>
+
+  </section>
+</main>
+
+<footer class="site-footer">
+  <span>Coffee Cupping System</span>
+
+  <span>
+    Structured evaluation &amp; session history
+  </span>
+</footer>
