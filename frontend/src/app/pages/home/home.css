@@ -256,3 +256,17 @@
   .hero-contact{font-size:9px;gap:7px}
   .site-footer{flex-direction:column}
 }
+
+.nav-logout {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--espresso);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.nav-logout:hover {
+  color: var(--crema);
+}
