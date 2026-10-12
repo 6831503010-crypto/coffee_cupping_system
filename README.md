@@ -1,238 +1,161 @@
 # Coffee Cupping System
 
-A shared repository for the Coffee Cupping System.
+A full-stack coffee cupping application developed using Angular, Spring Boot, MySQL, and Flyway.
 
-The project is being developed as a full-stack application using:
+## 1. Technology Stack
 
-- **Angular** — frontend
-- **Spring Boot REST API** — backend
-- **MySQL** — database
-- **Flyway** — database schema migrations
+| Technology  | Version          | Purpose                      |
+| ----------- | ---------------- | ---------------------------- |
+| Node.js     | 24.18.1          | Frontend runtime             |
+| npm         | 11.16.0          | Package manager              |
+| Angular     | 22.x             | Frontend                     |
+| Java        | 21               | Backend development standard |
+| Spring Boot | 4.1.1            | REST API                     |
+| MySQL       | 8.4.x            | Database                     |
+| Flyway      | Managed by Maven | Database migrations          |
 
-The original HTML/CSS/JavaScript prototype remains a visual and behavioral reference for the application.
+**Important:** Use the specified Node.js and npm versions to avoid dependency issues. The backend targets Java 21, even if a newer JDK works locally.
 
----
-
-## Technology Stack
-
-### Frontend
-
-- Angular
-- TypeScript
-- HTML
-- CSS
-
-### Backend
-
-- Spring Boot
-- Spring Web
-- Spring Data JPA
-- Spring Security
-- Bean Validation
-- BCrypt password hashing
-- Maven
-
-### Database
-
-- MySQL
-- Flyway migrations
-
----
-
-## Project Structure
+## 2. Project Structure
 
 ```text
 coffee-cupping-system/
-│
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── guards/
-│   │   │   │   └── auth.guard.ts
-│   │   │   │
-│   │   │   ├── models/
-│   │   │   │   ├── auth-user.ts
-│   │   │   │   ├── aroma-evaluation.ts
-│   │   │   │   ├── coffee-sample.ts
-│   │   │   │   └── flavor-evaluation.ts
-│   │   │   │
-│   │   │   ├── pages/
-│   │   │   │   ├── home/
-│   │   │   │   ├── login/
-│   │   │   │   ├── register/
-│   │   │   │   ├── cupping/
-│   │   │   │   └── history/
-│   │   │   │
-│   │   │   ├── services/
-│   │   │   │   └── auth.service.ts
-│   │   │   │
-│   │   │   ├── app.config.ts
-│   │   │   └── app.routes.ts
-│   │   │
-│   │   └── styles.css
-│   │
-│   ├── public/
-│   │   └── images/
-│   │
+│   │   │   ├── guards/       # Authentication and route guards
+│   │   │   ├── models/       # TypeScript interfaces
+│   │   │   ├── pages/        # Home, Login, Register, Cupping, History
+│   │   │   ├── services/     # API communication
+│   │   │   └── app.routes.ts # Angular routes
+│   │   └── styles.css        # Shared UI theme
+│   ├── public/               # Images and static assets
 │   ├── package.json
-│   └── angular.json
+│   └── package-lock.json
 │
 ├── backend/
-│   ├── src/
-│   │   └── main/
-│   │       ├── java/
-│   │       │   └── th/
-│   │       │       └── mfu/
-│   │       │           └── cupping/
-│   │       │               ├── config/
-│   │       │               ├── controller/
-│   │       │               ├── dto/
-│   │       │               ├── model/
-│   │       │               ├── repository/
-│   │       │               └── service/
-│   │       │
-│   │       └── resources/
-│   │           ├── db/
-│   │           │   └── migration/
-│   │           │       └── V1__create_users_table.sql
-│   │           │
-│   │           └── application.properties
-│   │
+│   ├── src/main/
+│   │   ├── java/th/mfu/cupping/
+│   │   │   ├── config/       # Security and application configuration
+│   │   │   ├── controller/   # REST endpoints
+│   │   │   ├── dto/          # Request/response objects
+│   │   │   ├── model/        # JPA entities
+│   │   │   ├── repository/   # Database queries
+│   │   │   └── service/      # Business logic
+│   │   └── resources/
+│   │       ├── db/migration/ # Flyway SQL migrations
+│   │       └── application.properties
 │   ├── pom.xml
-│   ├── mvnw
 │   └── mvnw.cmd
 │
 ├── docs/
 ├── README.md
 ├── CONTRIBUTING.md
-├── .editorconfig
 └── .gitignore
 ```
 
-### Important Directories
+The original HTML/CSS/JavaScript prototype remains the visual and behavioral reference. New development should take place in `frontend/` and `backend/`.
 
-`frontend/` contains the Angular application.
+## 3. First-Time Setup
 
-The main Angular pages are located under:
+### Step 1 — Clone the repository
 
-```text
-frontend/src/app/pages/
+```bash
+git clone <repository-url>
+cd coffee-cupping-system
 ```
 
-Shared application logic such as authentication is located under:
+Replace `<repository-url>` with the actual GitHub repository URL.
 
-```text
-frontend/src/app/services/
+### Step 2 — Verify required versions
+
+Open a terminal and run:
+
+```powershell
+node -v
+npm -v
+java --version
 ```
 
-Route protection is located under:
+Expected versions:
 
 ```text
-frontend/src/app/guards/
+Node.js: v24.18.1
+npm:     11.16.0
+Java:    21
 ```
 
----
+If using NVM on Windows:
 
-`backend/` contains the Spring Boot REST API.
-
-Java source code is located under:
-
-```text
-backend/src/main/java/th/mfu/cupping/
+```powershell
+nvm install 24.18.1
+nvm use 24.18.1
 ```
 
-The backend is organized into packages such as:
+Check `npm -v` afterward. If npm is not `11.16.0`, install the required version:
 
-```text
-controller/   REST API endpoints
-service/      business logic
-repository/   database access using Spring Data JPA
-model/        JPA entities
-dto/          request and response objects
-config/       Spring configuration and security configuration
+```powershell
+npm install -g npm@11.16.0
 ```
 
-Database migration files are located under:
+Use Java 21 for backend development.
 
-```text
-backend/src/main/resources/db/migration/
-```
+### Step 3 — Configure MySQL
 
----
-
-## Prerequisites
-
-Before running the project, make sure the following are installed:
-
-```text
-Node.js
-npm
-Java 21 or later
-MySQL Server
-Git
-```
-
-The project currently uses the MySQL database:
-
-```text
-coffee_cupping_db
-```
-
-Create the database before starting the backend:
+Start MySQL Server and create the database:
 
 ```sql
-CREATE DATABASE coffee_cupping_db;
+CREATE DATABASE IF NOT EXISTS coffee_cupping_db;
 ```
 
-Application tables should normally be created by **Flyway**, not manually.
+Configure the backend datasource using your own local MySQL credentials.
 
----
+Example configuration:
 
-# Running the Project
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/coffee_cupping_db
+spring.datasource.username=root
+spring.datasource.password=YOUR_LOCAL_PASSWORD
 
-The frontend and backend must run separately.
-
-The recommended startup order is:
-
-```text
-1. Start MySQL
-2. Start Spring Boot backend
-3. Start Angular frontend
+spring.jpa.hibernate.ddl-auto=validate
+spring.flyway.enabled=true
 ```
 
----
+Use the project's existing local configuration/profile arrangement. Keep passwords in a Git-ignored local configuration file and never commit them.
 
-## Running the Backend
+**Do not manually create application tables. Flyway handles that automatically.**
 
-Open a terminal in the project root:
+## 4. Running the Application
+
+Start services in this order:
+
+1. MySQL
+2. Spring Boot backend
+3. Angular frontend
+
+### Backend
+
+Open a terminal from the project root:
 
 ```powershell
 cd backend
-```
-
-On Windows:
-
-```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-On macOS/Linux:
+For macOS/Linux:
 
 ```bash
+cd backend
 ./mvnw spring-boot:run
 ```
 
-The backend runs by default at:
+Backend URL:
 
-```text
-http://localhost:8080
-```
+`http://localhost:8080`
 
-You can verify that it is running using:
+Health check:
 
-```text
-http://localhost:8080/api/health
-```
+`http://localhost:8080/api/health`
 
 Expected response:
 
@@ -243,314 +166,191 @@ Expected response:
 }
 ```
 
----
+### Frontend
 
-## Running the Frontend
-
-Open another terminal:
+Open a **second terminal** from the project root:
 
 ```powershell
 cd frontend
-```
-
-Install dependencies when running the project for the first time or after dependencies have changed:
-
-```powershell
-npm install
-```
-
-Start Angular:
-
-```powershell
+npm ci
 npm start
 ```
 
-Alternatively:
+Frontend URL:
 
-```powershell
-ng serve
-```
+`http://localhost:4200`
 
-The Angular application runs at:
+Use `npm ci` for the initial installation and after pulling dependency changes. It installs dependencies according to the committed `package-lock.json`.
 
-```text
-http://localhost:4200
-```
+Keep both terminals running during development.
 
-Keep both the frontend and backend terminals running while developing the application.
+## 5. Database Migrations — Flyway
 
----
+Flyway manages the database schema automatically when Spring Boot starts.
 
-# Database Migrations with Flyway
-
-The project uses **Flyway** to manage the MySQL database schema.
-
-Instead of manually creating or modifying tables, database changes are stored as SQL migration files.
-
-Migration files are located in:
+Migration files are stored in:
 
 ```text
 backend/src/main/resources/db/migration/
 ```
 
-For example:
+Current migration:
 
 ```text
 V1__create_users_table.sql
 ```
 
-The filename follows this format:
+### How it works
+
+```text
+Start Spring Boot
+      ↓
+Flyway connects to MySQL
+      ↓
+Checks flyway_schema_history
+      ↓
+Executes pending SQL migrations
+      ↓
+Hibernate validates the schema
+      ↓
+Backend starts
+```
+
+Flyway tracks completed migrations in the `flyway_schema_history` table. A successfully applied migration is not executed again on subsequent startups.
+
+### Adding a new migration
+
+Use the format:
 
 ```text
 V<version>__<description>.sql
 ```
 
-Examples:
+Example:
 
 ```text
 V1__create_users_table.sql
 V2__create_coffee_samples_table.sql
 V3__create_cupping_sessions_table.sql
-V4__create_session_samples_table.sql
 ```
 
-There must be **two underscores** between the version number and description.
+**Team rules:**
 
----
+- Never modify a migration that has already been applied and shared.
+- Create a new migration for every database schema change.
+- Keep migration version numbers unique across branches.
+- Coordinate migration numbering before merging pull requests.
+- Do not manually modify application tables or use Hibernate `ddl-auto=update`.
+- Never delete existing database tables just to rerun migrations.
 
-## How Flyway Works
-
-When Spring Boot starts:
-
-```text
-Spring Boot starts
-        ↓
-Flyway connects to MySQL
-        ↓
-Flyway checks flyway_schema_history
-        ↓
-Flyway finds migrations that have not been executed
-        ↓
-Missing migrations are executed in version order
-        ↓
-Migration result is recorded
-        ↓
-Hibernate validates the resulting database schema
-        ↓
-Application starts
-```
-
-For example, when a new developer runs the backend for the first time:
-
-```text
-V1__create_users_table.sql
-```
-
-is executed automatically.
-
-Flyway also creates its own table:
-
-```text
-flyway_schema_history
-```
-
-This table records which migrations have already been executed.
-
-Therefore, Flyway will not run the same migration again every time the application starts.
-
----
-
-## Migration Rules for the Team
-
-Once a migration has been committed and executed by the team, **do not modify that migration file**.
-
-For example, suppose this already exists:
-
-```text
-V1__create_users_table.sql
-```
-
-and later we decide to add a new column to `users`.
-
-Do not modify `V1`.
-
-Instead create:
-
-```text
-V2__add_role_to_users.sql
-```
-
-Example:
+For example, adding a column requires a new migration:
 
 ```sql
 ALTER TABLE users
 ADD COLUMN role VARCHAR(30) NOT NULL DEFAULT 'USER';
 ```
 
-The database history then becomes:
+The filename should use the next available migration version.
 
-```text
-V1 → Create users table
-V2 → Add role to users
-V3 → Create coffee samples
-V4 → Create cupping sessions
-...
-```
+## 6. Authentication
 
-This allows every team member's database to evolve in the same order.
+The application supports user registration, login, logout, and authenticated sessions.
 
----
+Passwords are securely hashed using BCrypt.
 
-## Hibernate and Flyway
+Spring Security manages sessions using the `JSESSIONID` cookie.
 
-Flyway is responsible for changing the database structure.
+| Route       | Access         |
+| ----------- | -------------- |
+| `/login`    | Public         |
+| `/register` | Public         |
+| `/`         | Login required |
+| `/cupping`  | Login required |
+| `/history`  | Login required |
 
-Hibernate is configured to validate that the JPA entities match the database schema.
+The Angular auth guard checks the current session through the Spring Boot API.
 
-```properties
-spring.jpa.hibernate.ddl-auto=validate
-```
+**Current development status:** Authentication is connected to MySQL. The cupping evaluation and history workflow still uses browser localStorage until the corresponding REST APIs and database persistence are implemented.
 
-Therefore:
+## 7. UI Development Rules
 
-```text
-Flyway
-→ Creates and modifies tables
+Maintain the visual design established by the original prototype.
 
-Hibernate/JPA
-→ Validates the schema
-
-Spring Data JPA
-→ Reads and writes application data
-```
-
-Do not change Hibernate back to:
-
-```properties
-spring.jpa.hibernate.ddl-auto=update
-```
-
-without discussing it with the team, because schema changes should now be handled through Flyway migrations.
-
----
-
-# Authentication
-
-The application currently supports:
-
-```text
-Register
-Login
-Current user session
-Protected routes
-Logout
-```
-
-Passwords are hashed using BCrypt before being stored in MySQL.
-
-Authentication uses a Spring Security server-side session.
-
-After login, Spring Boot creates a session and the browser receives a:
-
-```text
-JSESSIONID
-```
-
-cookie.
-
-The following Angular routes require authentication:
-
-```text
-/
-/cupping
-/history
-```
-
-The following routes are public:
-
-```text
-/login
-/register
-```
-
-The Angular authentication guard verifies the current session through the backend before allowing access to protected pages.
-
----
-
-# Shared UI Theme
-
-The migrated Angular application should continue following the visual design established by the original prototype.
-
-The shared Angular styles are primarily located in:
+Global styles:
 
 ```text
 frontend/src/styles.css
 ```
 
-Page-specific styles should remain inside the corresponding Angular component.
-
-For example:
+Page-specific styles:
 
 ```text
-frontend/src/app/pages/cupping/cupping.css
-frontend/src/app/pages/history/history.css
-frontend/src/app/pages/login/login.css
+frontend/src/app/pages/<page-name>/
 ```
 
-Shared colors, typography, spacing, buttons, cards, form controls, borders, and validation styles should remain consistent across the application.
+Use shared CSS variables for colors, typography, buttons, cards, and form controls.
 
----
+Avoid duplicating global styles in individual components.
 
-# Git Workflow
+## 8. Git Workflow
 
-Recommended team workflow:
+1. Pull the latest `main` before starting.
+2. Create a separate branch for your task.
+3. Make and test your changes.
+4. Commit with a meaningful message.
+5. Push your branch.
+6. Open a pull request.
+7. Request review before merging into `main`.
 
-1. Keep `main` stable.
-2. Create one branch per task.
-3. Pull the latest `main` before starting.
-4. Make database changes through new Flyway migrations.
-5. Never edit migrations that have already been shared and executed.
-6. Open a pull request when the task is ready.
-7. Have another teammate review the pull request before merging.
+Example:
 
-Example branch names:
-
-```text
-feature/authentication
-feature/cupping-session-api
-feature/session-history
-feature/event-dashboard
-fix/form-validation
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/session-api
 ```
 
-See `CONTRIBUTING.md` for additional collaboration rules.
+After development:
 
----
+```bash
+git add .
+git commit -m "Add session API"
+git push -u origin feature/session-api
+```
 
-# Local Configuration and Secrets
+See `CONTRIBUTING.md` for additional collaboration guidelines.
 
-Do not commit database passwords, API keys, or other credentials to GitHub.
+## 9. Troubleshooting
 
-Developer-specific database credentials should remain in local configuration files that are ignored by Git.
+| Problem                          | What to check                                            |
+| -------------------------------- | -------------------------------------------------------- |
+| `npm ci` fails                   | Node/npm versions and `package-lock.json`                |
+| Angular command not found        | Run `npm ci` inside `frontend/`, then `npm start`        |
+| Backend fails to start           | Java version, MySQL service, datasource configuration    |
+| MySQL connection refused         | MySQL is running on port 3306                            |
+| Flyway migration fails           | Migration filename, SQL syntax, migration history        |
+| Hibernate reports missing tables | Check whether Flyway successfully ran                    |
+| Login fails                      | Backend running, account registered, correct credentials |
+| Frontend cannot reach backend    | Both servers running on ports 4200 and 8080              |
 
-Before pushing changes, always check:
+## 10. Before Pushing
 
-```powershell
+Make sure:
+
+- The frontend starts successfully.
+- The backend starts successfully.
+- Database migrations complete without errors.
+- Existing authentication and cupping features still work.
+- No passwords or other secrets are committed.
+
+Check files before pushing:
+
+```bash
 git status
 ```
 
-to make sure local secrets are not being committed.
+Do not commit `node_modules/`, build output, or local credentials.
 
 ---
 
-# Current Database Migrations
-
-The current migration history starts with:
-
-```text
-V1__create_users_table.sql
-```
-
-This creates the `users` table used by the registration and authentication system.
-
-Future database tables from the Coffee Cupping ERD will be added as new Flyway migration versions.
+**Team reminder:** Follow this README for environment setup. Keep database changes in Flyway migrations and application development inside `frontend/` and `backend/`.
