@@ -1,0 +1,3611 @@
+<div class="shell">
+
+
+
+
+
+
+
+  @if (!sessionStarted()) {
+
+
+
+
+
+
+
+  <div>
+
+
+
+    <a class="back-link" routerLink="/">
+
+
+
+      ← Back to Home
+
+
+
+    </a>
+
+
+
+  </div>
+
+
+
+
+
+
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+  <header class="hero">
+
+
+
+
+
+
+
+    <div>
+
+
+
+
+
+
+
+      <div class="eyebrow" style="color:#e9c69a">
+
+
+
+        Coffee Cupping System Prototype
+
+
+
+      </div>
+
+
+
+
+
+
+
+      <h1>
+
+
+
+        From aroma to final cup.
+
+
+
+      </h1>
+
+
+
+
+
+
+
+      <p style="color: var(--crema);">
+
+
+
+        Multi-step digital cupping form •
+
+
+
+        Choose 1–10 samples before starting
+
+
+
+      </p>
+
+
+
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+    <div class="bean" aria-hidden="true"></div>
+
+
+
+
+
+
+
+  </header>
+
+
+
+
+
+
+
+
+
+
+
+  @if (!sessionStarted()) {
+
+
+
+
+
+
+
+  <section class="sample-setup">
+
+
+
+
+
+
+
+    <div class="sample-setup-inner">
+
+
+
+
+
+
+
+      <div class="sample-setup-icon" aria-hidden="true">
+
+
+
+
+
+
+
+        <svg viewBox="0 0 24 24">
+
+
+
+
+
+
+
+          <path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Z" />
+
+
+
+
+
+
+
+          <path d="M17 9h2a3 3 0 0 1 0 6h-2M7 3v2M11 3v2M15 3v2" />
+
+
+
+
+
+
+
+        </svg>
+
+
+
+
+
+
+
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+      <div class="eyebrow">
+
+
+
+        Before you begin
+
+
+
+      </div>
+
+
+
+
+
+
+
+      <h2>
+
+
+
+        How many coffee samples will you evaluate?
+
+
+
+      </h2>
+
+
+
+
+
+
+
+      <p>
+
+
+
+        Enter the number of samples for this
+
+
+
+        cupping session. The system will create
+
+
+
+        the same Aroma, Flavor, and Review forms
+
+
+
+        for each sample.
+
+
+
+      </p>
+
+
+
+
+
+
+
+
+
+
+
+      <div class="sample-count-row">
+
+
+
+
+
+
+
+        <div class="sample-count-field">
+
+
+
+
+
+
+
+          <label for="sampleCountInput">
+
+
+
+
+
+
+
+            Number of samples
+
+
+
+
+
+
+
+            <span class="required-mark" aria-hidden="true">
+
+
+
+              *
+
+
+
+            </span>
+
+
+
+
+
+
+
+          </label>
+
+
+
+
+
+
+
+
+
+
+
+          <div class="sample-stepper">
+
+
+
+
+
+
+
+            <button class="sample-stepper-btn" type="button" aria-label="Decrease number of samples"
+              [disabled]="decreaseDisabled()" (click)="changeSampleCount(-1)">
+
+
+
+              −
+
+
+
+            </button>
+
+
+
+
+
+
+
+
+
+
+
+            <input id="sampleCountInput" type="number" min="1" max="10" step="1" placeholder="1–10" inputmode="numeric"
+              autocomplete="off" [formControl]="sampleCount" (input)="clearSampleCountError()"
+              (keydown.enter)="startCupping()">
+
+
+
+
+
+
+
+
+
+
+
+            <button class="sample-stepper-btn" type="button" aria-label="Increase number of samples"
+              [disabled]="increaseDisabled()" (click)="changeSampleCount(1)">
+
+
+
+              +
+
+
+
+            </button>
+
+
+
+
+
+
+
+          </div>
+
+
+
+
+
+
+
+        </div>
+
+
+
+
+
+
+
+
+
+
+
+        <button class="btn primary" type="button" (click)="startCupping()">
+
+
+
+          Start Cupping →
+
+
+
+        </button>
+
+
+
+
+
+
+
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+      <div class="sample-count-error" aria-live="polite">
+
+
+
+        {{ sampleCountError() }}
+
+
+
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+      <div class="sample-limit-note">
+
+
+
+        Maximum 10 samples per session
+
+
+
+      </div>
+
+
+
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+  </section>
+
+
+
+
+
+
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+  @if (sessionStarted()) {
+
+
+
+
+
+
+
+  <div class="progress cupping-progress">
+
+
+
+
+
+
+
+    <div class="steps">
+
+
+
+
+
+
+
+
+
+
+
+      <div class="step" [class.active]="currentStage() === 'aroma'" [class.done]="currentStage() !== 'aroma'">
+
+        <div class="step-icon">
+
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+
+            <path d="M7 17c-4-4 4-5 0-10M12 17c-4-4 4-5 0-10M17 17c-4-4 4-5 0-10" />
+
+            <path d="M5 21h14" />
+
+          </svg>
+
+        </div>
+
+
+
+
+
+
+
+        <div class="step-label">
+
+
+
+
+
+
+
+          <span class="step-caption">
+
+
+
+            Step 1
+
+
+
+          </span>
+
+
+
+
+
+
+
+          <span>
+
+
+
+            Aroma Test
+
+
+
+          </span>
+
+
+
+
+
+
+
+        </div>
+
+
+
+
+
+
+
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+      <div class="step" [class.active]="currentStage() === 'flavor'" [class.done]="currentStage() === 'review'">
+
+
+
+
+
+
+
+        <div class="step-icon">
+
+
+
+
+
+
+
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+
+
+
+
+
+
+
+            <path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Z" />
+
+
+
+
+
+
+
+            <path d="M17 9h2a3 3 0 0 1 0 6h-2M7 3v2M11 3v2M15 3v2" />
+
+
+
+
+
+
+
+          </svg>
+
+
+
+
+
+
+
+        </div>
+
+
+
+
+
+
+
+        <div class="step-label">
+
+
+
+
+
+
+
+          <span class="step-caption">
+
+
+
+            Step 2
+
+
+
+          </span>
+
+
+
+
+
+
+
+          <span>
+
+
+
+            Flavor Test
+
+
+
+          </span>
+
+
+
+
+
+
+
+        </div>
+
+
+
+
+
+
+
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+      <div class="step" [class.active]="currentStage() === 'review'">
+
+        <div class="step-icon">
+
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+
+            <rect x="5" y="4" width="14" height="17" rx="2" />
+
+            <path d="M9 4V2h6v2M8 13l3 3 5-6" />
+
+          </svg>
+
+        </div>
+
+        <div class="step-label">
+
+
+
+
+
+
+
+          <span class="step-caption">
+
+
+
+            Step 3
+
+
+
+          </span>
+
+
+
+
+
+
+
+          <span>
+
+
+
+            Review &amp; Finalize
+
+
+
+          </span>
+
+
+
+
+
+
+
+        </div>
+
+
+
+
+
+
+
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+  @if (currentStage() === 'aroma') {
+
+  <main class="panel" [class.locked]="aromaLocked()" #cuppingPanel>
+
+
+
+
+
+
+
+    <div class="panel-head">
+
+
+
+
+
+
+
+      <div>
+
+
+
+
+
+
+
+        <div class="eyebrow">
+
+
+
+          Step 1 of 3
+
+
+
+        </div>
+
+
+
+
+
+
+
+        <h2>
+
+
+
+          Aroma Test
+
+
+
+        </h2>
+
+
+
+
+
+
+
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+      <div class="rule">
+
+
+
+
+
+
+
+        @if (aromaLocked()) {
+
+
+
+
+
+
+
+        Aroma is locked.
+
+
+
+        The Aroma evaluation can no longer
+
+
+
+        be edited.
+
+
+
+
+
+
+
+        } @else {
+
+
+
+
+
+
+
+        Complete Aroma for every sample.
+
+
+
+        Once you confirm this stage,
+
+
+
+        all Aroma data is locked.
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+      </div>
+
+
+
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+    <div class="tabs">
+
+
+
+
+
+
+
+      @for (
+
+
+
+      sample of samples();
+
+
+
+      track sample.id
+
+
+
+      ) {
+
+
+
+
+
+
+
+      <button class="tab" type="button" [class.active]="
+
+
+
+          activeSample() === sample.id
+
+
+
+        " [class.complete]="
+
+
+
+          isAromaComplete(sample)
+
+
+
+        " [class.error]="
+
+
+
+          hasAromaSampleError(sample.id)
+
+
+
+        " (click)="selectSample(sample.id)">
+
+
+
+        <span class="dot"></span>
+
+
+
+
+
+
+
+        Sample {{ sample.id }}
+
+
+
+      </button>
+
+
+
+
+
+
+
+      }
+
+
+
+
+
+
+
+    </div>
+
+
+
+    <div class="locked-banner">
+
+
+
+      🔒 Aroma data has been confirmed and locked.
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+    <div class="content">
+
+
+
+
+
+
+
+      <div class="sample-title">
+
+
+
+
+
+
+
+        <h3>
+
+
+
+          Sample {{ activeSample() }}
+
+
+
+        </h3>
+
+
+
+
+
+
+
+        <span class="pill">
+
+
+
+          Aroma • 5 cups evaluated as one sample
+
+
+
+        </span>
+
+
+
+
+
+
+
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+      <div class="grid" [formGroup]="aromaForm" (change)="onAromaFormChange()">
+
+
+
+
+
+
+
+        <!-- Dry Aroma -->
+
+
+
+        <section class="section" [class.validation-error]="hasAromaError('dry')">
+
+
+
+
+
+
+
+          <h4>
+
+
+
+            Dry Aroma
+
+
+
+          </h4>
+
+
+
+
+
+
+
+          <label>
+
+
+
+            Dry score (1–5)
+
+
+
+            <span class="required-mark" aria-hidden="true">
+
+
+
+              *
+
+
+
+            </span>
+
+
+
+          </label>
+
+
+
+
+
+
+
+
+
+
+
+          <div class="scale5">
+
+
+
+
+
+
+
+            @for (
+
+
+
+            score of fivePointScale;
+
+
+
+            track score
+
+
+
+            ) {
+
+
+
+
+
+
+
+            <input type="radio" formControlName="dry" [id]="'dry-' + score" [value]="score">
+
+
+
+
+
+
+
+            <label [for]="'dry-' + score">
+
+
+
+              {{ score }}
+
+
+
+            </label>
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+          </div>
+
+
+
+          @if (hasAromaError('dry')) {
+
+
+
+
+
+
+
+          <div class="field-error-message">
+
+
+
+            Required field
+
+
+
+          </div>
+
+
+
+
+
+
+
+          }
+
+
+
+
+
+
+
+        </section>
+
+
+
+
+
+
+
+
+
+
+
+        <!-- Break Aroma -->
+
+
+
+        <section class="section" [class.validation-error]="hasAromaError('break')">
+
+
+
+
+
+
+
+          <h4>
+
+
+
+            Break Aroma
+
+
+
+          </h4>
+
+
+
+
+
+
+
+          <label>
+
+
+
+            Break score (1–5)
+
+
+
+            <span class="required-mark" aria-hidden="true">
+
+
+
+              *
+
+
+
+            </span>
+
+
+
+          </label>
+
+
+
+
+
+
+
+
+
+
+
+          <div class="scale5">
+
+
+
+
+
+
+
+            @for (
+
+
+
+            score of fivePointScale;
+
+
+
+            track score
+
+
+
+            ) {
+
+
+
+
+
+
+
+            <input type="radio" formControlName="break" [id]="'break-' + score" [value]="score">
+
+
+
+
+
+
+
+            <label [for]="'break-' + score">
+
+
+
+              {{ score }}
+
+
+
+            </label>
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+          </div>
+
+
+
+          @if (hasAromaError('break')) {
+
+
+
+          <div class="field-error-message">
+
+
+
+            Required field
+
+
+
+          </div>
+
+
+
+          }
+
+
+
+        </section>
+
+
+
+
+
+
+
+
+
+
+
+        <!-- Colour -->
+
+
+
+        <section class="section" [class.validation-error]="hasAromaError('color')">
+
+
+
+
+
+
+
+          <h4>
+
+
+
+            Colour Intensity
+
+
+
+          </h4>
+
+
+
+
+
+
+
+          <label>
+
+
+
+            Select the observed intensity
+
+
+
+            <span class="required-mark" aria-hidden="true">
+
+
+
+              *
+
+
+
+            </span>
+
+
+
+          </label>
+
+
+
+
+
+
+
+
+
+
+
+          <div class="choice3">
+
+
+
+
+
+
+
+            @for (
+
+
+
+            option of colorOptions;
+
+
+
+            track option
+
+
+
+            ) {
+
+
+
+
+
+
+
+            <input type="radio" formControlName="color" [id]="'color-' + option" [value]="option">
+
+
+
+
+
+
+
+            <label [for]="'color-' + option">
+
+
+
+              {{ option }}
+
+
+
+            </label>
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+          </div>
+
+
+
+          @if (hasAromaError('color')) {
+
+
+
+          <div class="field-error-message">
+
+            Required field
+
+          </div>
+
+
+
+          }
+
+
+
+        </section>
+
+
+
+
+
+
+
+
+
+
+
+        <!-- Quality Score -->
+
+
+
+        <section class="section">
+
+
+
+
+
+
+
+          <h4>
+
+
+
+            Fragrance / Aroma Quality
+
+
+
+          </h4>
+
+
+
+
+
+
+
+          <div class="field-card" [class.validation-error]="hasAromaError('qualityScore')">
+
+
+
+
+
+
+
+            <label for="qualityScore">
+
+
+
+
+
+
+
+              Quality score
+
+
+
+
+
+
+
+              <span class="required-mark" aria-hidden="true">
+
+
+
+                *
+
+
+
+              </span>
+
+
+
+
+
+
+
+            </label>
+
+
+
+
+
+
+
+
+
+
+
+            <select id="qualityScore" class="score-select" formControlName="qualityScore">
+
+
+
+
+
+
+
+              <option [ngValue]="null">
+
+
+
+                Select score
+
+
+
+              </option>
+
+
+
+
+
+
+
+              @for (
+
+
+
+              score of scoreOptions;
+
+
+
+              track score
+
+
+
+              ) {
+
+
+
+
+
+
+
+              <option [ngValue]="score">
+
+
+
+                {{ score.toFixed(2) }}
+
+
+
+              </option>
+
+
+
+
+
+
+
+              }
+
+
+
+
+
+
+
+            </select>
+
+
+
+
+
+
+
+
+
+
+
+            <div class="help">
+
+
+
+              SCA quality scale:
+
+
+
+              6.00–10.00 in 0.25 increments
+
+
+
+            </div>
+
+
+
+            @if (
+
+
+
+            hasAromaError('qualityScore')
+
+
+
+            ) {
+
+
+
+
+
+
+
+            <div class="field-error-message">
+
+
+
+              Required field
+
+
+
+            </div>
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+          </div>
+
+
+
+
+
+
+
+        </section>
+
+
+
+
+
+
+
+
+
+
+
+        <!-- Aroma Qualities -->
+
+
+
+        <section class="section full" [class.validation-error]="hasAromaError('aromaQualities')">
+
+
+
+
+
+
+
+          <h4>
+
+
+
+            Aroma Qualities
+
+
+
+          </h4>
+
+
+
+
+
+
+
+          <label>
+
+
+
+            Select all qualities that apply
+
+
+
+
+
+
+
+            <span class="required-mark" aria-hidden="true">
+
+
+
+              *
+
+
+
+            </span>
+
+
+
+          </label>
+
+
+
+
+
+
+
+
+
+
+
+          <div class="aroma-quality-groups">
+
+
+
+
+
+
+
+            @for (
+
+
+
+            group of aromaQualityGroups;
+
+
+
+            track group.parent
+
+
+
+            ) {
+
+
+
+
+
+
+
+            <div class="aroma-quality-group">
+
+
+
+
+
+
+
+
+
+
+
+              <!-- Parent -->
+
+
+
+              <label class="
+
+
+
+                    aroma-quality-option
+
+
+
+                    aroma-quality-parent
+
+
+
+                  ">
+
+
+
+
+
+
+
+                <input type="checkbox" [disabled]="aromaLocked()" [checked]="
+
+
+
+                      isAromaQualitySelected(
+
+
+
+                        group.parent
+
+
+
+                      )
+
+
+
+                    " (change)="
+
+
+
+                      onAromaQualityChange(
+
+
+
+                        group.parent,
+
+
+
+                        $event
+
+
+
+                      )
+
+
+
+                    ">
+
+
+
+
+
+
+
+                <span>
+
+
+
+                  {{ group.parent }}
+
+
+
+                </span>
+
+
+
+
+
+
+
+              </label>
+
+
+
+
+
+
+
+
+
+
+
+              <!-- Children -->
+
+
+
+              @if (group.children.length) {
+
+
+
+
+
+
+
+              <div class="aroma-quality-children">
+
+
+
+
+
+
+
+                @for (
+
+
+
+                child of group.children;
+
+
+
+                track child
+
+
+
+                ) {
+
+
+
+
+
+
+
+                <label class="
+
+
+
+                          aroma-quality-option
+
+
+
+                          aroma-quality-child
+
+
+
+                        ">
+
+
+
+
+
+
+
+                  <input type="checkbox" [disabled]="aromaLocked()" [checked]="
+
+
+
+                            isAromaQualitySelected(
+
+
+
+                              child
+
+
+
+                            )
+
+
+
+                          " (change)="
+
+
+
+                            onAromaQualityChange(
+
+
+
+                              child,
+
+
+
+                              $event
+
+
+
+                            )
+
+
+
+                          ">
+
+
+
+
+
+
+
+                  <span>
+
+
+
+                    {{ child }}
+
+
+
+                  </span>
+
+
+
+
+
+
+
+                </label>
+
+
+
+
+
+
+
+                }
+
+
+
+
+
+
+
+              </div>
+
+
+
+
+
+
+
+              }
+
+
+
+
+
+
+
+            </div>
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+          </div>
+
+
+
+          @if (hasAromaError('aromaQualities')) {
+
+
+
+          <div class="field-error-message">
+
+            Required field
+
+          </div>
+
+
+
+          }
+
+
+
+        </section>
+
+
+
+
+
+
+
+      </div>
+
+
+
+
+
+
+
+    </div>
+
+
+
+
+
+    <div class="actions">
+
+
+
+      @if (selectedSampleCount() > 1) {
+
+
+
+      <button class="btn secondary" type="button" [disabled]="activeSample() === 1" (click)="previousSample()">
+
+        ← Previous sample
+
+      </button>
+
+
+
+      } @else {
+
+
+
+      <div></div>
+
+
+
+      }
+
+
+
+
+
+      <div style="
+
+          display:flex;
+
+          gap:10px;
+
+          flex-wrap:wrap;
+
+        ">
+
+
+
+        @if (!aromaLocked()) {
+
+
+
+        @if (selectedSampleCount() > 1) {
+
+
+
+        <button class="btn ghost" type="button" (click)="nextSample()">
+
+          Save &amp; next sample →
+
+        </button>
+
+
+
+        }
+
+
+
+
+
+        <button class="btn primary" type="button" (click)="confirmAroma()">
+
+          Confirm Aroma Stage 🔒
+
+        </button>
+
+
+
+        } @else {
+
+
+
+        <button class="btn primary" type="button" (click)="goToFlavor()">
+          Continue to Flavor Test →
+        </button>
+
+
+
+        }
+
+
+
+      </div>
+
+
+
+    </div>
+
+
+
+
+
+  </main>
+
+  }
+
+
+  @if (currentStage() === 'flavor') {
+
+  <main class="panel" #cuppingPanel>
+
+    <div class="panel-head">
+
+      <div>
+        <div class="eyebrow">
+          Step 2 of 3
+        </div>
+
+        <h2>
+          Flavor Test
+        </h2>
+      </div>
+
+      <div class="rule">
+        Complete the Flavor evaluation
+        for every sample before review.
+      </div>
+
+    </div>
+
+
+    <div class="tabs">
+
+      @for (
+      sample of samples();
+      track sample.id
+      ) {
+
+      <button class="tab" type="button" [class.active]="activeSample() === sample.id"
+        [class.complete]="isFlavorComplete(sample)" [class.error]="hasFlavorSampleError(sample.id)"
+        (click)="selectSample(sample.id)">
+
+        <span class="dot"></span>
+
+        Sample {{ sample.id }}
+
+      </button>
+
+      }
+
+    </div>
+
+
+    <div class="content">
+
+      <div class="sample-title">
+
+        <h3>
+          Sample {{ activeSample() }}
+        </h3>
+
+        <span class="pill">
+          Flavor stage • flexible/editable
+        </span>
+
+      </div>
+
+
+      <div class="grid" [formGroup]="flavorForm" (change)="onFlavorFormChange()">
+
+        <section class="section full">
+
+          <h4>
+            Taste Evaluation
+          </h4>
+
+          <div class="score-grid">
+
+
+            <div class="field-card" [class.validation-error]="hasFlavorError('flavor')">
+
+              <label for="flavorScore">
+                Flavor
+                <span class="required-mark" aria-hidden="true">*</span>
+              </label>
+
+              <select id="flavorScore" class="score-select" formControlName="flavor">
+                <option [ngValue]="null">
+                  Select score
+                </option>
+
+                @for (score of scoreOptions; track score) {
+                <option [ngValue]="score">
+                  {{ score.toFixed(2) }}
+                </option>
+                }
+              </select>
+
+              @if (hasFlavorError('flavor')) {
+              <div class="field-error-message">
+                Required field
+              </div>
+              }
+
+            </div>
+
+
+            <div class="field-card" [class.validation-error]="hasFlavorError('aftertaste')">
+
+              <label for="aftertasteScore">
+                Aftertaste
+                <span class="required-mark" aria-hidden="true">*</span>
+              </label>
+
+              <select id="aftertasteScore" class="score-select" formControlName="aftertaste">
+                <option [ngValue]="null">
+                  Select score
+                </option>
+
+                @for (score of scoreOptions; track score) {
+                <option [ngValue]="score">
+                  {{ score.toFixed(2) }}
+                </option>
+                }
+              </select>
+
+              @if (hasFlavorError('aftertaste')) {
+              <div class="field-error-message">
+                Required field
+              </div>
+              }
+
+            </div>
+
+
+            <div class="field-card" [class.validation-error]="hasFlavorError('acidity')">
+
+              <label for="acidityScore">
+                Acidity
+                <span class="required-mark" aria-hidden="true">*</span>
+              </label>
+
+              <select id="acidityScore" class="score-select" formControlName="acidity">
+                <option [ngValue]="null">
+                  Select score
+                </option>
+
+                @for (score of scoreOptions; track score) {
+                <option [ngValue]="score">
+                  {{ score.toFixed(2) }}
+                </option>
+                }
+              </select>
+
+              @if (hasFlavorError('acidity')) {
+              <div class="field-error-message">
+                Required field
+              </div>
+              }
+
+            </div>
+
+
+            <div class="field-card" [class.validation-error]="hasFlavorError('body')">
+
+              <label for="bodyScore">
+                Body
+                <span class="required-mark" aria-hidden="true">*</span>
+              </label>
+
+              <select id="bodyScore" class="score-select" formControlName="body">
+                <option [ngValue]="null">
+                  Select score
+                </option>
+
+                @for (score of scoreOptions; track score) {
+                <option [ngValue]="score">
+                  {{ score.toFixed(2) }}
+                </option>
+                }
+              </select>
+
+              @if (hasFlavorError('body')) {
+              <div class="field-error-message">
+                Required field
+              </div>
+              }
+
+            </div>
+
+
+            <div class="field-card" [class.validation-error]="hasFlavorError('balance')">
+
+              <label for="balanceScore">
+                Balance
+                <span class="required-mark" aria-hidden="true">*</span>
+              </label>
+
+              <select id="balanceScore" class="score-select" formControlName="balance">
+                <option [ngValue]="null">
+                  Select score
+                </option>
+
+                @for (score of scoreOptions; track score) {
+                <option [ngValue]="score">
+                  {{ score.toFixed(2) }}
+                </option>
+                }
+              </select>
+
+              @if (hasFlavorError('balance')) {
+              <div class="field-error-message">
+                Required field
+              </div>
+              }
+
+            </div>
+
+
+            <div class="field-card" [class.validation-error]="hasFlavorError('overall')">
+
+              <label for="overallScore">
+                Overall
+                <span class="required-mark" aria-hidden="true">*</span>
+              </label>
+
+              <select id="overallScore" class="score-select" formControlName="overall">
+                <option [ngValue]="null">
+                  Select score
+                </option>
+
+                @for (score of scoreOptions; track score) {
+                <option [ngValue]="score">
+                  {{ score.toFixed(2) }}
+                </option>
+                }
+              </select>
+
+              @if (hasFlavorError('overall')) {
+              <div class="field-error-message">
+                Required field
+              </div>
+              }
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <section class="section" [class.validation-error]="hasFlavorError('acidityIntensity')">
+
+          <h4>
+            Acidity Intensity
+          </h4>
+
+          <label>
+            Select intensity (1–5)
+            <span class="required-mark" aria-hidden="true">*</span>
+          </label>
+
+          <div class="scale5">
+
+            @for (score of fivePointScale; track score) {
+
+            <input type="radio" formControlName="acidityIntensity" [id]="'acidityIntensity-' + score" [value]="score">
+
+            <label [for]="'acidityIntensity-' + score">
+              {{ score }}
+            </label>
+
+            }
+
+          </div>
+
+          <div class="help">
+            1 = Low · 5 = High
+          </div>
+
+          @if (hasFlavorError('acidityIntensity')) {
+          <div class="field-error-message">
+            Required field
+          </div>
+          }
+
+        </section>
+
+
+        <section class="section" [class.validation-error]="hasFlavorError('bodyLevel')">
+
+          <h4>
+            Body Level
+          </h4>
+
+          <label>
+            Select body level (1–5)
+            <span class="required-mark" aria-hidden="true">*</span>
+          </label>
+
+          <div class="scale5">
+
+            @for (score of fivePointScale; track score) {
+
+            <input type="radio" formControlName="bodyLevel" [id]="'bodyLevel-' + score" [value]="score">
+
+            <label [for]="'bodyLevel-' + score">
+              {{ score }}
+            </label>
+
+            }
+
+          </div>
+
+          <div class="help">
+            1 = Thin · 5 = Heavy
+          </div>
+
+          @if (hasFlavorError('bodyLevel')) {
+          <div class="field-error-message">
+            Required field
+          </div>
+          }
+
+        </section>
+
+
+        <section class="section full">
+
+          <div class="section-score-header">
+
+            <h4>
+              Uniformity — Cup 1 to Cup 5
+            </h4>
+
+            <div class="section-score">
+              Score:
+              <span>
+                {{
+                calculateCupScore(
+                activeSampleData()?.flavor?.uniformity
+                )
+                }}
+              </span>/10
+            </div>
+
+          </div>
+
+          <div class="cup-state-legend">
+            <strong>Selected cup</strong> = Uniform ·
+            <strong>Unselected cup</strong> = Not Uniform
+          </div>
+
+          <div class="cupchecks">
+
+            @for (
+            cup of fivePointScale;
+            track cup;
+            let i = $index
+            ) {
+
+            <label class="cup">
+
+              <input type="checkbox" [checked]="isCupSelected('uniformity', i)"
+                (change)="onCupChange('uniformity', i, $event)" [attr.aria-label]="'Cup ' + (i + 1)">
+
+              <span class="coffee-cup-control" aria-hidden="true">
+
+                <svg viewBox="0 0 48 48">
+                  <path d="M10 15h24v14a10 10 0 0 1-10 10h-4A10 10 0 0 1 10 29Z"></path>
+                  <path d="M34 19h3.5a6.5 6.5 0 0 1 0 13H34"></path>
+                  <path d="M8 40h29"></path>
+                  <path class="cup-check" d="m16 26 5 5 10-12"></path>
+                </svg>
+
+              </span>
+
+              <span class="cup-label">
+                Cup {{ i + 1 }}
+              </span>
+
+            </label>
+
+            }
+
+          </div>
+
+        </section>
+
+
+        <section class="section full">
+
+          <div class="section-score-header">
+
+            <h4>
+              Clean Cup — Cup 1 to Cup 5
+            </h4>
+
+            <div class="section-score">
+              Score:
+              <span>
+                {{
+                calculateCupScore(
+                activeSampleData()?.flavor?.cleanCup
+                )
+                }}
+              </span>/10
+            </div>
+
+          </div>
+
+          <div class="cup-state-legend">
+            <strong>Selected cup</strong> = Clean ·
+            <strong>Unselected cup</strong> = Not Clean
+          </div>
+
+          <div class="cupchecks">
+
+            @for (
+            cup of fivePointScale;
+            track cup;
+            let i = $index
+            ) {
+
+            <label class="cup">
+
+              <input type="checkbox" [checked]="isCupSelected('cleanCup', i)"
+                (change)="onCupChange('cleanCup', i, $event)" [attr.aria-label]="'Cup ' + (i + 1)">
+
+              <span class="coffee-cup-control" aria-hidden="true">
+
+                <svg viewBox="0 0 48 48">
+                  <path d="M10 15h24v14a10 10 0 0 1-10 10h-4A10 10 0 0 1 10 29Z"></path>
+                  <path d="M34 19h3.5a6.5 6.5 0 0 1 0 13H34"></path>
+                  <path d="M8 40h29"></path>
+                  <path class="cup-check" d="m16 26 5 5 10-12"></path>
+                </svg>
+
+              </span>
+
+              <span class="cup-label">
+                Cup {{ i + 1 }}
+              </span>
+
+            </label>
+
+            }
+
+          </div>
+
+        </section>
+
+
+        @if (
+        getDefectiveCupCount(
+        activeSampleData()
+        ) > 0
+        ) {
+
+        <section class="section full" [class.validation-error]="hasFlavorError('defectType')">
+
+          <div class="section-score-header">
+
+            <h4>
+              Defects
+            </h4>
+
+            <div class="section-score">
+
+              {{
+              getDefectiveCupCount(
+              activeSampleData()
+              )
+              }}
+
+              defective
+
+              {{
+              cupLabel(
+              getDefectiveCupCount(
+              activeSampleData()
+              )
+              )
+              }}
+
+            </div>
+
+          </div>
+
+          <label>
+            How severe is the defect?
+            <span class="required-mark" aria-hidden="true">*</span>
+          </label>
+
+          <div class="defect-options">
+
+            <input type="radio" name="defectType" id="defect-taint" value="taint"
+              [checked]="activeSampleData()?.flavor?.defectType === 'taint'" (change)="setDefectType('taint')">
+
+            <label for="defect-taint">
+              <strong>Taint</strong>
+              <br>
+              <span class="help">
+                2 points per defective cup
+              </span>
+            </label>
+
+
+            <input type="radio" name="defectType" id="defect-fault" value="fault"
+              [checked]="activeSampleData()?.flavor?.defectType === 'fault'" (change)="setDefectType('fault')">
+
+            <label for="defect-fault">
+              <strong>Fault</strong>
+              <br>
+              <span class="help">
+                4 points per defective cup
+              </span>
+            </label>
+
+          </div>
+
+
+          <div class="defect-deduction">
+
+            Deduction:
+
+            {{
+            getDefectiveCupCount(
+            activeSampleData()
+            )
+            }}
+
+            {{
+            cupLabel(
+            getDefectiveCupCount(
+            activeSampleData()
+            )
+            )
+            }}
+
+            ×
+
+            {{
+            getDefectLabel(
+            activeSampleData()?.flavor?.defectType ?? null
+            )
+            }}
+
+            =
+
+            {{
+            calculateDefectDeduction(
+            activeSampleData()
+            )
+            }}
+
+            points
+
+          </div>
+
+          @if (hasFlavorError('defectType')) {
+          <div class="field-error-message">
+            Select Taint or Fault for the defective cups
+          </div>
+          }
+
+        </section>
+
+        }
+
+
+        <section class="section full">
+
+          <div class="section-score-header">
+
+            <h4>
+              Sweetness — Cup 1 to Cup 5
+            </h4>
+
+            <div class="section-score">
+              Score:
+              <span>
+                {{
+                calculateCupScore(
+                activeSampleData()?.flavor?.sweetness
+                )
+                }}
+              </span>/10
+            </div>
+
+          </div>
+
+          <div class="cup-state-legend">
+            <strong>Selected cup</strong> = Sweet ·
+            <strong>Unselected cup</strong> = Not Sweet
+          </div>
+
+          <div class="cupchecks">
+
+            @for (
+            cup of fivePointScale;
+            track cup;
+            let i = $index
+            ) {
+
+            <label class="cup">
+
+              <input type="checkbox" [checked]="isCupSelected('sweetness', i)"
+                (change)="onCupChange('sweetness', i, $event)" [attr.aria-label]="'Cup ' + (i + 1)">
+
+              <span class="coffee-cup-control" aria-hidden="true">
+
+                <svg viewBox="0 0 48 48">
+                  <path d="M10 15h24v14a10 10 0 0 1-10 10h-4A10 10 0 0 1 10 29Z"></path>
+                  <path d="M34 19h3.5a6.5 6.5 0 0 1 0 13H34"></path>
+                  <path d="M8 40h29"></path>
+                  <path class="cup-check" d="m16 26 5 5 10-12"></path>
+                </svg>
+
+              </span>
+
+              <span class="cup-label">
+                Cup {{ i + 1 }}
+              </span>
+
+            </label>
+
+            }
+
+          </div>
+
+        </section>
+
+
+        <section class="section full" [class.validation-error]="hasFlavorError('flavorQualities')">
+
+          <h4>
+            Flavor Qualities
+          </h4>
+
+          <label>
+            Select all qualities that apply
+            <span class="required-mark" aria-hidden="true">*</span>
+          </label>
+
+          <div class="aroma-quality-groups">
+
+            @for (
+            group of aromaQualityGroups;
+            track group.parent
+            ) {
+
+            <div class="aroma-quality-group">
+
+              <label class="aroma-quality-option aroma-quality-parent">
+
+                <input type="checkbox" [checked]="isFlavorQualitySelected(group.parent)"
+                  (change)="onFlavorQualityChange(group.parent, $event)">
+
+                <span>
+                  {{ group.parent }}
+                </span>
+
+              </label>
+
+
+              @if (group.children.length) {
+
+              <div class="aroma-quality-children">
+
+                @for (
+                child of group.children;
+                track child
+                ) {
+
+                <label class="aroma-quality-option aroma-quality-child">
+
+                  <input type="checkbox" [checked]="isFlavorQualitySelected(child)"
+                    (change)="onFlavorQualityChange(child, $event)">
+
+                  <span>
+                    {{ child }}
+                  </span>
+
+                </label>
+
+                }
+
+              </div>
+
+              }
+
+            </div>
+
+            }
+
+          </div>
+
+          @if (hasFlavorError('flavorQualities')) {
+          <div class="field-error-message">
+            Select at least one Flavor Quality
+          </div>
+          }
+
+        </section>
+
+
+        <section class="section full" [class.validation-error]="hasFlavorError('mainTastes')">
+
+          <h4>
+            Main Tastes
+          </h4>
+
+          <label>
+            Select at least one main taste
+            <span class="required-mark" aria-hidden="true">*</span>
+          </label>
+
+          <div class="aroma-quality-grid">
+
+            @for (
+            taste of mainTasteOptions;
+            track taste
+            ) {
+
+            <label class="aroma-quality-option">
+
+              <input type="checkbox" [checked]="isMainTasteSelected(taste)" (change)="onMainTasteChange(taste, $event)">
+
+              <span>
+                {{ taste }}
+              </span>
+
+            </label>
+
+            }
+
+          </div>
+
+          @if (hasFlavorError('mainTastes')) {
+          <div class="field-error-message">
+            Select at least one Main Taste
+          </div>
+          }
+
+        </section>
+
+      </div>
+
+    </div>
+
+
+    <div class="actions">
+
+      @if (selectedSampleCount() > 1) {
+
+      <button class="btn secondary" type="button" [disabled]="activeSample() === 1" (click)="previousSample()">
+        ← Previous sample
+      </button>
+
+      } @else {
+
+      <div></div>
+
+      }
+
+
+      <div style="
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+        ">
+
+        @if (selectedSampleCount() > 1) {
+
+        <button class="btn ghost" type="button" (click)="nextSample()">
+          Save &amp; next sample →
+        </button>
+
+        }
+
+        <button class="btn primary" type="button" (click)="goToReview()">
+          Continue to Review →
+        </button>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  }
+
+
+  @if (currentStage() === 'review') {
+
+  <main class="panel" #cuppingPanel>
+
+    <div class="panel-head">
+
+      <div>
+
+        <div class="eyebrow">
+          Step 3 of 3
+        </div>
+
+        <h2>
+          Review &amp; Finalize
+        </h2>
+
+      </div>
+
+      <div class="rule">
+        Review all samples.
+        Aroma is view-only;
+        Flavor can still be edited before final confirmation.
+      </div>
+
+    </div>
+
+
+    <div class="content">
+
+      <div class="sample-title">
+
+        <h3>
+          Review all samples
+        </h3>
+
+        <span class="pill">
+          Aroma locked • Flavor editable until finalization
+        </span>
+
+      </div>
+
+
+      <div class="review-list">
+
+        @for (
+        sample of samples();
+        track sample.id
+        ) {
+
+        <article class="review-card">
+
+          <div style="
+                display:flex;
+                justify-content:space-between;
+                gap:10px;
+                align-items:center;
+                margin-bottom:12px;
+              ">
+
+            <h4>
+              Sample {{ sample.id }}
+            </h4>
+
+            <button class="btn ghost" type="button" (click)="editFlavor(sample.id)">
+              Edit Flavor Test
+            </button>
+
+          </div>
+
+
+          <div class="review-score-group">
+
+            <h5>
+              Aroma Test Scores
+            </h5>
+
+            <div class="mini-grid">
+
+              <div class="kv">
+                <b>Aroma Quality</b>
+                <span>
+                  {{
+                  formatScore(
+                  sample.aroma.qualityScore
+                  )
+                  }} / 10
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Dry Aroma</b>
+                <span>
+                  {{
+                  formatScore(
+                  sample.aroma.dry
+                  )
+                  }} / 5
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Break Aroma</b>
+                <span>
+                  {{
+                  formatScore(
+                  sample.aroma.break
+                  )
+                  }} / 5
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Colour Intensity</b>
+                <span>
+                  {{ sample.aroma.color || '—' }}
+                </span>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="review-qualities">
+
+            <b>
+              Selected Aroma Qualities
+            </b>
+
+            <div class="quality-inline-list">
+
+              @for (
+              quality of sample.aroma.qualities;
+              track quality
+              ) {
+
+              <span class="quality-item">
+                • {{ quality }}
+              </span>
+
+              }
+
+            </div>
+
+          </div>
+
+
+          <div class="review-score-group">
+
+            <h5>
+              Flavor Test Scores
+            </h5>
+
+            <div class="mini-grid">
+
+              <div class="kv">
+                <b>Flavor</b>
+                <span>
+                  {{
+                  formatScore(
+                  sample.flavor.flavor
+                  )
+                  }} / 10
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Aftertaste</b>
+                <span>
+                  {{
+                  formatScore(
+                  sample.flavor.aftertaste
+                  )
+                  }} / 10
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Acidity</b>
+                <span>
+                  {{
+                  formatScore(
+                  sample.flavor.acidity
+                  )
+                  }} / 10
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Body</b>
+                <span>
+                  {{
+                  formatScore(
+                  sample.flavor.body
+                  )
+                  }} / 10
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Uniformity</b>
+                <span>
+                  {{
+                  formatScore(
+                  calculateCupScore(
+                  sample.flavor.uniformity
+                  )
+                  )
+                  }} / 10
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Clean Cup</b>
+                <span>
+                  {{
+                  formatScore(
+                  calculateCupScore(
+                  sample.flavor.cleanCup
+                  )
+                  )
+                  }} / 10
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Balance</b>
+                <span>
+                  {{
+                  formatScore(
+                  sample.flavor.balance
+                  )
+                  }} / 10
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Sweetness</b>
+                <span>
+                  {{
+                  formatScore(
+                  calculateCupScore(
+                  sample.flavor.sweetness
+                  )
+                  )
+                  }} / 10
+                </span>
+              </div>
+
+
+              <div class="kv">
+                <b>Overall</b>
+                <span>
+                  {{
+                  formatScore(
+                  sample.flavor.overall
+                  )
+                  }} / 10
+                </span>
+              </div>
+
+
+              @if (
+              getDefectiveCupCount(sample) > 0
+              ) {
+
+              <div class="kv">
+
+                <b>
+                  Defects
+                </b>
+
+                <span>
+
+                  {{
+                  getDefectiveCupCount(sample)
+                  }}
+
+                  {{
+                  cupLabel(
+                  getDefectiveCupCount(sample)
+                  )
+                  }}
+
+                  ×
+
+                  {{
+                  sample.flavor.defectType === 'taint'
+                  ? 'Taint (-2)'
+                  : 'Fault (-4)'
+                  }}
+
+                  =
+
+                  -{{
+                  formatDefectDeduction(sample)
+                  }}
+
+                </span>
+
+              </div>
+
+              }
+
+            </div>
+
+          </div>
+
+
+          <div class="review-qualities">
+
+            <b>
+              Selected Flavor Qualities
+            </b>
+
+            <div class="quality-inline-list">
+
+              @for (
+              quality of sample.flavor.flavorQualities;
+              track quality
+              ) {
+
+              <span class="quality-item">
+                • {{ quality }}
+              </span>
+
+              }
+
+            </div>
+
+          </div>
+
+
+          <div class="review-qualities">
+
+            <b>
+              Main Tastes
+            </b>
+
+            <div class="quality-inline-list">
+
+              @for (
+              taste of sample.flavor.mainTastes;
+              track taste
+              ) {
+
+              <span class="quality-item">
+                • {{ taste }}
+              </span>
+
+              }
+
+            </div>
+
+          </div>
+
+
+          <div class="review-score-group">
+
+            <h5>
+              Final Score
+            </h5>
+
+            <div class="kv" style="
+                  text-align:center;
+                  padding:20px;
+                ">
+
+              <span style="
+                    font-size:28px;
+                    font-weight:800;
+                  ">
+                {{
+                formatScore(
+                calculateFinalScore(sample)
+                )
+                }} / 100
+              </span>
+
+            </div>
+
+          </div>
+
+        </article>
+
+        }
+
+      </div>
+
+    </div>
+
+
+    <div class="review-finalize-note">
+      Finalizing will save this completed session
+      to Session History in this browser.
+    </div>
+
+
+    <div class="actions">
+
+      <button class="btn secondary" type="button" [disabled]="finalizing()" (click)="backToFlavor()">
+        ← Back to Flavor Test
+      </button>
+
+
+      <button class="btn primary" type="button" [disabled]="finalizing()" (click)="finalizeEvaluation()">
+        {{
+        finalizing()
+        ? 'Saving...'
+        : 'Finalize Evaluation ✓'
+        }}
+      </button>
+
+    </div>
+
+  </main>
+
+  }
+
+
+  }
+
+</div>

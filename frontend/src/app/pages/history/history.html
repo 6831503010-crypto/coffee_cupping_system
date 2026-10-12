@@ -1,0 +1,431 @@
+<div class="history-shell">
+
+  <header class="history-header">
+
+    <div>
+      <a class="back-link" routerLink="/">
+        ← Back to Home
+      </a>
+
+      <p class="eyebrow">
+        CUPPING HISTORY
+      </p>
+
+      <h1>
+        Session History
+      </h1>
+
+      <p class="history-subtitle">
+        Review completed coffee cupping sessions
+        and sample scores.
+      </p>
+    </div>
+
+
+    <div class="history-actions">
+
+      <a class="btn primary btn-link" routerLink="/cupping">
+        New Cupping
+      </a>
+
+      <button class="btn ghost" type="button" (click)="clearHistory()">
+        Clear History
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <section class="history-summary" aria-label="History summary">
+
+    <div class="summary-card">
+
+      <strong>
+        {{ sessionCount() }}
+      </strong>
+
+      <span>
+        {{
+        sessionCount() <= 1 ? 'Session' : 'Sessions' }} </span>
+
+    </div>
+
+
+    <div class="summary-card">
+
+      <strong>
+        {{ sampleCount() }}
+      </strong>
+
+      <span>
+        {{
+        sampleCount() <= 1 ? 'Sample' : 'Samples' }} </span>
+
+    </div>
+
+
+    <div class="summary-card">
+
+      <strong>
+        {{ latestDate() }}
+      </strong>
+
+      <span>
+        Latest session
+      </span>
+
+    </div>
+
+  </section>
+
+
+  <main class="history-list">
+
+    @if (records().length === 0) {
+
+    <section class="history-empty">
+
+      <h2>
+        No completed sessions yet.
+      </h2>
+
+      <p>
+        Finish an evaluation in the Cupping Form
+        and it will appear here.
+      </p>
+
+      <a class="btn primary btn-link" routerLink="/cupping">
+        Start Cupping →
+      </a>
+
+    </section>
+
+    } @else {
+
+    @for (
+    record of records();
+    track record.id;
+    let sessionIndex = $index
+    ) {
+
+    <article class="history-card">
+
+      <div class="history-card-head">
+
+        <div>
+
+          <h2>
+            Session
+            {{
+            records().length
+            - sessionIndex
+            }}
+          </h2>
+
+          <div class="history-date">
+
+            {{ formatDate(record.completedAt) }}
+
+            •
+
+            {{ record.samples?.length || 0 }}
+
+            {{
+            (record.samples?.length || 0) === 1
+            ? 'sample'
+            : 'samples'
+            }}
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="sample-grid">
+
+        @for (
+        sample of record.samples || [];
+        track sample.id
+        ) {
+
+        <article class="sample-card">
+
+          <h3>
+            Sample {{ sample.id }}
+          </h3>
+
+
+          <div class="score-row">
+            <span>Aroma quality</span>
+
+            <strong>
+              {{
+              formatScore(
+              sample.aroma?.qualityScore
+              )
+              }}
+            </strong>
+          </div>
+
+
+          <div class="score-row">
+            <span>Flavor</span>
+
+            <strong>
+              {{
+              formatScore(
+              sample.flavor?.flavor
+              )
+              }}
+            </strong>
+          </div>
+
+
+          <div class="score-row">
+            <span>Aftertaste</span>
+
+            <strong>
+              {{
+              formatScore(
+              sample.flavor?.aftertaste
+              )
+              }}
+            </strong>
+          </div>
+
+
+          <div class="score-row">
+            <span>Acidity</span>
+
+            <strong>
+              {{
+              formatScore(
+              sample.flavor?.acidity
+              )
+              }}
+            </strong>
+          </div>
+
+
+          <div class="score-row">
+            <span>Body</span>
+
+            <strong>
+              {{
+              formatScore(
+              sample.flavor?.body
+              )
+              }}
+            </strong>
+          </div>
+
+
+          <div class="score-row">
+            <span>Balance</span>
+
+            <strong>
+              {{
+              formatScore(
+              sample.flavor?.balance
+              )
+              }}
+            </strong>
+          </div>
+
+
+          <div class="score-row">
+
+            <span>Defect</span>
+
+            <strong>
+
+              @if (
+              getDefectiveCupCount(
+              sample.flavor || {}
+              ) > 0
+              ) {
+
+              {{
+              getDefectiveCupCount(
+              sample.flavor || {}
+              )
+              }}
+
+              {{
+              getDefectiveCupCount(
+              sample.flavor || {}
+              ) === 1
+              ? 'cup'
+              : 'cups'
+              }}
+
+              ×
+
+              {{
+              getDefectLabel(
+              sample.flavor?.defectType
+              )
+              }}
+
+              (-{{
+              getDefectPoints(
+              sample.flavor?.defectType
+              )
+              }})
+
+              =
+
+              -{{
+              formatScore(
+              getDefectDeduction(
+              sample.flavor || {}
+              )
+              )
+              }}
+
+              } @else {
+
+              None
+
+              }
+
+            </strong>
+
+          </div>
+
+
+          <div class="score-row">
+
+            <span>Overall</span>
+
+            <strong>
+              {{
+              formatScore(
+              sample.flavor?.overall
+              )
+              }}
+            </strong>
+
+          </div>
+
+
+          <div class="score-row">
+
+            <span>Final score</span>
+
+            <strong>
+              {{
+              formatScore(
+              sample.finalScore
+              )
+              }}
+              / 100
+            </strong>
+
+          </div>
+
+
+          <button class="details-toggle" type="button" (click)="
+                    toggleDetails(
+                      record.id,
+                      sample.id
+                    )
+                  ">
+
+            {{
+            isDetailsOpen(
+            record.id,
+            sample.id
+            )
+            ? 'Hide details'
+            : 'Show details'
+            }}
+
+          </button>
+
+
+          <div class="details" [class.open]="
+                    isDetailsOpen(
+                      record.id,
+                      sample.id
+                    )
+                  ">
+
+            <div class="sample-notes">
+
+              <strong>
+                Aroma:
+              </strong>
+
+              {{
+              text(
+              sample.aroma?.qualities
+              )
+              }}
+
+            </div>
+
+
+            <div class="sample-notes">
+
+              <strong>
+                Flavor qualities:
+              </strong>
+
+              {{
+              text(
+              sample.flavor
+              ?.flavorQualities
+              )
+              }}
+
+              <br>
+
+              <strong>
+                Main tastes:
+              </strong>
+
+              {{
+              text(
+              sample.flavor
+              ?.mainTastes
+              )
+              }}
+
+            </div>
+
+          </div>
+
+        </article>
+
+        }
+
+      </div>
+
+
+      <div class="history-card-footer">
+
+        <span class="muted">
+          Saved in this browser
+        </span>
+
+        <button class="delete-session" type="button" (click)="
+                deleteSession(record.id)
+              ">
+          Delete session
+        </button>
+
+      </div>
+
+    </article>
+
+    }
+
+    }
+
+  </main>
+
+</div>

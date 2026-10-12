@@ -1,0 +1,11 @@
+:host {
+  display: block;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 26px;
+  color: var(--mocha);
+  text-decoration: none;
+  font-weight: 800;
+}
