@@ -19,7 +19,7 @@ A full-stack coffee cupping application developed using Angular, Spring Boot, My
 ## 2. Project Structure
 
 ```text
-coffee-cupping-system/
+coffee_cupping_system/
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
@@ -48,6 +48,14 @@ coffee-cupping-system/
 │   ├── pom.xml
 │   └── mvnw.cmd
 │
+├── index.html                # Legacy prototype landing page
+├── cupping-form.html         # Legacy prototype cupping form
+├── history.html              # Legacy prototype history page
+├── css/                      # Legacy prototype styles
+├── js/                       # Legacy prototype scripts
+├── templates/                # Legacy prototype templates
+├── assets/
+├── images/
 ├── docs/
 ├── README.md
 ├── CONTRIBUTING.md
@@ -61,11 +69,9 @@ The original HTML/CSS/JavaScript prototype remains the visual and behavioral ref
 ### Step 1 — Clone the repository
 
 ```bash
-git clone <repository-url>
-cd coffee-cupping-system
+git clone https://github.com/6831503010-crypto/coffee_cupping_system.git
+cd coffee_cupping_system
 ```
-
-Replace `<repository-url>` with the actual GitHub repository URL.
 
 ### Step 2 — Verify required versions
 
@@ -108,20 +114,24 @@ Start MySQL Server and create the database:
 CREATE DATABASE IF NOT EXISTS coffee_cupping_db;
 ```
 
-Configure the backend datasource using your own local MySQL credentials.
+Then create this local configuration file:
 
-Example configuration:
-
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/coffee_cupping_db
-spring.datasource.username=root
-spring.datasource.password=YOUR_LOCAL_PASSWORD
-
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
+```text
+backend/src/main/resources/application-local.properties
 ```
 
-Use the project's existing local configuration/profile arrangement. Keep passwords in a Git-ignored local configuration file and never commit them.
+Add your own local MySQL credentials:
+
+```properties
+spring.datasource.username=root
+spring.datasource.password=YOUR_MYSQL_PASSWORD
+```
+
+The main `application.properties` already contains the database URL, Hibernate validation, Flyway configuration, and server port.
+
+`application-local.properties` is ignored by Git, so each teammate can use their own local MySQL username and password without committing secrets.
+
+**Do not commit `application-local.properties`.**
 
 **Do not manually create application tables. Flyway handles that automatically.**
 
