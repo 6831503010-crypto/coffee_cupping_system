@@ -326,6 +326,13 @@ export class Cupping {
       {
         nonNullable: true
       }
+    ),
+
+    otherTastingNotes: new FormControl<string>(
+      '',
+      {
+        nonNullable: true
+      }
     )
   });
 
@@ -376,6 +383,12 @@ export class Cupping {
         nonNullable: true
       }
     ),
+    otherTastingNotes: new FormControl<string>(
+      '',
+      {
+        nonNullable: true
+      }
+    )
 
   });
 
@@ -888,7 +901,8 @@ export class Cupping {
         break: null,
         color: null,
         qualityScore: null,
-        qualities: []
+        qualities: [],
+        otherTastingNotes: ''
       },
 
       flavor: {
@@ -929,6 +943,7 @@ export class Cupping {
         defectType: null,
 
         flavorQualities: [],
+        otherTastingNotes: ''
       }
     };
   }
@@ -957,7 +972,8 @@ export class Cupping {
             break: values.break,
             color: values.color,
             qualityScore: values.qualityScore,
-            qualities: [...values.qualities]
+            qualities: [...values.qualities],
+            otherTastingNotes: values.otherTastingNotes
           }
         };
       })
@@ -981,7 +997,8 @@ export class Cupping {
         break: sample.aroma.break,
         color: sample.aroma.color,
         qualityScore: sample.aroma.qualityScore,
-        qualities: [...sample.aroma.qualities]
+        qualities: [...sample.aroma.qualities],
+        otherTastingNotes:sample.aroma.otherTastingNotes
       },
       {
         emitEvent: false
@@ -1197,6 +1214,7 @@ export class Cupping {
             acidityIntensity: values.acidityIntensity,
             bodyLevel: values.bodyLevel,
             flavorQualities: [...values.flavorQualities],
+            otherTastingNotes:values.otherTastingNotes
           }
         };
       })
@@ -1225,6 +1243,7 @@ export class Cupping {
         acidityIntensity: sample.flavor.acidityIntensity,
         bodyLevel: sample.flavor.bodyLevel,
         flavorQualities: [...sample.flavor.flavorQualities],
+        otherTastingNotes:sample.flavor.otherTastingNotes
       },
       {
         emitEvent: false

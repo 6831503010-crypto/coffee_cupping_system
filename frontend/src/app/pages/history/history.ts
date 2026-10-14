@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 interface AromaEvaluation {
   qualityScore?: string | number;
   qualities?: string[];
+  otherTastingNotes?: string;
 }
 
 interface FlavorEvaluation {
@@ -18,6 +19,7 @@ interface FlavorEvaluation {
 
   defectType?: string;
   flavorQualities?: string[];
+  otherTastingNotes?: string;
 }
 
 interface HistorySample {

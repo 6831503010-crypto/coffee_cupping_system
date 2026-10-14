@@ -4,4 +4,5 @@ export interface AromaEvaluation {
   color: string | null;
   qualityScore: number | null;
   qualities: string[];
+  otherTastingNotes: string;
 }
