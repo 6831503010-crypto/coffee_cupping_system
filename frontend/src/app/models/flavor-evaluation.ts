@@ -18,5 +18,4 @@ export interface FlavorEvaluation {
   defectType: DefectType;
 
   flavorQualities: string[];
-  mainTastes: string[];
 }

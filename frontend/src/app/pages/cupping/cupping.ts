@@ -107,14 +107,6 @@ export class Cupping {
     }
   ];
 
-  readonly mainTasteOptions = [
-    'Salty',
-    'Bitter',
-    'Sour',
-    'Umami',
-    'Sweet'
-  ];
-
 
   previousSample() {
 
@@ -385,12 +377,6 @@ export class Cupping {
       }
     ),
 
-    mainTastes: new FormControl<string[]>(
-      [],
-      {
-        nonNullable: true
-      }
-    )
   });
 
 
@@ -453,56 +439,6 @@ export class Cupping {
     }
   }
 
-
-  isMainTasteSelected(
-    taste: string
-  ): boolean {
-
-    return this.flavorForm
-      .controls
-      .mainTastes
-      .value
-      .includes(taste);
-  }
-
-
-  onMainTasteChange(
-    taste: string,
-    event: Event
-  ) {
-
-    const checkbox =
-      event.target as HTMLInputElement;
-
-    const current =
-      this.flavorForm
-        .controls
-        .mainTastes
-        .value;
-
-    const updated =
-      checkbox.checked
-        ? (
-            current.includes(taste)
-              ? current
-              : [...current, taste]
-          )
-        : current.filter(
-            value => value !== taste
-          );
-
-    this.flavorForm
-      .controls
-      .mainTastes
-      .setValue(updated);
-
-    this.saveFlavorForm();
-
-    if (this.flavorValidationActive()) {
-      this.refreshFlavorValidation();
-    }
-  }
-
   private getFlavorMissingFields(
     sample: CoffeeSample
   ): string[] {
@@ -549,12 +485,6 @@ export class Cupping {
       missing.push('flavorQualities');
     }
 
-    if (
-      !flavor.mainTastes ||
-      flavor.mainTastes.length === 0
-    ) {
-      missing.push('mainTastes');
-    }
 
     if (
       this.getDefectiveCupCount(sample) > 0 &&
@@ -999,7 +929,6 @@ export class Cupping {
         defectType: null,
 
         flavorQualities: [],
-        mainTastes: []
       }
     };
   }
@@ -1268,7 +1197,6 @@ export class Cupping {
             acidityIntensity: values.acidityIntensity,
             bodyLevel: values.bodyLevel,
             flavorQualities: [...values.flavorQualities],
-            mainTastes: [...values.mainTastes]
           }
         };
       })
@@ -1297,7 +1225,6 @@ export class Cupping {
         acidityIntensity: sample.flavor.acidityIntensity,
         bodyLevel: sample.flavor.bodyLevel,
         flavorQualities: [...sample.flavor.flavorQualities],
-        mainTastes: [...sample.flavor.mainTastes]
       },
       {
         emitEvent: false
@@ -1502,10 +1429,6 @@ export class Cupping {
           flavorQualities: [
             ...sample.flavor.flavorQualities
           ],
-
-          mainTastes: [
-            ...sample.flavor.mainTastes
-          ]
         },
 
         finalScore:

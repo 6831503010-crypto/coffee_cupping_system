@@ -3089,45 +3089,7 @@
         </section>
 
 
-        <section class="section full" [class.validation-error]="hasFlavorError('mainTastes')">
 
-          <h4>
-            Main Tastes
-          </h4>
-
-          <label>
-            Select at least one main taste
-            <span class="required-mark" aria-hidden="true">*</span>
-          </label>
-
-          <div class="aroma-quality-grid">
-
-            @for (
-            taste of mainTasteOptions;
-            track taste
-            ) {
-
-            <label class="aroma-quality-option">
-
-              <input type="checkbox" [checked]="isMainTasteSelected(taste)" (change)="onMainTasteChange(taste, $event)">
-
-              <span>
-                {{ taste }}
-              </span>
-
-            </label>
-
-            }
-
-          </div>
-
-          @if (hasFlavorError('mainTastes')) {
-          <div class="field-error-message">
-            Select at least one Main Taste
-          </div>
-          }
-
-        </section>
 
       </div>
 
@@ -3519,28 +3481,7 @@
           </div>
 
 
-          <div class="review-qualities">
 
-            <b>
-              Main Tastes
-            </b>
-
-            <div class="quality-inline-list">
-
-              @for (
-              taste of sample.flavor.mainTastes;
-              track taste
-              ) {
-
-              <span class="quality-item">
-                • {{ taste }}
-              </span>
-
-              }
-
-            </div>
-
-          </div>
 
 
           <div class="review-score-group">

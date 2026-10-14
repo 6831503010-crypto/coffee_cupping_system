@@ -18,7 +18,6 @@ interface FlavorEvaluation {
 
   defectType?: string;
   flavorQualities?: string[];
-  mainTastes?: string[];
 }
 
 interface HistorySample {
