@@ -816,7 +816,7 @@
         </section>
 
         <section class="section full">
-          <div class="section-score-header">
+          <!-- <div class="section-score-header">
             <h4>Uniformity — Cup 1 to Cup 5</h4>
 
             <div class="section-score">
@@ -824,8 +824,38 @@
 
               <span> {{ calculateCupScore( activeSampleData()?.flavor?.uniformity ) }} </span>/10
             </div>
-          </div>
+          </div> -->
 
+          <div class="section-score-header">
+
+            <h4>
+              Uniformity — Cup 1 to Cup 5
+            </h4>
+
+            <div class="cup-section-actions">
+
+              <button class="check-all-btn" type="button" (click)="toggleUniformityAndCleanCupAll()">
+                {{
+                areUniformityAndCleanCupAllSelected()
+                ? 'Uncheck All'
+                : 'Check All'
+                }}
+              </button>
+
+              <div class="section-score">
+                Score:
+                <span>
+                  {{
+                  calculateCupScore(
+                  activeSampleData()?.flavor?.uniformity
+                  )
+                  }}
+                </span>/10
+              </div>
+
+            </div>
+
+          </div>
           <div class="cup-state-legend">
             <strong>Selected cup</strong> = Uniform ·
 
@@ -859,7 +889,7 @@
         </section>
 
         <section class="section full">
-          <div class="section-score-header">
+          <!-- <div class="section-score-header">
             <h4>Clean Cup — Cup 1 to Cup 5</h4>
 
             <div class="section-score">
@@ -867,6 +897,36 @@
 
               <span> {{ calculateCupScore( activeSampleData()?.flavor?.cleanCup ) }} </span>/10
             </div>
+          </div> -->
+          <div class="section-score-header">
+
+            <h4>
+              Clean Cup — Cup 1 to Cup 5
+            </h4>
+
+            <div class="cup-section-actions">
+
+              <button class="check-all-btn" type="button" (click)="toggleUniformityAndCleanCupAll()">
+                {{
+                areUniformityAndCleanCupAllSelected()
+                ? 'Uncheck All'
+                : 'Check All'
+                }}
+              </button>
+
+              <div class="section-score">
+                Score:
+                <span>
+                  {{
+                  calculateCupScore(
+                  activeSampleData()?.flavor?.cleanCup
+                  )
+                  }}
+                </span>/10
+              </div>
+
+            </div>
+
           </div>
 
           <div class="cup-state-legend">
@@ -959,7 +1019,7 @@
         }
 
         <section class="section full">
-          <div class="section-score-header">
+          <!-- <div class="section-score-header">
             <h4>Sweetness — Cup 1 to Cup 5</h4>
 
             <div class="section-score">
@@ -967,6 +1027,36 @@
 
               <span> {{ calculateCupScore( activeSampleData()?.flavor?.sweetness ) }} </span>/10
             </div>
+          </div> -->
+          <div class="section-score-header">
+
+            <h4>
+              Sweetness — Cup 1 to Cup 5
+            </h4>
+
+            <div class="cup-section-actions">
+
+              <button class="check-all-btn" type="button" (click)="toggleSweetnessAll()">
+                {{
+                areAllSweetnessSelected()
+                ? 'Uncheck All'
+                : 'Check All'
+                }}
+              </button>
+
+              <div class="section-score">
+                Score:
+                <span>
+                  {{
+                  calculateCupScore(
+                  activeSampleData()?.flavor?.sweetness
+                  )
+                  }}
+                </span>/10
+              </div>
+
+            </div>
+
           </div>
 
           <div class="cup-state-legend">

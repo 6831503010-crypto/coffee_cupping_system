@@ -13,3 +13,31 @@
 .tasting-notes-field {
   margin-top: 16px;
 }
+
+.cup-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.check-all-btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--mocha);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.check-all-btn:hover:not(:disabled) {
+  background: #fffaf5;
+}
+
+.check-all-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

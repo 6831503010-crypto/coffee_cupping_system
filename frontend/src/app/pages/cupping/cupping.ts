@@ -212,7 +212,7 @@ export class Cupping {
         firstIncomplete
       );
 
-      this.scrollToFirstAromaError();
+      this.scrollToFirstError();
 
       return;
     }
@@ -231,7 +231,7 @@ export class Cupping {
     });
   }
 
-  private scrollToFirstAromaError() {
+  private scrollToFirstError() {
 
     requestAnimationFrame(() => {
 
@@ -553,29 +553,7 @@ export class Cupping {
       incompleteSamples
     );
   }
-
-
-  private scrollToFirstFlavorError() {
-
-    requestAnimationFrame(() => {
-
-      const firstError =
-        this.cuppingPanel
-          ?.nativeElement
-          .querySelector(
-            '.validation-error'
-          );
-
-      firstError?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-      });
-
-    });
-  }
-
-
-  goToReview() {
+goToReview() {
 
     this.saveFlavorForm();
 
@@ -605,7 +583,7 @@ export class Cupping {
         firstIncomplete
       );
 
-      this.scrollToFirstFlavorError();
+      this.scrollToFirstError();
 
       return;
     }
@@ -916,29 +894,11 @@ export class Cupping {
         acidityIntensity: null,
         bodyLevel: null,
 
-        uniformity: [
-          false,
-          false,
-          false,
-          false,
-          false
-        ],
+        uniformity: Array(5).fill(false),
 
-        cleanCup: [
-          false,
-          false,
-          false,
-          false,
-          false
-        ],
+        cleanCup: Array(5).fill(false),
 
-        sweetness: [
-          false,
-          false,
-          false,
-          false,
-          false
-        ],
+        sweetness: Array(5).fill(false),
 
         defectType: null,
 
@@ -1084,6 +1044,63 @@ export class Cupping {
     }
   }
 
+  areUniformityAndCleanCupAllSelected(): boolean {
+
+    const sample = this.activeSampleData();
+
+    if (!sample) {
+      return false;
+    }
+
+    return (
+      sample.flavor.uniformity.every(Boolean) &&
+      sample.flavor.cleanCup.every(Boolean)
+    );
+  }
+
+
+  toggleUniformityAndCleanCupAll() {
+
+    this.saveFlavorForm();
+
+    const sampleId = this.activeSample();
+
+    const shouldSelectAll =
+      !this.areUniformityAndCleanCupAllSelected();
+
+    this.samples.update(samples =>
+      samples.map(sample => {
+
+        if (sample.id !== sampleId) {
+          return sample;
+        }
+
+        const newValues = Array(5).fill(shouldSelectAll);
+
+        return {
+          ...sample,
+
+          flavor: {
+            ...sample.flavor,
+
+            uniformity: [...newValues],
+            cleanCup: [...newValues],
+
+            // Any bulk change resets the defect choice.
+            // If all cups are checked, there are no defects.
+            // If all are unchecked, the user must choose
+            // Taint or Fault again.
+            defectType: null
+          }
+        };
+
+      })
+    );
+
+    if (this.flavorValidationActive()) {
+      this.refreshFlavorValidation();
+    }
+  }
 
   getDefectiveCupCount(
     sample: CoffeeSample | undefined
@@ -1472,6 +1489,52 @@ export class Cupping {
     );
 
     this.router.navigate(['/history']);
+  }
+
+  areAllSweetnessSelected(): boolean {
+
+    const sample = this.activeSampleData();
+
+    if (!sample) {
+      return false;
+    }
+
+    return sample.flavor.sweetness.every(Boolean);
+  }
+
+
+  toggleSweetnessAll() {
+
+    this.saveFlavorForm();
+
+    const sampleId = this.activeSample();
+
+    const shouldSelectAll =
+      !this.areAllSweetnessSelected();
+
+    this.samples.update(samples =>
+      samples.map(sample => {
+
+        if (sample.id !== sampleId) {
+          return sample;
+        }
+
+        return {
+          ...sample,
+
+          flavor: {
+            ...sample.flavor,
+
+            sweetness: Array(5).fill(shouldSelectAll)
+          }
+        };
+
+      })
+    );
+
+    if (this.flavorValidationActive()) {
+      this.refreshFlavorValidation();
+    }
   }
 
 }
