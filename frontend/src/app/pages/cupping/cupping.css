@@ -41,3 +41,27 @@
   opacity: 0.55;
   cursor: default;
 }
+
+/* Grouped qualities in Review & Finalize */
+
+.review-quality-groups {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.review-quality-line {
+  color: var(--roast);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.review-quality-line strong {
+  color: var(--espresso);
+  font-weight: 800;
+}
+
+.review-quality-line span {
+  color: var(--roast);
+}

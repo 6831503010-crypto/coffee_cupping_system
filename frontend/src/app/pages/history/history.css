@@ -346,3 +346,21 @@
     border-radius: 18px;
   }
 }
+
+/* Selected aroma / flavor descriptors grouped by parent */
+.quality-selection-list {
+  display: grid;
+  gap: 8px;
+}
+
+.quality-selection-line {
+  color: var(--roast);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.quality-selection-line strong {
+  color: var(--espresso);
+  font-size: inherit;
+}

@@ -384,13 +384,21 @@
             Selected qualities
           </strong>
 
-          <span>
-            {{
-            text(
-            details.sample.aroma?.qualities
-            )
-            }}
-          </span>
+          @if (groupSelectedQualities(details.sample.aroma?.qualities).length > 0) {
+
+          <div class="quality-selection-list">
+            @for (group of groupSelectedQualities(details.sample.aroma?.qualities); track group.parent) {
+
+            <div class="quality-selection-line">
+              <strong>{{ group.parent }}</strong>{{ group.children.length > 0 ? ': ' + group.children.join(', ') : '' }}
+            </div>
+
+            }
+          </div>
+
+          } @else {
+          <span>—</span>
+          }
 
         </div>
 
@@ -425,14 +433,21 @@
             Selected qualities
           </strong>
 
-          <span>
-            {{
-            text(
-            details.sample.flavor
-            ?.flavorQualities
-            )
-            }}
-          </span>
+          @if (groupSelectedQualities(details.sample.flavor?.flavorQualities).length > 0) {
+
+          <div class="quality-selection-list">
+            @for (group of groupSelectedQualities(details.sample.flavor?.flavorQualities); track group.parent) {
+
+            <div class="quality-selection-line">
+              <strong>{{ group.parent }}</strong>{{ group.children.length > 0 ? ': ' + group.children.join(', ') : '' }}
+            </div>
+
+            }
+          </div>
+
+          } @else {
+          <span>—</span>
+          }
 
         </div>
 

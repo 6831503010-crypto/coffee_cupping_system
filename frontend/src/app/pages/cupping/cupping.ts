@@ -107,6 +107,58 @@ export class Cupping {
     }
   ];
 
+  groupSelectedQualities(
+    values: string[] | undefined
+  ): { parent: string; children: string[] }[] {
+
+    if (!Array.isArray(values) || values.length === 0) {
+      return [];
+    }
+
+    const selected = new Set(values);
+    const known = new Set<string>();
+
+    const groups: {
+      parent: string;
+      children: string[];
+    }[] = [];
+
+    for (const group of this.aromaQualityGroups) {
+
+      known.add(group.parent);
+
+      group.children.forEach(
+        child => known.add(child)
+      );
+
+      const children = group.children.filter(
+        child => selected.has(child)
+      );
+
+      if (
+        selected.has(group.parent) ||
+        children.length > 0
+      ) {
+        groups.push({
+          parent: group.parent,
+          children
+        });
+      }
+    }
+
+    // Preserve any unrecognized descriptors.
+    for (const quality of selected) {
+      if (!known.has(quality)) {
+        groups.push({
+          parent: quality,
+          children: []
+        });
+      }
+    }
+
+    return groups;
+  }
+
   private updateQualitySelection(
     current: string[],
     quality: string,

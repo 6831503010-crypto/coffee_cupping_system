@@ -1257,14 +1257,30 @@
 
           <div class="review-qualities">
             <b> Selected Aroma Qualities </b>
+              <div class="review-quality-groups">
 
-            <div class="quality-inline-list">
-              @for ( quality of sample.aroma.qualities; track quality ) {
+                @for (
+                group of groupSelectedQualities(sample.aroma.qualities);
+                track group.parent
+                ) {
 
-              <span class="quality-item"> • {{ quality }} </span>
+                <div class="review-quality-line">
 
-              }
-            </div>
+                  <strong>{{ group.parent }}</strong>
+
+                  @if (group.children.length > 0) {
+                  <span>: {{ group.children.join(', ') }}</span>
+                  }
+
+                </div>
+
+                } @empty {
+
+                <span>—</span>
+
+                }
+
+              </div>
           </div>
 
           <div class="review-qualities">
@@ -1350,12 +1366,29 @@
           <div class="review-qualities">
             <b> Selected Flavor Qualities </b>
 
-            <div class="quality-inline-list">
-              @for ( quality of sample.flavor.flavorQualities; track quality ) {
+            <div class="review-quality-groups">
 
-              <span class="quality-item"> • {{ quality }} </span>
+              @for (
+              group of groupSelectedQualities(sample.flavor.flavorQualities);
+              track group.parent
+              ) {
+
+              <div class="review-quality-line">
+
+                <strong>{{ group.parent }}</strong>
+
+                @if (group.children.length > 0) {
+                <span>: {{ group.children.join(', ') }}</span>
+                }
+
+              </div>
+
+              } @empty {
+
+              <span>—</span>
 
               }
+
             </div>
           </div>
 

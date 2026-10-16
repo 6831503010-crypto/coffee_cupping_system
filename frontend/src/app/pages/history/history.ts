@@ -51,6 +51,69 @@ export class History {
   records = signal<HistoryRecord[]>(this.readHistory());
 
   // openDetails = signal<Set<string>>(new Set());
+  private readonly historyQualityGroups = [
+    { parent: 'Floral', children: [] },
+    { parent: 'Fruity', children: ['Berry', 'Dried Fruit', 'Citrus Fruit'] },
+    { parent: 'Roasted', children: ['Cereal', 'Burnt', 'Tobacco'] },
+    { parent: 'Sour/Fermented', children: ['Sour', 'Fermented'] },
+    { parent: 'Nutty/Cocoa', children: ['Nutty', 'Cocoa'] },
+    { parent: 'Green/Vegetative', children: [] },
+    { parent: 'Spice', children: [] },
+    { parent: 'Sweet', children: ['Vanilla/Vanillin', 'Brown Sugar'] },
+    { parent: 'Other', children: ['Chemical', 'Musty/Earthy', 'Woody'] }
+  ];
+
+  groupSelectedQualities(
+    values: string[] | undefined
+  ): { parent: string; children: string[] }[] {
+
+    if (!Array.isArray(values) || values.length === 0) {
+      return [];
+    }
+
+    const selected = new Set(values);
+    const known = new Set<string>();
+
+    const groups: {
+      parent: string;
+      children: string[];
+    }[] = [];
+
+    for (const group of this.historyQualityGroups) {
+
+      known.add(group.parent);
+
+      group.children.forEach(
+        child => known.add(child)
+      );
+
+      const children = group.children.filter(
+        child => selected.has(child)
+      );
+
+      if (
+        selected.has(group.parent) ||
+        children.length > 0
+      ) {
+        groups.push({
+          parent: group.parent,
+          children
+        });
+      }
+    }
+
+    // Keep older or unrecognized descriptors visible.
+    for (const quality of selected) {
+      if (!known.has(quality)) {
+        groups.push({
+          parent: quality,
+          children: []
+        });
+      }
+    }
+
+    return groups;
+  }
 
   sessionCount = computed(() =>
     this.records().length
