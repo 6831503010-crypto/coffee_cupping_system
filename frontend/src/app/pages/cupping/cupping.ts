@@ -107,6 +107,50 @@ export class Cupping {
     }
   ];
 
+  private updateQualitySelection(
+    current: string[],
+    quality: string,
+    checked: boolean
+  ): string[] {
+
+    const updated = new Set(current);
+
+    const parentGroup = this.aromaQualityGroups.find(
+      group => group.parent === quality
+    );
+
+    const childGroup = this.aromaQualityGroups.find(
+      group => group.children.includes(quality)
+    );
+
+    if (checked) {
+
+      // Selecting a child also selects its parent.
+      if (childGroup) {
+        updated.add(childGroup.parent);
+      }
+
+      updated.add(quality);
+
+    } else if (parentGroup) {
+
+      // Unchecking a parent clears its children.
+      updated.delete(parentGroup.parent);
+
+      parentGroup.children.forEach(
+        child => updated.delete(child)
+      );
+
+    } else {
+
+      // Unchecking a child keeps its parent.
+      updated.delete(quality);
+
+    }
+
+    return [...updated];
+  }
+
 
   previousSample() {
 
@@ -273,20 +317,11 @@ export class Cupping {
     const current =
       this.aromaForm.controls.qualities.value;
 
-    let updated: string[];
-
-    if (checkbox.checked) {
-
-      updated = current.includes(quality)
-        ? current
-        : [...current, quality];
-
-    } else {
-
-      updated = current.filter(
-        value => value !== quality
-      );
-    }
+    const updated = this.updateQualitySelection(
+      current,
+      quality,
+      checkbox.checked
+    );
 
     this.aromaForm
       .controls
@@ -429,16 +464,11 @@ export class Cupping {
         .flavorQualities
         .value;
 
-    const updated =
+    const updated = this.updateQualitySelection(
+      current,
+      quality,
       checkbox.checked
-        ? (
-            current.includes(quality)
-              ? current
-              : [...current, quality]
-          )
-        : current.filter(
-            value => value !== quality
-          );
+    );
 
     this.flavorForm
       .controls

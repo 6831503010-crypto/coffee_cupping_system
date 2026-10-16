@@ -16,6 +16,8 @@ interface FlavorEvaluation {
   overall?: string | number;
 
   uniformity?: boolean[];
+  cleanCup?: boolean[];
+  sweetness?: boolean[];
 
   defectType?: string;
   flavorQualities?: string[];
@@ -48,7 +50,7 @@ export class History {
 
   records = signal<HistoryRecord[]>(this.readHistory());
 
-  openDetails = signal<Set<string>>(new Set());
+  // openDetails = signal<Set<string>>(new Set());
 
   sessionCount = computed(() =>
     this.records().length
@@ -191,36 +193,64 @@ export class History {
     );
   }
 
-
-  toggleDetails(
-    sessionId: string,
-    sampleId: number
-  ) {
-
-    const key =
-      `${sessionId}-${sampleId}`;
-
-    const updated =
-      new Set(this.openDetails());
-
-    if (updated.has(key)) {
-      updated.delete(key);
-    } else {
-      updated.add(key);
+  getCupScore(values?: boolean[]): number {
+    if (!Array.isArray(values)) {
+      return 0;
     }
 
-    this.openDetails.set(updated);
+    return values.filter(Boolean).length * 2;
   }
 
 
-  isDetailsOpen(
-    sessionId: string,
-    sampleId: number
-  ): boolean {
+  // toggleDetails(
+  //   sessionId: string,
+  //   sampleId: number
+  // ) {
 
-    return this.openDetails().has(
-      `${sessionId}-${sampleId}`
-    );
+  //   const key =
+  //     `${sessionId}-${sampleId}`;
+
+  //   const updated =
+  //     new Set(this.openDetails());
+
+  //   if (updated.has(key)) {
+  //     updated.delete(key);
+  //   } else {
+  //     updated.add(key);
+  //   }
+
+  //   this.openDetails.set(updated);
+  // }
+
+
+  // isDetailsOpen(
+  //   sessionId: string,
+  //   sampleId: number
+  // ): boolean {
+
+  //   return this.openDetails().has(
+  //     `${sessionId}-${sampleId}`
+  //   );
+  // }
+  selectedDetails = signal<{
+    sessionNumber: number;
+    sample: HistorySample;
+  } | null>(null);
+
+
+  openSampleDetails(
+    sample: HistorySample,
+    sessionNumber: number
+  ) {
+    this.selectedDetails.set({
+      sample,
+      sessionNumber
+    });
+  }
+
+
+  closeSampleDetails() {
+    this.selectedDetails.set(null);
   }
 
 
@@ -262,6 +292,7 @@ export class History {
     );
 
     this.records.set([]);
-    this.openDetails.set(new Set());
+    // this.openDetails.set(new Set());
+    this.selectedDetails.set(null);
   }
 }
