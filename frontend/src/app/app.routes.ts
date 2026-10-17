@@ -5,6 +5,7 @@ import { History } from './pages/history/history';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { authGuard } from './guards/auth.guard';
+import { Guide } from './pages/guide/guide';
 
 export const routes: Routes = [
   {
@@ -28,6 +29,16 @@ export const routes: Routes = [
   {
     path: 'history',
     component: History,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'about',
+    component: Guide,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'guide',
+    component: Guide,
     canActivate: [authGuard]
   }
 ];

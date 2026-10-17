@@ -11,7 +11,7 @@
   <nav class="site-nav" id="siteNav" aria-label="Primary navigation" [class.open]="menuOpen()">
     <a routerLink="/" (click)="closeMenu()">HOME</a>
 
-    <a href="#about" (click)="closeMenu()">ABOUT</a>
+    <a routerLink="/about" (click)="closeMenu()">ABOUT</a>
 
     <a routerLink="/history" (click)="closeMenu()">HISTORY</a>
     <button class="nav-logout" type="button" (click)="logout()">
