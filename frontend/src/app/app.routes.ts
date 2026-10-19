@@ -6,6 +6,8 @@ import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { authGuard } from './guards/auth.guard';
 import { Guide } from './pages/guide/guide';
+import { IndividualSession } from './pages/individual-session/individual-session';
+
 
 export const routes: Routes = [
   {
@@ -40,5 +42,15 @@ export const routes: Routes = [
     path: 'guide',
     component: Guide,
     canActivate: [authGuard]
-  }
+  },
+  {
+    path: 'individual/new',
+    component: IndividualSession,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'individual/:id',
+    component: IndividualSession,
+    canActivate: [authGuard]
+  },
 ];

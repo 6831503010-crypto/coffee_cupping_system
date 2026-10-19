@@ -1,10 +1,11 @@
 import { Component, inject,signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { CuppingModeModal } from '../../shared/cupping-mode-modal/cupping-mode-modal';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink],
+  imports: [RouterLink, CuppingModeModal],
   templateUrl: './home.html',
   styleUrl: './home.css'
 })
@@ -50,4 +51,35 @@ export class Home {
 
       });
   }
+
+
+  // @ViewChild('cuppingModeDialog')
+  // cuppingModeDialog?: ElementRef<HTMLDialogElement>;
+
+  // openModeDialog() {
+  //   const dialog = this.cuppingModeDialog?.nativeElement;
+
+  //   if (dialog && !dialog.open) {
+  //     dialog.showModal();
+  //   }
+  // }
+
+  // closeModeDialog() {
+  //   this.cuppingModeDialog?.nativeElement.close();
+  // }
+
+  // selectIndividualMode() {
+  //   this.closeModeDialog();
+  //   this.router.navigateByUrl('/individual/new');
+  // }
+
+  // onModeDialogClick(event: MouseEvent) {
+  //   // Close when clicking outside the popup content.
+  //   if (
+  //     event.target ===
+  //     this.cuppingModeDialog?.nativeElement
+  //   ) {
+  //     this.closeModeDialog();
+  //   }
+  // }
 }

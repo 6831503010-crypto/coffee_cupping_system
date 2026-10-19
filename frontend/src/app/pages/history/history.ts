@@ -1,5 +1,6 @@
 import { Component, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CuppingModeModal } from '../../shared/cupping-mode-modal/cupping-mode-modal';
 
 interface AromaEvaluation {
   qualityScore?: string | number;
@@ -39,7 +40,7 @@ interface HistoryRecord {
 
 @Component({
   selector: 'app-history',
-  imports: [RouterLink],
+  imports: [RouterLink, CuppingModeModal],
   templateUrl: './history.html',
   styleUrl: './history.css'
 })

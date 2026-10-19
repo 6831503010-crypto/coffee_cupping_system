@@ -1,5 +1,7 @@
 import {
   Component,
+  OnInit,
+  DestroyRef,
   computed,
   ElementRef,
   inject,
@@ -15,7 +17,12 @@ import {
 } from '@angular/forms';
 
 import { CoffeeSample } from '../../models/coffee-sample';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  IndividualSessionService,
+  SessionView
+} from '../../services/individual-session.service';
 
 @Component({
   selector: 'app-cupping',
@@ -26,12 +33,102 @@ import { Router, RouterLink } from '@angular/router';
   templateUrl: './cupping.html',
   styleUrl: './cupping.css'
 })
-export class Cupping {
+export class Cupping implements OnInit {
 
   private readonly HISTORY_KEY =
     'aromaArtisans.cuppingHistory.v1';
 
   private readonly router = inject(Router);
+
+  private readonly route = inject(ActivatedRoute);
+  private readonly individualSessions = inject(IndividualSessionService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly sessionIdParam =
+    this.route.snapshot.queryParamMap.get('sessionId');
+
+  readonly isSavedSession = this.sessionIdParam !== null;
+
+  loadingSession = signal(false);
+  sessionLoadError = signal('');
+  savedSession = signal<SessionView | null>(null);
+
+  ngOnInit(): void {
+    if (!this.isSavedSession) {
+      return;
+    }
+
+    const sessionId = Number(this.sessionIdParam);
+
+    if (!Number.isSafeInteger(sessionId) || sessionId < 1) {
+      this.sessionLoadError.set('Invalid session ID.');
+      return;
+    }
+
+    this.loadingSession.set(true);
+
+    this.individualSessions.get(sessionId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: session => {
+          this.loadingSession.set(false);
+
+          if (!session.canEvaluate) {
+            this.sessionLoadError.set(
+              'You are not an evaluator for this session.'
+            );
+            return;
+          }
+
+          if (session.samples.length === 0) {
+            this.sessionLoadError.set(
+              'This session does not contain any coffee samples.'
+            );
+            return;
+          }
+
+          this.savedSession.set(session);
+
+          // Preserve sequential positions for Previous/Next navigation.
+          // Database IDs and full sample details remain in savedSession.
+          this.samples.set(
+            session.samples.map((_, index) =>
+              this.createSample(index + 1)
+            )
+          );
+
+          this.selectedSampleCount.set(session.samples.length);
+          this.activeSample.set(1);
+          this.currentStage.set('aroma');
+
+          this.aromaLocked.set(false);
+          this.aromaValidationActive.set(false);
+          this.aromaErrorSamples.set([]);
+          this.flavorValidationActive.set(false);
+          this.flavorErrorSamples.set([]);
+
+          this.aromaForm.enable({ emitEvent: false });
+          this.loadAromaForm(1);
+          this.sessionStarted.set(true);
+        },
+        error: () => {
+          this.loadingSession.set(false);
+          this.sessionLoadError.set(
+            'Unable to load this session. Check your login and access, then refresh.'
+          );
+        }
+      });
+  }
+
+  sampleDetails(position: number) {
+    return this.savedSession()?.samples[position - 1];
+  }
+
+  sampleLabel(position: number): string {
+    return this.sampleDetails(position)?.sampleCode
+      ?? String(position);
+  }
+
 
   finalizing = signal(false);
   readonly fivePointScale = [1, 2, 3, 4, 5];
@@ -856,6 +953,10 @@ goToReview() {
 
 
   startCupping() {
+    if (this.isSavedSession) {
+      return;
+    }
+
 
     const count = this.sampleCount.value;
     this.currentStage.set('aroma');

@@ -13,13 +13,37 @@
 
       <h1>From aroma to final cup.</h1>
 
-      <p style="color: var(--crema)">Multi-step digital cupping form • Choose 1–10 samples before starting</p>
+      <p style="color: var(--crema)">
+        @if (isSavedSession) {
+        {{ savedSession()?.sessionName || 'Individual Cupping' }}
+        • Evaluate your selected coffee samples
+        } @else {
+        Multi-step digital cupping form • Choose 1–10 samples before starting
+        }
+      </p>
     </div>
 
     <div class="bean" aria-hidden="true"></div>
   </header>
 
-  @if (!sessionStarted()) {
+  @if (loadingSession()) {
+  <section class="panel">
+    <div class="content" role="status">
+      Loading session and coffee samples…
+    </div>
+  </section>
+  }
+
+  @if (sessionLoadError()) {
+  <section class="panel">
+    <div class="content">
+      <p role="alert">{{ sessionLoadError() }}</p>
+      <a class="back-link" routerLink="/">← Back to Home</a>
+    </div>
+  </section>
+  }
+
+  @if (!isSavedSession && !sessionStarted()) {
 
   <section class="sample-setup">
     <div class="sample-setup-inner">
@@ -198,7 +222,7 @@
         " (click)="selectSample(sample.id)">
         <span class="dot"></span>
 
-        Sample {{ sample.id }}
+        Sample {{ sampleLabel(sample.id) }}
       </button>
 
       }
@@ -208,7 +232,7 @@
 
     <div class="content">
       <div class="sample-title">
-        <h3>Sample {{ activeSample() }}</h3>
+        <h3>Sample {{ sampleLabel(activeSample()) }}</h3>
 
         <span class="pill"> Aroma • 5 cups evaluated as one sample </span>
       </div>
@@ -595,15 +619,16 @@
         (click)="selectSample(sample.id)">
         <span class="dot"></span>
 
-        Sample {{ sample.id }}
+        Sample {{ sampleLabel(sample.id) }}
       </button>
 
       }
     </div>
 
     <div class="content">
+
       <div class="sample-title">
-        <h3>Sample {{ activeSample() }}</h3>
+        <h3>Sample {{ sampleLabel(activeSample()) }}</h3>
 
         <span class="pill"> Flavor stage • flexible/editable </span>
       </div>
@@ -1207,6 +1232,7 @@
         @for ( sample of samples(); track sample.id ) {
 
         <article class="review-card">
+
           <div style="
                             display: flex;
 
@@ -1218,7 +1244,7 @@
 
                             margin-bottom: 12px;
                         ">
-            <h4>Sample {{ sample.id }}</h4>
+            <h4>Sample {{ sampleLabel(sample.id) }}</h4>
 
             <button class="btn ghost" type="button" (click)="editFlavor(sample.id)">
               Edit Flavor Test
@@ -1257,30 +1283,30 @@
 
           <div class="review-qualities">
             <b> Selected Aroma Qualities </b>
-              <div class="review-quality-groups">
+            <div class="review-quality-groups">
 
-                @for (
-                group of groupSelectedQualities(sample.aroma.qualities);
-                track group.parent
-                ) {
+              @for (
+              group of groupSelectedQualities(sample.aroma.qualities);
+              track group.parent
+              ) {
 
-                <div class="review-quality-line">
+              <div class="review-quality-line">
 
-                  <strong>{{ group.parent }}</strong>
+                <strong>{{ group.parent }}</strong>
 
-                  @if (group.children.length > 0) {
-                  <span>: {{ group.children.join(', ') }}</span>
-                  }
-
-                </div>
-
-                } @empty {
-
-                <span>—</span>
-
+                @if (group.children.length > 0) {
+                <span>: {{ group.children.join(', ') }}</span>
                 }
 
               </div>
+
+              } @empty {
+
+              <span>—</span>
+
+              }
+
+            </div>
           </div>
 
           <div class="review-qualities">
