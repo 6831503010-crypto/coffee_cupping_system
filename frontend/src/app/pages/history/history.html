@@ -52,12 +52,16 @@
       </button>
     </section>
 
-    } @else { @for ( record of records(); track record.id; let sessionIndex = $index ) {
+    } @else { @for (
+    record of paginatedRecords();
+    track record.id;
+    let sessionIndex = $index
+    ) {
 
     <article class="history-card">
       <div class="history-card-head">
         <div>
-          <h2>Session {{ records().length - sessionIndex }}</h2>
+          <h2>Session {{ sessionNumber(sessionIndex) }}</h2>
 
           <div class="history-date">
             {{ formatDate(record.completedAt) }} • {{ record.samples?.length || 0 }} {{
@@ -142,7 +146,7 @@
           <button class="details-toggle" type="button" (click)="
               openSampleDetails(
                 sample,
-                records().length - sessionIndex
+                sessionNumber(sessionIndex)
               )
             ">
             View details
@@ -161,6 +165,35 @@
 
     } }
   </main>
+
+  @if (sessionCount() > 0) {
+  <div class="history-pagination">
+    <p class="pagination-summary" aria-live="polite">
+      Showing {{ showingFrom() }}–{{ showingTo() }}
+      of {{ sessionCount() }} sessions
+    </p>
+
+    @if (totalPages() > 1) {
+    <nav class="pagination-controls" aria-label="History pages">
+      <button type="button" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
+        Previous
+      </button>
+
+      @for (page of pageNumbers(); track page) {
+      <button type="button" [class.active]="currentPage() === page"
+        [attr.aria-current]="currentPage() === page ? 'page' : null" [attr.aria-label]="'Page ' + page"
+        (click)="goToPage(page)">
+        {{ page }}
+      </button>
+      }
+
+      <button type="button" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
+        Next
+      </button>
+    </nav>
+    }
+  </div>
+  }
 
   @if (selectedDetails(); as details) {
 

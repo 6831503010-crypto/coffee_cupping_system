@@ -1,29 +1,4 @@
-<header class="site-header">
-  <a class="brand" routerLink="/" aria-label="Coffee Cupping System home" (click)="closeMenu()">
-    <span class="bean" aria-hidden="true"></span>
 
-    <span class="brand-text">
-      <strong>Coffee Cupping</strong>
-      <strong>System</strong>
-    </span>
-  </a>
-
-  <nav class="site-nav" id="siteNav" aria-label="Primary navigation" [class.open]="menuOpen()">
-    <a routerLink="/" (click)="closeMenu()">HOME</a>
-
-    <a routerLink="/about" (click)="closeMenu()">ABOUT</a>
-
-    <a routerLink="/history" (click)="closeMenu()">HISTORY</a>
-    <button class="nav-logout" type="button" (click)="logout()">
-      LOGOUT
-    </button>
-  </nav>
-
-  <button class="menu-toggle" type="button" aria-label="Open navigation" [attr.aria-expanded]="menuOpen()"
-    aria-controls="siteNav" (click)="toggleMenu()">
-    ☰
-  </button>
-</header>
 
 <main>
   <section class="landing-hero">

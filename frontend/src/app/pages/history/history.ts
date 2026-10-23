@@ -51,6 +51,77 @@ export class History {
 
   records = signal<HistoryRecord[]>(this.readHistory());
 
+  readonly pageSize = 5;
+  readonly currentPage = signal(1);
+
+  readonly sortedRecords = computed(() =>
+    [...this.records()].sort((a, b) => {
+      const aTime = Date.parse(a.completedAt);
+      const bTime = Date.parse(b.completedAt);
+
+      return (Number.isNaN(bTime) ? 0 : bTime)
+        - (Number.isNaN(aTime) ? 0 : aTime);
+    })
+  );
+
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.records().length / this.pageSize))
+  );
+
+  readonly pageStartIndex = computed(() =>
+    (this.currentPage() - 1) * this.pageSize
+  );
+
+  readonly paginatedRecords = computed(() =>
+    this.sortedRecords().slice(
+      this.pageStartIndex(),
+      this.pageStartIndex() + this.pageSize
+    )
+  );
+
+  readonly showingFrom = computed(() =>
+    this.records().length === 0 ? 0 : this.pageStartIndex() + 1
+  );
+
+  readonly showingTo = computed(() =>
+    Math.min(
+      this.pageStartIndex() + this.pageSize,
+      this.records().length
+    )
+  );
+
+  readonly pageNumbers = computed(() => {
+    const total = this.totalPages();
+    const start = Math.max(
+      1,
+      Math.min(this.currentPage() - 2, total - 4)
+    );
+
+    return Array.from(
+      { length: Math.min(5, total) },
+      (_, index) => start + index
+    );
+  });
+
+  goToPage(page: number): void {
+    if (
+      !Number.isInteger(page) ||
+      page < 1 ||
+      page > this.totalPages()
+    ) {
+      return;
+    }
+
+    this.closeSampleDetails();
+    this.currentPage.set(page);
+  }
+
+  sessionNumber(indexOnPage: number): number {
+    return this.records().length
+      - this.pageStartIndex()
+      - indexOnPage;
+  }
+
   // openDetails = signal<Set<string>>(new Set());
   private readonly historyQualityGroups = [
     { parent: 'Floral', children: [] },
@@ -129,7 +200,7 @@ export class History {
   );
 
   latestDate = computed(() => {
-    const records = this.records();
+    const records = this.sortedRecords();
 
     return records.length
       ? this.formatDate(records[0].completedAt)
@@ -159,6 +230,10 @@ export class History {
     );
 
     this.records.set(records);
+
+    this.currentPage.update(page =>
+      Math.min(page, this.totalPages())
+    );
   }
 
 
@@ -356,6 +431,7 @@ export class History {
     );
 
     this.records.set([]);
+    this.currentPage.set(1);
     // this.openDetails.set(new Set());
     this.selectedDetails.set(null);
   }

@@ -1,7 +1,9 @@
 .guide-container {
-  max-width: 1100px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 2.5rem 2rem 4rem;
+  padding: 2.5rem 20px 4rem;
   font-family: inherit;
   color: #3e2723;
 }
@@ -111,4 +113,14 @@
   border-radius: 10px;
   font-style: italic;
   font-size: 1.1rem;
+}
+
+@media (max-width: 600px) {
+  .guide-container {
+    padding-inline: 16px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
 }

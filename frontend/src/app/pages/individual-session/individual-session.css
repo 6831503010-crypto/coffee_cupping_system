@@ -1,7 +1,9 @@
 .individual-container {
-  max-width: 850px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1180px;
   margin: 2rem auto;
-  padding: 1.5rem;
+  padding: 1.5rem 20px;
   color: #3e2723;
 }
 
@@ -439,4 +441,10 @@
   background: #5d4037;
   border-color: #5d4037;
   color: #fff;
+}
+
+@media (max-width: 600px) {
+  .individual-container {
+    padding-inline: 16px;
+  }
 }
