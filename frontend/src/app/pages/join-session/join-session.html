@@ -1,0 +1,85 @@
+<main class="shell join-shell">
+  <a routerLink="/" class="back-link">
+    &larr; Back to Home
+  </a>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Coffee Cupping</div>
+      <h1>Join a Session</h1>
+      <p>Check the session details before joining as an evaluator.</p>
+    </div>
+  </header>
+
+  <section class="panel landing-panel" aria-labelledby="join-title" [attr.aria-busy]="loading() || joining()">
+    <div class="panel-head">
+      <div>
+        <div class="eyebrow">Session Participation</div>
+        <h2 id="join-title">
+          {{ preview()?.sessionName || 'Participation link' }}
+        </h2>
+      </div>
+    </div>
+
+    <div class="content">
+      @if (loading()) {
+      <p class="muted" role="status">Loading session details...</p>
+      }
+
+      @if (error()) {
+      <p class="join-error" role="alert">{{ error() }}</p>
+      }
+
+      @if (!loading()) {
+      @if (preview(); as info) {
+      <p class="pill capacity">
+        Evaluators: {{ info.joinedEvaluators }}
+        / {{ info.evaluatorLimit }}
+      </p>
+
+      @if (info.alreadyParticipating) {
+      <p role="status">
+        You are already an evaluator in this session.
+        Opening it will not use another place.
+      </p>
+      } @else {
+      <p role="status">{{ info.message }}</p>
+      }
+
+      @if (info.canJoin && !info.alreadyParticipating) {
+      <p class="muted">
+        Joining uses one evaluator place. Your evaluation records
+        will be associated with your account.
+      </p>
+      }
+      }
+      }
+    </div>
+
+    <div class="actions">
+      <a routerLink="/" class="btn secondary btn-link">
+        Back to Home
+      </a>
+
+      <div class="join-buttons">
+        <button type="button" class="btn ghost" [disabled]="loading() || joining()" (click)="loadPreview()">
+          Refresh
+        </button>
+
+        @if (!loading()) {
+        @if (preview(); as info) {
+        @if (info.alreadyParticipating) {
+        <a class="btn primary btn-link" [routerLink]="['/individual', info.sessionId]">
+          Open session
+        </a>
+        } @else if (info.canJoin) {
+        <button type="button" class="btn primary" [disabled]="joining()" (click)="join()">
+          {{ joining() ? 'Joining...' : 'Join session' }}
+        </button>
+        }
+        }
+        }
+      </div>
+    </div>
+  </section>
+</main>

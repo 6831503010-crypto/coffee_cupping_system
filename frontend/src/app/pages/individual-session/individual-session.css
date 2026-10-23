@@ -312,3 +312,131 @@
       font-size: 0.875rem;
       line-height: 1.4;
     }
+
+        .evaluator-autocomplete {
+          position: relative;
+        }
+
+        .evaluator-dropdown {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0;
+          right: 0;
+          z-index: 20;
+          max-height: 280px;
+          overflow-y: auto;
+          background: #fff;
+          border: 1px solid #d6c9c0;
+          border-radius: 8px;
+          box-shadow: 0 8px 24px rgb(62 39 35 / 12%);
+        }
+
+        .evaluator-suggestions {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+
+        .evaluator-option {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 12px 14px;
+          cursor: pointer;
+          overflow-wrap: anywhere;
+        }
+
+        .evaluator-option+.evaluator-option {
+          border-top: 1px solid #eee2d8;
+        }
+
+        .evaluator-option.active,
+        .evaluator-option:hover {
+          background: #f7f2ed;
+        }
+
+        .evaluator-option span {
+          color: #795548;
+          font-size: 0.9rem;
+        }
+
+        .evaluator-search-status {
+          margin: 0;
+          padding: 12px 14px;
+          color: #795548;
+        }
+
+        /* Red border only; preserve the normal input background. */
+        .setup-section input.input-error {
+          border-color: #b42318;
+        }
+
+                .evaluator-card {
+                  flex-wrap: nowrap;
+                  align-items: flex-start;
+                }
+
+                .evaluator-card-details {
+                  min-width: 0;
+                  overflow-wrap: anywhere;
+                }
+
+                .setup-section .remove-evaluator-button {
+                  display: grid;
+                  place-items: center;
+                  flex-shrink: 0;
+                  width: 40px;
+                  height: 40px;
+                  margin: 0;
+                  padding: 0;
+                  border: 1px solid #d6c9c0;
+                  border-radius: 8px;
+                  background: #fff;
+                  color: #795548;
+                  font-size: 26px;
+                  line-height: 1;
+                }
+
+                .setup-section .remove-evaluator-button:hover:not(:disabled) {
+                  border-color: #b42318;
+                  color: #b42318;
+                }
+
+                .setup-section .remove-evaluator-button:focus-visible {
+                  outline: 2px solid #795548;
+                  outline-offset: 3px;
+                }
+.remove-evaluator-content {
+  padding: 1.5rem;
+  overflow-wrap: anywhere;
+}
+
+.remove-evaluator-content p {
+  margin: 0 0 1rem;
+}
+
+.remove-evaluator-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.remove-evaluator-actions button {
+  padding: 0.75rem 1rem;
+  border: 1px solid #d6c9c0;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.modal-cancel-button {
+  background: #fff;
+  color: #5d4037;
+}
+
+.remove-evaluator-actions .modal-remove-button {
+  background: #5d4037;
+  border-color: #5d4037;
+  color: #fff;
+}

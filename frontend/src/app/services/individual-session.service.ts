@@ -47,6 +47,8 @@ export interface SessionView {
   samples: SessionSample[];
   finalized: boolean;
   sampleDetailsVisible: boolean;
+  sessionEvaluatorId: number | null;
+  closed: boolean;
 }
 
 export interface CreateIndividualSessionRequest {
@@ -54,6 +56,40 @@ export interface CreateIndividualSessionRequest {
   evaluatorLimit: number;
   creatorParticipates: boolean;
   samples: SampleChoice[];
+}
+
+export interface ParticipationLink {
+  token: string;
+}
+
+export interface ParticipationResult {
+  sessionId: number;
+  sessionEvaluatorId: number;
+  alreadyParticipating: boolean;
+}
+
+export interface JoinPreview {
+  sessionId: number;
+  sessionName: string;
+  evaluatorLimit: number;
+  joinedEvaluators: number;
+  alreadyParticipating: boolean;
+  canJoin: boolean;
+  message: string;
+}
+
+export interface EvaluatorView {
+  sessionEvaluatorId: number;
+  userId: number;
+  name: string;
+  email: string;
+  creator: boolean;
+}
+
+export interface EvaluatorCandidate {
+  userId: number;
+  name: string;
+  email: string;
 }
 
 interface CsrfResponse {
@@ -92,6 +128,92 @@ export class IndividualSessionService {
         this.http.post<SessionView>(
           `${this.baseUrl}/individual-sessions`,
           request,
+          {
+            withCredentials: true,
+            headers: {
+              [csrf.headerName]: csrf.token
+            }
+          }
+        )
+      )
+    );
+  }
+
+  listEvaluators(sessionId: number) {
+    return this.http.get<EvaluatorView[]>(
+      `${this.baseUrl}/individual-sessions/${sessionId}/evaluators`,
+      { withCredentials: true }
+    );
+  }
+
+  searchEvaluatorCandidates(sessionId: number, query: string) {
+    return this.http.get<EvaluatorCandidate[]>(
+      `${this.baseUrl}/individual-sessions/${sessionId}/evaluator-candidates`,
+      {
+        withCredentials: true,
+        params: {
+          q: query.trim()
+        }
+      }
+    );
+  }
+
+  assignEvaluator(sessionId: number, email: string) {
+    return this.postWithCsrf<ParticipationResult>(
+      `/individual-sessions/${sessionId}/evaluators`,
+      { email: email.trim() }
+    );
+  }
+
+  removeEvaluator(membershipId: number) {
+    return this.http.get<CsrfResponse>(
+      `${this.baseUrl}/csrf`,
+      { withCredentials: true }
+    ).pipe(
+      switchMap(csrf =>
+        this.http.delete<void>(
+          `${this.baseUrl}/session-evaluators/${membershipId}`,
+          {
+            withCredentials: true,
+            headers: {
+              [csrf.headerName]: csrf.token
+            }
+          }
+        )
+      )
+    );
+  }
+
+  getParticipationLink(sessionId: number) {
+    return this.postWithCsrf<ParticipationLink>(
+      `/individual-sessions/${sessionId}/participation-link`,
+      {}
+    );
+  }
+
+  previewJoin(token: string) {
+    return this.http.get<JoinPreview>(
+      `${this.baseUrl}/individual-sessions/join/${encodeURIComponent(token)}`,
+      { withCredentials: true }
+    );
+  }
+
+  joinSession(token: string) {
+    return this.postWithCsrf<ParticipationResult>(
+      `/individual-sessions/join/${encodeURIComponent(token)}`,
+      {}
+    );
+  }
+
+  private postWithCsrf<T>(path: string, body: unknown) {
+    return this.http.get<CsrfResponse>(
+      `${this.baseUrl}/csrf`,
+      { withCredentials: true }
+    ).pipe(
+      switchMap(csrf =>
+        this.http.post<T>(
+          `${this.baseUrl}${path}`,
+          body,
           {
             withCredentials: true,
             headers: {

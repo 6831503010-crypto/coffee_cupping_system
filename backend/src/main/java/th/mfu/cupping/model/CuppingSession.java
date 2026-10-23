@@ -38,41 +38,115 @@ public class CuppingSession {
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
 
+  @Column(name = "evaluator_capacity", nullable = false, updatable = false)
+  private Integer evaluatorCapacity = 1;
+
+  @Column(name = "creator_participates", nullable = false, updatable = false)
+  private Boolean creatorParticipates = false;
+
   @PrePersist
   public void beforeInsert() {
-    if (createdAt == null) createdAt = LocalDateTime.now();
-    if (status == null) status = "DRAFT";
-    if (resultVisibility == null) resultVisibility = "PRIVATE";
+    if (createdAt == null)
+      createdAt = LocalDateTime.now();
+    if (status == null)
+      status = "DRAFT";
+    if (resultVisibility == null)
+      resultVisibility = "PRIVATE";
   }
 
-  public Integer getSessionId() { return sessionId; }
-  public void setSessionId(Integer value) { this.sessionId = value; }
+  public Integer getSessionId() {
+    return sessionId;
+  }
 
-  public Integer getCreatedBy() { return createdBy; }
-  public void setCreatedBy(Integer value) { this.createdBy = value; }
+  public void setSessionId(Integer value) {
+    this.sessionId = value;
+  }
 
-  public String getSessionName() { return sessionName; }
-  public void setSessionName(String value) { this.sessionName = value; }
+  public Integer getCreatedBy() {
+    return createdBy;
+  }
 
-  public String getMode() { return mode; }
-  public void setMode(String value) { this.mode = value; }
+  public void setCreatedBy(Integer value) {
+    this.createdBy = value;
+  }
 
-  public String getDescription() { return description; }
-  public void setDescription(String value) { this.description = value; }
+  public String getSessionName() {
+    return sessionName;
+  }
 
-  public LocalDateTime getCuppingDate() { return cuppingDate; }
-  public void setCuppingDate(LocalDateTime value) { this.cuppingDate = value; }
+  public void setSessionName(String value) {
+    this.sessionName = value;
+  }
 
-  public String getStatus() { return status; }
-  public void setStatus(String value) { this.status = value; }
+  public String getMode() {
+    return mode;
+  }
 
-  public String getResultVisibility() { return resultVisibility; }
-  public void setResultVisibility(String value) { this.resultVisibility = value; }
+  public void setMode(String value) {
+    this.mode = value;
+  }
 
-  public LocalDateTime getFinalizedAt() { return finalizedAt; }
-  public void setFinalizedAt(LocalDateTime value) { this.finalizedAt = value; }
+  public String getDescription() {
+    return description;
+  }
 
-  public LocalDateTime getCreatedAt() { return createdAt; }
-  public void setCreatedAt(LocalDateTime value) { this.createdAt = value; }
+  public void setDescription(String value) {
+    this.description = value;
+  }
 
+  public LocalDateTime getCuppingDate() {
+    return cuppingDate;
+  }
+
+  public void setCuppingDate(LocalDateTime value) {
+    this.cuppingDate = value;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String value) {
+    this.status = value;
+  }
+
+  public String getResultVisibility() {
+    return resultVisibility;
+  }
+
+  public void setResultVisibility(String value) {
+    this.resultVisibility = value;
+  }
+
+  public LocalDateTime getFinalizedAt() {
+    return finalizedAt;
+  }
+
+  public void setFinalizedAt(LocalDateTime value) {
+    this.finalizedAt = value;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(LocalDateTime value) {
+    this.createdAt = value;
+  }
+
+  public Integer getEvaluatorCapacity() {
+    return evaluatorCapacity;
+  }
+
+  public void setEvaluatorCapacity(Integer evaluatorCapacity) {
+    this.evaluatorCapacity = evaluatorCapacity;
+  }
+
+  public Boolean getCreatorParticipates() {
+    return creatorParticipates;
+  }
+
+  public void setCreatorParticipates(Boolean creatorParticipates) {
+    this.creatorParticipates = creatorParticipates;
+  }
 }

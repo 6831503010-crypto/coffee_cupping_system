@@ -232,9 +232,194 @@
 
     <p>
       Your role:
-      {{ info.canEvaluate ? 'Evaluator' : 'Creator only' }}
+      {{ info.isCreator
+      ? (info.sessionEvaluatorId !== null ? 'Creator and evaluator' : 'Creator only')
+      : 'Evaluator' }}
     </p>
   </section>
+
+  @if (info.isCreator) {
+  <section class="setup-section">
+    <h2>Manage Evaluators</h2>
+
+    <p>
+      Evaluators: {{ info.joinedEvaluators }} / {{ info.evaluatorLimit }}
+    </p>
+
+    <form (ngSubmit)="assignEvaluator()">
+      <label for="evaluatorSearch">Search by name or email</label>
+
+      <div class="evaluator-autocomplete">
+        <input id="evaluatorSearch" name="evaluatorSearch" type="text" autocomplete="off" spellcheck="false" role="combobox"
+          aria-autocomplete="list" aria-haspopup="listbox" [ngModel]="evaluatorSearchText"
+          (ngModelChange)="onEvaluatorSearchChange($event)" (focus)="onEvaluatorSearchFocus()"
+          (blur)="closeEvaluatorDropdown()" (keydown)="onEvaluatorSearchKeydown($event)" [disabled]="!canSearchEvaluators()"
+          [class.input-error]="!!evaluatorEmailError() || !!evaluatorSearchError()" [attr.aria-invalid]="
+            evaluatorEmailError() || evaluatorSearchError() ? 'true' : null
+          " [attr.aria-expanded]="evaluatorDropdownOpen()" [attr.aria-controls]="
+            evaluatorDropdownOpen() ? 'evaluatorSuggestions' : null
+          " [attr.aria-activedescendant]="
+            evaluatorDropdownOpen() && activeCandidateIndex() >= 0
+              ? 'evaluator-option-' + activeCandidateIndex()
+              : null
+          " [attr.aria-describedby]="
+            evaluatorEmailError() || evaluatorSearchError()
+              ? 'assignmentHelp evaluatorSearchError'
+              : 'assignmentHelp'
+          " placeholder="Type at least 2 characters" />
+
+        @if (evaluatorDropdownOpen()) {
+        <div class="evaluator-dropdown">
+          <ul id="evaluatorSuggestions" class="evaluator-suggestions" role="listbox" aria-label="Matching accounts"
+            [attr.aria-busy]="searchingEvaluators()">
+            @for (
+            candidate of evaluatorCandidates();
+            track candidate.userId;
+            let i = $index
+            ) {
+            <li [id]="'evaluator-option-' + i" class="evaluator-option" role="option"
+              [attr.aria-selected]="activeCandidateIndex() === i" [class.active]="activeCandidateIndex() === i"
+              (mouseenter)="activeCandidateIndex.set(i)" (mousedown)="$event.preventDefault()"
+              (click)="selectEvaluator(candidate)">
+              <strong>{{ candidate.name }}</strong>
+              <span>{{ candidate.email }}</span>
+            </li>
+            }
+          </ul>
+
+          @if (searchingEvaluators()) {
+          <p class="evaluator-search-status" role="status">
+            Searching accounts…
+          </p>
+          } @else if (
+          evaluatorSearchCompleted() &&
+          !evaluatorSearchError() &&
+          evaluatorCandidates().length === 0
+          ) {
+          <p class="evaluator-search-status" role="status">
+            No matching accounts found.
+          </p>
+          }
+        </div>
+        }
+      </div>
+
+      <p id="assignmentHelp" class="help">
+        @if (info.closed) {
+        This session is closed. Evaluators cannot be added.
+        } @else if (info.joinedEvaluators >= info.evaluatorLimit) {
+        All evaluator places are filled.
+        } @else {
+        Search for an account, select it, then click Add evaluator.
+        Use ↑ and ↓ to browse suggestions and Enter to select.
+        }
+      </p>
+
+      @if (evaluatorEmailError() || evaluatorSearchError()) {
+      <p id="evaluatorSearchError" class="field-error" role="alert">
+        {{ evaluatorEmailError() || evaluatorSearchError() }}
+      </p>
+      }
+
+      @if (selectedEvaluator(); as selected) {
+      <p class="help" role="status">
+        Selected: <strong>{{ selected.name }}</strong>
+        — {{ selected.email }}
+      </p>
+      }
+
+      <button type="submit" [disabled]="!canSearchEvaluators() || !selectedEvaluator()">
+        {{ assigningEvaluator() ? 'Adding...' : 'Add evaluator' }}
+      </button>
+    </form>
+
+    @if (participationSuccess()) {
+    <p role="status">{{ participationSuccess() }}</p>
+    }
+
+    <div class="sample-section-heading">
+      <h3>Current Evaluators</h3>
+
+      <button type="button" [disabled]="loadingEvaluators() || assigningEvaluator()|| removingEvaluatorId() !== null" (click)="refreshEvaluators()"> {{ loadingEvaluators() ? 'Refreshing...' : 'Refresh list' }}
+      </button>
+    </div>
+
+    @if (evaluatorListError()) {
+    <p class="field-error" role="alert">
+      {{ evaluatorListError() }}
+    </p>
+    }
+
+    @if (evaluatorRemovalError()) {
+    <p class="field-error" role="alert">
+      {{ evaluatorRemovalError() }}
+    </p>
+    }
+
+    @for (evaluator of evaluators(); track evaluator.sessionEvaluatorId) {
+    <article class="sample-row evaluator-card">
+      <div class="evaluator-card-details">
+        <strong>{{ evaluator.name }}</strong>
+
+        @if (evaluator.creator) {
+        <span> · Creator</span>
+        }
+
+        <p>{{ evaluator.email }}</p>
+      </div>
+
+      <button type="button" class="remove-evaluator-button" [disabled]="
+          info.closed ||
+          loadingEvaluators() ||
+          assigningEvaluator() ||
+          removingEvaluatorId() !== null
+        " [attr.aria-label]="'Remove ' + evaluator.name + ' as an evaluator'" [title]="
+          info.closed
+            ? 'Evaluators cannot be removed from a closed session'
+            : 'Remove evaluator'
+        " (click)="removeEvaluator(evaluator)">
+        {{ removingEvaluatorId() === evaluator.sessionEvaluatorId ? '…' : '×' }}
+      </button>
+    </article>
+    } @empty {
+    @if (!loadingEvaluators() && !evaluatorListError()) {
+    <p class="help">No evaluators have joined yet.</p>
+    }
+    }
+  </section>
+
+  <section class="setup-section">
+    <h2>Participation Link</h2>
+
+    <p class="help">
+      Share this link with your evaluators. Anyone signed in who has
+      the link can join while places remain.
+    </p>
+
+    <button type="button" [disabled]="generatingLink() || info.closed" (click)="generateParticipationLink()">
+      {{ generatingLink() ? 'Getting link...' : 'Get participation link' }}
+    </button>
+
+    @if (participationLink()) {
+    <label for="participationLink">Session participation link</label>
+
+    <input #linkInput id="participationLink" type="text" readonly [value]="participationLink()"
+      (focus)="linkInput.select()" />
+
+    <button type="button" [disabled]="copyingLink()" (click)="copyParticipationLink()">
+      {{ copyingLink() ? 'Copying...' : 'Copy link' }}
+    </button>
+    }
+
+    @if (linkMessage()) {
+    <p role="status">{{ linkMessage() }}</p>
+    }
+
+    @if (linkError()) {
+    <p class="field-error" role="alert">{{ linkError() }}</p>
+    }
+  </section>
+  }
 
   <section class="setup-section">
     <h2>Session Coffee Samples</h2>
@@ -269,6 +454,10 @@
   <p class="help">
     This session is completed. Sample details are now available.
   </p>
+  } @else if (info.closed) {
+  <p class="help">
+    This session is closed. Evaluation is unavailable.
+  </p>
   } @else if (info.canEvaluate) {
   <a class="action-link" routerLink="/cupping" [queryParams]="{ sessionId: info.sessionId }">
     Start Evaluation →
@@ -280,4 +469,45 @@
   }
   }
   }
+
+  <dialog #removeEvaluatorDialog class="sample-modal" aria-labelledby="removeEvaluatorTitle"
+    aria-describedby="removeEvaluatorDescription" (cancel)="onRemoveEvaluatorCancel($event)">
+    <div class="sample-modal-heading">
+      <h2 id="removeEvaluatorTitle">Remove evaluator?</h2>
+
+      <button type="button" class="sample-modal-close" aria-label="Close removal confirmation"
+        (click)="closeRemoveEvaluatorModal()">
+        ×
+      </button>
+    </div>
+
+    <div class="remove-evaluator-content">
+      <p id="removeEvaluatorDescription">
+        @if (evaluatorToRemove(); as evaluator) {
+        @if (evaluator.creator) {
+        Remove yourself as an evaluator?
+        You will remain the session creator and can still manage this session.
+        } @else {
+        Remove <strong>{{ evaluator.name }}</strong>
+        ({{ evaluator.email }}) from this session?
+        }
+        }
+      </p>
+
+      <p class="help">
+        Removal frees an evaluator place. Evaluators with saved evaluations
+        cannot be removed.
+      </p>
+
+      <div class="remove-evaluator-actions">
+        <button type="button" class="modal-cancel-button" autofocus (click)="closeRemoveEvaluatorModal()">
+          Cancel
+        </button>
+
+        <button type="button" class="modal-remove-button" (click)="confirmEvaluatorRemoval()">
+          Remove evaluator
+        </button>
+      </div>
+    </div>
+  </dialog>
 </main>

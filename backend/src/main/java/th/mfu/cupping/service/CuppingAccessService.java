@@ -67,31 +67,57 @@ public class CuppingAccessService {
   }
 
   public void requireSessionRead(Integer id, User user) {
-    if (!canReadSession(session(id), user)) deny();
+    if (!canReadSession(session(id), user))
+      deny();
   }
 
   public void requireSessionOwner(Integer id, User user) {
-    if (!session(id).getCreatedBy().equals(user.getUserId())) deny();
+    if (!session(id).getCreatedBy().equals(user.getUserId()))
+      deny();
   }
 
   public void requireSessionOpen(Integer id) {
-    String status = session(id).getStatus();
-    if ("FINALIZED".equals(status) || "CANCELLED".equals(status))
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Session is closed");
+    var item = session(id);
+
+    if (item.getFinalizedAt() != null
+        || "FINALIZED".equals(item.getStatus())
+        || "CANCELLED".equals(item.getStatus())) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Session is closed");
+    }
   }
 
   public boolean canReadSample(CoffeeSample sample, User user) {
-    if (sample.getCreatedBy().equals(user.getUserId())) return true;
+    // The sample owner already knows its details.
+    if (sample.getCreatedBy().equals(user.getUserId())) {
+      return true;
+    }
+
     return sessionSamples.findBySampleId(sample.getSampleId()).stream()
-        .anyMatch(ss -> canReadSession(session(ss.getSessionId()), user));
+        .anyMatch(ss -> {
+          CuppingSession session = session(ss.getSessionId());
+
+          // The session organizer can manage its samples.
+          if (session.getCreatedBy().equals(user.getUserId())) {
+            return true;
+          }
+
+          boolean completed = "FINALIZED".equals(session.getStatus())
+              && session.getFinalizedAt() != null;
+
+          // Other users need both completion and session read access.
+          return completed && canReadSession(session, user);
+        });
   }
 
   public void requireSampleRead(Integer id, User user) {
-    if (!canReadSample(sample(id), user)) deny();
+    if (!canReadSample(sample(id), user))
+      deny();
   }
 
   public void requireSampleOwner(Integer id, User user) {
-    if (!sample(id).getCreatedBy().equals(user.getUserId())) deny();
+    if (!sample(id).getCreatedBy().equals(user.getUserId()))
+      deny();
   }
 
   public boolean canReadEvaluation(Evaluation evaluation, User user) {
@@ -105,13 +131,15 @@ public class CuppingAccessService {
   }
 
   public void requireEvaluationRead(Integer id, User user) {
-    if (!canReadEvaluation(evaluation(id), user)) deny();
+    if (!canReadEvaluation(evaluation(id), user))
+      deny();
   }
 
   public void requireEvaluationWrite(Integer id, User user) {
     Evaluation evaluation = evaluation(id);
     SessionEvaluator evaluator = evaluator(evaluation.getSessionEvaluatorId());
-    if (!evaluator.getUserId().equals(user.getUserId())) deny();
+    if (!evaluator.getUserId().equals(user.getUserId()))
+      deny();
     requireSessionOpen(evaluator.getSessionId());
     if ("FINALIZED".equals(evaluation.getStatus()))
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Evaluation is finalized");
@@ -122,12 +150,14 @@ public class CuppingAccessService {
     SessionSample sample = sessionSample(sessionSampleId);
     if (!evaluator.getSessionId().equals(sample.getSessionId()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Evaluator and sample must belong to same session");
-    if (!evaluator.getUserId().equals(user.getUserId())) deny();
+    if (!evaluator.getUserId().equals(user.getUserId()))
+      deny();
     requireSessionOpen(evaluator.getSessionId());
   }
 
   public void requireSelf(Integer userId, User user) {
-    if (!user.getUserId().equals(userId)) deny();
+    if (!user.getUserId().equals(userId))
+      deny();
   }
 
   public void deny() {

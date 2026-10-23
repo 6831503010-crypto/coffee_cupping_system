@@ -18,37 +18,70 @@ import th.mfu.cupping.service.CuppingAccessService;
 public class SessionSampleController {
   private final SessionSampleRepository repo;
   private final CuppingAccessService access;
-  
 
   public SessionSampleController(SessionSampleRepository repo, CuppingAccessService access) {
-    this.repo = repo; this.access = access; 
+    this.repo = repo;
+    this.access = access;
+  }
+
+  public record SessionSampleView(
+      Integer sessionSampleId,
+      Integer sessionId,
+      Integer sampleId,
+      String sampleCode,
+      Integer displayOrder) {
+  }
+
+  private SessionSampleView toView(SessionSample item, User user) {
+    CuppingSession session = access.session(item.getSessionId());
+
+    boolean isCreator = session.getCreatedBy().equals(user.getUserId());
+
+    boolean completed = "FINALIZED".equals(session.getStatus())
+        && session.getFinalizedAt() != null;
+
+    return new SessionSampleView(
+        item.getSessionSampleId(),
+        item.getSessionId(),
+        isCreator || completed ? item.getSampleId() : null,
+        item.getSampleCode(),
+        item.getDisplayOrder());
   }
 
   @GetMapping
-  public List<SessionSample> list(Authentication auth) {
+  public List<SessionSampleView> list(Authentication auth) {
     User user = access.current(auth);
+
     return repo.findAll().stream()
-        .filter(item -> { try { access.requireSessionRead(item.getSessionId(), user); return true; } catch (org.springframework.web.server.ResponseStatusException ex) { return false; } })
+        .filter(item -> access.canReadSession(
+            access.session(item.getSessionId()), user))
+        .map(item -> toView(item, user))
         .toList();
   }
 
   @GetMapping("/{id}")
-  public SessionSample get(@PathVariable Integer id, Authentication auth) {
+  public SessionSampleView get(
+      @PathVariable Integer id,
+      Authentication auth) {
+
     User user = access.current(auth);
     SessionSample item = find(id);
+
     access.requireSessionRead(item.getSessionId(), user);
-    return item;
+
+    return toView(item, user);
   }
 
   private SessionSample find(Integer id) {
-    return repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "SessionSample not found"));
+    return repo.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "SessionSample not found"));
   }
 
   @PostMapping
   @Transactional
   public ResponseEntity<SessionSample> create(@Valid @RequestBody SessionSampleRequest request, Authentication auth) {
     User user = access.current(auth);
-access.requireSessionOwner(request.sessionId(), user);
+    access.requireSessionOwner(request.sessionId(), user);
     access.requireSessionOpen(request.sessionId());
     access.requireSampleOwner(request.sampleId(), user);
 
@@ -65,11 +98,13 @@ access.requireSessionOwner(request.sessionId(), user);
 
   @PutMapping("/{id}")
   @Transactional
-  public SessionSample update(@PathVariable Integer id, @Valid @RequestBody SessionSampleRequest request, Authentication auth) {
+  public SessionSample update(@PathVariable Integer id, @Valid @RequestBody SessionSampleRequest request,
+      Authentication auth) {
     User user = access.current(auth);
     SessionSample item = find(id);
-    access.requireSessionOwner(item.getSessionId(), user); access.requireSessionOpen(item.getSessionId());
-if (!item.getSessionId().equals(request.sessionId()))
+    access.requireSessionOwner(item.getSessionId(), user);
+    access.requireSessionOpen(item.getSessionId());
+    if (!item.getSessionId().equals(request.sessionId()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sessionId cannot be changed");
     access.requireSampleOwner(request.sampleId(), user);
 
@@ -86,7 +121,8 @@ if (!item.getSessionId().equals(request.sessionId()))
   public void delete(@PathVariable Integer id, Authentication auth) {
     User user = access.current(auth);
     SessionSample item = find(id);
-    access.requireSessionOwner(item.getSessionId(), user); access.requireSessionOpen(item.getSessionId());
+    access.requireSessionOwner(item.getSessionId(), user);
+    access.requireSessionOpen(item.getSessionId());
     repo.delete(item);
     repo.flush();
   }

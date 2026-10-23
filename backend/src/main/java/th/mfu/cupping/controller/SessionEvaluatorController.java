@@ -13,6 +13,10 @@ import th.mfu.cupping.model.*;
 import th.mfu.cupping.repository.*;
 import th.mfu.cupping.service.CuppingAccessService;
 
+import org.springframework.transaction.annotation.Isolation;
+import th.mfu.cupping.service.SessionParticipationService;
+import th.mfu.cupping.dto.IndividualSessionDtos.ParticipationResult;
+
 @RestController
 @RequestMapping("/api/session-evaluators")
 public class SessionEvaluatorController {
@@ -20,40 +24,82 @@ public class SessionEvaluatorController {
   private final CuppingAccessService access;
   private final UserRepository users;
 
-  public SessionEvaluatorController(SessionEvaluatorRepository repo, CuppingAccessService access, UserRepository users) {
-    this.repo = repo; this.access = access; this.users = users;
+  private final SessionParticipationService participation;
+
+  public SessionEvaluatorController(
+      SessionEvaluatorRepository repo,
+      CuppingAccessService access,
+      UserRepository users,
+      SessionParticipationService participation) {
+
+    this.repo = repo;
+    this.access = access;
+    this.users = users;
+    this.participation = participation;
   }
 
   @GetMapping
   public List<SessionEvaluator> list(Authentication auth) {
     User user = access.current(auth);
+
     return repo.findAll().stream()
-        .filter(item -> { try { access.requireSessionRead(item.getSessionId(), user); return true; } catch (org.springframework.web.server.ResponseStatusException ex) { return false; } })
+        .filter(item -> access.session(item.getSessionId())
+            .getCreatedBy()
+            .equals(user.getUserId()))
         .toList();
   }
 
   @GetMapping("/{id}")
-  public SessionEvaluator get(@PathVariable Integer id, Authentication auth) {
+  public SessionEvaluator get(
+      @PathVariable Integer id,
+      Authentication auth) {
+
     User user = access.current(auth);
     SessionEvaluator item = find(id);
-    access.requireSessionRead(item.getSessionId(), user);
+
+    access.requireSessionOwner(item.getSessionId(), user);
+
     return item;
   }
 
   private SessionEvaluator find(Integer id) {
-    return repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "SessionEvaluator not found"));
+    return repo.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "SessionEvaluator not found"));
   }
 
   @PostMapping
-  @Transactional
-  public ResponseEntity<SessionEvaluator> create(@Valid @RequestBody SessionEvaluatorRequest request, Authentication auth) {
+  @Transactional(isolation = Isolation.READ_COMMITTED)
+  public ResponseEntity<SessionEvaluator> create(
+      @Valid @RequestBody SessionEvaluatorRequest request,
+      Authentication auth) {
+
     User user = access.current(auth);
-access.requireSessionOwner(request.sessionId(), user);
+    access.requireSessionOwner(request.sessionId(), user);
+
+    CuppingSession session = access.session(request.sessionId());
+
+    User evaluator = users.findById(request.userId())
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "User not found"));
+
+    if ("INDIVIDUAL".equals(session.getMode())) {
+      ParticipationResult result = participation.assign(
+          request.sessionId(),
+          evaluator.getEmail(),
+          auth.getName());
+
+      SessionEvaluator membership = find(result.sessionEvaluatorId());
+
+      return ResponseEntity
+          .status(result.alreadyParticipating()
+              ? HttpStatus.OK
+              : HttpStatus.CREATED)
+          .body(membership);
+    }
+
+    // Preserve the existing event assignment behavior.
     access.requireSessionOpen(request.sessionId());
-    if ("INDIVIDUAL".equals(access.session(request.sessionId()).getMode()))
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Individual session already has its sole evaluator");
-    if (!users.existsById(request.userId()))
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
 
     SessionEvaluator item = new SessionEvaluator();
     item.setSessionId(request.sessionId());
@@ -67,11 +113,13 @@ access.requireSessionOwner(request.sessionId(), user);
 
   @PutMapping("/{id}")
   @Transactional
-  public SessionEvaluator update(@PathVariable Integer id, @Valid @RequestBody SessionEvaluatorRequest request, Authentication auth) {
+  public SessionEvaluator update(@PathVariable Integer id, @Valid @RequestBody SessionEvaluatorRequest request,
+      Authentication auth) {
     User user = access.current(auth);
     SessionEvaluator item = find(id);
-    access.requireSessionOwner(item.getSessionId(), user); access.requireSessionOpen(item.getSessionId());
-if (!item.getSessionId().equals(request.sessionId()) || !item.getUserId().equals(request.userId()))
+    access.requireSessionOwner(item.getSessionId(), user);
+    access.requireSessionOpen(item.getSessionId());
+    if (!item.getSessionId().equals(request.sessionId()) || !item.getUserId().equals(request.userId()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change session or evaluator identity");
 
     item.setJoinedAt(request.joinedAt());
@@ -80,13 +128,11 @@ if (!item.getSessionId().equals(request.sessionId()) || !item.getUserId().equals
   }
 
   @DeleteMapping("/{id}")
-  @Transactional
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void delete(@PathVariable Integer id, Authentication auth) {
-    User user = access.current(auth);
-    SessionEvaluator item = find(id);
-    access.requireSessionOwner(item.getSessionId(), user); access.requireSessionOpen(item.getSessionId());
-    repo.delete(item);
-    repo.flush();
+  public void delete(
+      @PathVariable Integer id,
+      Authentication auth) {
+
+    participation.removeEvaluator(id, auth.getName());
   }
 }

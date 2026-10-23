@@ -60,6 +60,53 @@ public final class IndividualSessionDtos {
       boolean canEvaluate,
       boolean finalized,
       boolean sampleDetailsVisible,
-      List<SessionSample> samples) {
+      List<SessionSample> samples,
+      Integer sessionEvaluatorId,
+      boolean closed) {
+  }
+
+  // Creator assigns an existing account using its registered email.
+  public record AssignEvaluatorRequest(
+      @NotBlank @Email @Size(max = 255) String email) {
+  }
+
+  // Returned only to the session creator.
+  // The frontend combines this token with its own origin and /join/.
+  public record ParticipationLink(
+      String token) {
+  }
+
+  // Limited information shown before joining.
+  // Deliberately contains no sample details or evaluator email addresses.
+  public record JoinPreview(
+      Integer sessionId,
+      String sessionName,
+      int evaluatorLimit,
+      int joinedEvaluators,
+      boolean alreadyParticipating,
+      boolean canJoin,
+      String message) {
+  }
+
+  // Returned after joining or assigning an evaluator.
+  public record ParticipationResult(
+      Integer sessionId,
+      Integer sessionEvaluatorId,
+      boolean alreadyParticipating) {
+  }
+
+  // Evaluator information displayed to the session creator.
+  public record EvaluatorView(
+      Integer sessionEvaluatorId,
+      Integer userId,
+      String name,
+      String email,
+      boolean creator) {
+  }
+
+  public record EvaluatorCandidate(
+      Integer userId,
+      String name,
+      String email) {
   }
 }

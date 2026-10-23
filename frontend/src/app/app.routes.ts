@@ -7,6 +7,7 @@ import { Register } from './pages/register/register';
 import { authGuard } from './guards/auth.guard';
 import { Guide } from './pages/guide/guide';
 import { IndividualSession } from './pages/individual-session/individual-session';
+import { JoinSession} from './pages/join-session/join-session';
 
 
 export const routes: Routes = [
@@ -41,6 +42,11 @@ export const routes: Routes = [
   {
     path: 'guide',
     component: Guide,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'join/:token',
+    component: JoinSession,
     canActivate: [authGuard]
   },
   {

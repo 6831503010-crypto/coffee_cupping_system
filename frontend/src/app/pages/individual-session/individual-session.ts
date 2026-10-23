@@ -1,5 +1,16 @@
 
-import { Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import {
+    EMPTY,
+    Subject,
+    catchError,
+    finalize,
+    forkJoin,
+    switchMap,
+    timer
+  } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component,DestroyRef, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ActivatedRoute,
@@ -12,7 +23,9 @@ import {
   LibrarySample,
   NewCoffeeSample,
   SampleChoice,
-  SessionView
+  SessionView,
+  EvaluatorView,
+  EvaluatorCandidate
 } from '../../services/individual-session.service';
 
 @Component({
@@ -34,6 +47,43 @@ export class IndividualSession {
   readonly error = signal('');
   readonly existingSampleError = signal('');
   readonly existingCodeError = signal('');
+
+  readonly evaluators = signal<EvaluatorView[]>([]);
+  readonly loadingEvaluators = signal(false);
+  readonly evaluatorListError = signal('');
+
+  readonly assigningEvaluator = signal(false);
+  readonly evaluatorEmailError = signal('');
+  readonly participationSuccess = signal('');
+
+  readonly participationLink = signal('');
+  readonly generatingLink = signal(false);
+  readonly copyingLink = signal(false);
+  readonly linkError = signal('');
+  readonly linkMessage = signal('');
+
+  evaluatorEmail = '';
+
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly evaluatorSearchRequests = new Subject<string>();
+
+  evaluatorSearchText = '';
+
+  readonly evaluatorCandidates = signal<EvaluatorCandidate[]>([]);
+  readonly selectedEvaluator = signal<EvaluatorCandidate | null>(null);
+  readonly searchingEvaluators = signal(false);
+  readonly evaluatorSearchError = signal('');
+  readonly evaluatorSearchCompleted = signal(false);
+  readonly evaluatorDropdownOpen = signal(false);
+  readonly activeCandidateIndex = signal(-1);
+
+  readonly removingEvaluatorId = signal<number | null>(null);
+  readonly evaluatorRemovalError = signal('');
+
+  readonly evaluatorToRemove = signal<EvaluatorView | null>(null);
+
+  @ViewChild('removeEvaluatorDialog')
+  private removeEvaluatorDialog?: ElementRef<HTMLDialogElement>;
 
   @ViewChild('newSampleDialog')
   private newSampleDialog?: ElementRef<HTMLDialogElement>;
@@ -131,6 +181,7 @@ export class IndividualSession {
   }
 
   constructor() {
+    this.setupEvaluatorSearch();
     if (this.sessionIdParam !== null) {
       const id = Number(this.sessionIdParam);
 
@@ -140,7 +191,13 @@ export class IndividualSession {
       }
 
       this.api.get(id).subscribe({
-        next: data => this.session.set(data),
+        next: data => {
+          this.session.set(data);
+
+          if (data.isCreator) {
+            this.refreshEvaluators();
+          }
+        },
         error: () => this.error.set(
           'Could not load this session.'
         )
@@ -340,5 +397,415 @@ export class IndividualSession {
     return Number.isInteger(this.evaluatorLimit)
       && this.evaluatorLimit >= 1
       && this.evaluatorLimit <= 10;
+  }
+
+  canSearchEvaluators(): boolean {
+    const info = this.session();
+
+    return !!info?.isCreator
+      && !info.closed
+      && info.joinedEvaluators < info.evaluatorLimit
+      && !this.assigningEvaluator()
+      && !this.loadingEvaluators()
+      && this.removingEvaluatorId() === null;
+  }
+
+  private setupEvaluatorSearch(): void {
+    this.evaluatorSearchRequests.pipe(
+      switchMap(query => {
+        // switchMap cancels the previous timer or HTTP request first.
+        this.searchingEvaluators.set(false);
+
+        const info = this.session();
+
+        if (
+          !info ||
+          !this.canSearchEvaluators() ||
+          query.length < 2 ||
+          query.length > 255
+        ) {
+          return EMPTY;
+        }
+
+        this.searchingEvaluators.set(true);
+
+        return timer(300).pipe(
+          switchMap(() =>
+            this.api.searchEvaluatorCandidates(info.sessionId, query)
+          ),
+          catchError((error: HttpErrorResponse) => {
+            this.evaluatorSearchError.set(
+              error.status === 401
+                ? 'Please sign in again.'
+                : error.status === 403
+                  ? 'Only the session creator can search for evaluators.'
+                  : error.status === 409
+                    ? 'The session is full or closed. Refresh the evaluator list.'
+                    : 'Could not search accounts. Edit the search to try again.'
+            );
+
+            return EMPTY;
+          }),
+          finalize(() => this.searchingEvaluators.set(false))
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(candidates => {
+      this.evaluatorCandidates.set(candidates);
+      this.evaluatorSearchCompleted.set(true);
+      this.activeCandidateIndex.set(-1);
+    });
+  }
+
+  onEvaluatorSearchChange(value: string): void {
+    this.evaluatorSearchText = value;
+
+    // Editing the text invalidates the previous account selection.
+    this.selectedEvaluator.set(null);
+    this.evaluatorEmail = '';
+
+    this.evaluatorCandidates.set([]);
+    this.activeCandidateIndex.set(-1);
+    this.evaluatorSearchCompleted.set(false);
+    this.evaluatorSearchError.set('');
+    this.evaluatorEmailError.set('');
+    this.participationSuccess.set('');
+
+    const query = value.trim();
+
+    this.evaluatorDropdownOpen.set(
+      this.canSearchEvaluators() && query.length >= 2
+    );
+
+    // Emit even short/empty queries to cancel an older request.
+    this.evaluatorSearchRequests.next(query);
+  }
+
+  selectEvaluator(candidate: EvaluatorCandidate): void {
+    if (!this.canSearchEvaluators()) return;
+
+    this.selectedEvaluator.set(candidate);
+    this.evaluatorEmail = candidate.email;
+    this.evaluatorSearchText = `${candidate.name} — ${candidate.email}`;
+    this.evaluatorEmailError.set('');
+    this.evaluatorSearchError.set('');
+
+    this.closeEvaluatorDropdown();
+  }
+
+  closeEvaluatorDropdown(): void {
+    this.evaluatorSearchRequests.next('');
+    this.evaluatorDropdownOpen.set(false);
+    this.activeCandidateIndex.set(-1);
+  }
+
+  onEvaluatorSearchFocus(): void {
+    if (!this.selectedEvaluator() && this.canSearchEvaluators()) {
+      this.onEvaluatorSearchChange(this.evaluatorSearchText);
+    }
+  }
+
+  onEvaluatorSearchKeydown(event: KeyboardEvent): void {
+    if (event.isComposing) return;
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeEvaluatorDropdown();
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      this.closeEvaluatorDropdown();
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      // Enter selects a suggestion; adding requires the Add button.
+      event.preventDefault();
+
+      if (this.evaluatorDropdownOpen()) {
+        const candidate =
+          this.evaluatorCandidates()[this.activeCandidateIndex()];
+
+        if (candidate) {
+          this.selectEvaluator(candidate);
+        }
+      }
+
+      return;
+    }
+
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+      return;
+    }
+
+    if (!this.canSearchEvaluators() || this.selectedEvaluator()) return;
+
+    event.preventDefault();
+
+    const candidates = this.evaluatorCandidates();
+    if (!candidates.length) return;
+
+    this.evaluatorDropdownOpen.set(true);
+
+    const current = this.activeCandidateIndex();
+    const next = event.key === 'ArrowDown'
+      ? (current + 1) % candidates.length
+      : current <= 0 ? candidates.length - 1 : current - 1;
+
+    this.activeCandidateIndex.set(next);
+  }
+
+  resetEvaluatorSearch(): void {
+    this.closeEvaluatorDropdown();
+    this.evaluatorSearchText = '';
+    this.evaluatorEmail = '';
+    this.selectedEvaluator.set(null);
+    this.evaluatorCandidates.set([]);
+    this.evaluatorSearchCompleted.set(false);
+    this.evaluatorSearchError.set('');
+  }
+
+  removeEvaluator(evaluator: EvaluatorView): void {
+    const info = this.session();
+
+    if (
+      !info?.isCreator ||
+      info.closed ||
+      this.removingEvaluatorId() !== null ||
+      this.assigningEvaluator() ||
+      this.loadingEvaluators()
+    ) {
+      return;
+    }
+
+    this.evaluatorToRemove.set(evaluator);
+    this.removeEvaluatorDialog?.nativeElement.showModal();
+  }
+
+  closeRemoveEvaluatorModal(): void {
+    this.removeEvaluatorDialog?.nativeElement.close();
+    this.evaluatorToRemove.set(null);
+  }
+
+  onRemoveEvaluatorCancel(event: Event): void {
+    event.preventDefault();
+    this.closeRemoveEvaluatorModal();
+  }
+
+  confirmEvaluatorRemoval(): void {
+  const evaluator = this.evaluatorToRemove();
+  if (!evaluator) return;
+  const info = this.session();
+
+  if (
+    !info?.isCreator ||
+    info.closed ||
+    this.removingEvaluatorId() !== null ||
+    this.assigningEvaluator() ||
+    this.loadingEvaluators()
+  ) {
+    return;
+  }
+
+  this.closeRemoveEvaluatorModal();
+
+  this.resetEvaluatorSearch();
+  this.evaluatorRemovalError.set('');
+  this.participationSuccess.set('');
+  this.removingEvaluatorId.set(evaluator.sessionEvaluatorId);
+
+  this.api.removeEvaluator(evaluator.sessionEvaluatorId).pipe(
+    takeUntilDestroyed(this.destroyRef),
+    finalize(() => this.removingEvaluatorId.set(null))
+  ).subscribe({
+    next: () => {
+      this.participationSuccess.set(
+        evaluator.creator
+          ? 'You are no longer an evaluator. You can still manage this session.'
+          : `${evaluator.name} was removed from this session.`
+      );
+
+      this.refreshEvaluators();
+    },
+    error: (error: HttpErrorResponse) => {
+      switch (error.status) {
+        case 401:
+          this.evaluatorRemovalError.set('Please sign in again.');
+          break;
+        case 403:
+          this.evaluatorRemovalError.set(
+            'Only the session creator can remove evaluators.'
+          );
+          break;
+        case 404:
+          this.evaluatorRemovalError.set(
+            'This evaluator membership no longer exists. The list will refresh.'
+          );
+          break;
+        case 409:
+          this.evaluatorRemovalError.set(
+            'Removal is unavailable because the evaluator has saved evaluations or the session is closed.'
+          );
+          break;
+        default:
+          this.evaluatorRemovalError.set(
+            'Could not confirm removal. Check the refreshed list before trying again.'
+          );
+      }
+
+      this.refreshEvaluators();
+    }
+  });
+}
+
+refreshEvaluators(): void {
+  const info = this.session();
+
+  if (!info?.isCreator || this.loadingEvaluators()) return;
+  this.resetEvaluatorSearch();
+
+  this.loadingEvaluators.set(true);
+  this.evaluatorListError.set('');
+
+  forkJoin({
+    session: this.api.get(info.sessionId),
+    evaluators: this.api.listEvaluators(info.sessionId)
+  }).pipe(
+    finalize(() => this.loadingEvaluators.set(false))
+  ).subscribe({
+    next: result => {
+      this.session.set(result.session);
+      this.evaluators.set(result.evaluators);
+    },
+    error: () => {
+      this.evaluatorListError.set(
+        'Could not refresh the evaluator list. Please try again.'
+      );
+    }
+  });
+}
+
+assignEvaluator(): void {
+  const info = this.session();
+
+  if (!info || !this.canSearchEvaluators()) return;
+
+  this.evaluatorEmailError.set('');
+  this.participationSuccess.set('');
+
+  const candidate = this.selectedEvaluator();
+
+  if (!candidate) {
+    this.evaluatorEmailError.set(
+      'Select an account from the suggestions first.'
+    );
+    return;
+  }
+
+  const email = candidate.email;
+  this.closeEvaluatorDropdown();
+
+  this.assigningEvaluator.set(true);
+
+  this.api.assignEvaluator(info.sessionId, email).pipe(
+    finalize(() => this.assigningEvaluator.set(false))
+  ).subscribe({
+    next: result => {
+      this.resetEvaluatorSearch();
+      this.participationSuccess.set(
+        result.alreadyParticipating
+          ? 'This account is already an evaluator. No extra place was used.'
+          : 'Evaluator added successfully.'
+      );
+
+      this.refreshEvaluators();
+    },
+    error: (error: HttpErrorResponse) => {
+      switch (error.status) {
+        case 400:
+          this.evaluatorEmailError.set('Enter a valid account email address.');
+          break;
+        case 403:
+          this.evaluatorEmailError.set(
+            'This assignment is not allowed. A creator who excluded themselves cannot be added.'
+          );
+          break;
+        case 404:
+          this.evaluatorEmailError.set(
+            'The account or session could not be found. Check the email address.'
+          );
+          break;
+        case 409:
+          this.evaluatorEmailError.set(
+            'The session is full or closed. No evaluator was added.'
+          );
+          break;
+        case 401:
+          this.evaluatorEmailError.set('Please sign in again.');
+          break;
+        default:
+          this.evaluatorEmailError.set(
+            'Could not confirm the assignment. Refresh the evaluator list before trying again.'
+          );
+      }
+
+      this.refreshEvaluators();
+    }
+  });
+}
+
+generateParticipationLink(): void {
+  const info = this.session();
+
+  if (!info?.isCreator || info.closed || this.generatingLink()) return;
+
+  this.generatingLink.set(true);
+  this.linkError.set('');
+  this.linkMessage.set('');
+
+  this.api.getParticipationLink(info.sessionId).pipe(
+    finalize(() => this.generatingLink.set(false))
+  ).subscribe({
+    next: result => {
+      const tree = this.router.createUrlTree(['/join', result.token]);
+      const path = this.router.serializeUrl(tree);
+
+      this.participationLink.set(
+        new URL(path, window.location.origin).href
+      );
+      this.linkMessage.set('Your participation link is ready to copy.');
+    },
+    error: (error: HttpErrorResponse) => {
+      this.linkError.set(
+        error.status === 409
+          ? 'This session is closed. A participation link is unavailable.'
+          : error.status === 401
+            ? 'Please sign in again.'
+            : 'Could not get the participation link. Please try again.'
+      );
+    }
+  });
+}
+
+async copyParticipationLink(): Promise<void> {
+    const link = this.participationLink();
+
+    if (!link || this.copyingLink()) return;
+
+    this.copyingLink.set(true);
+    this.linkError.set('');
+    this.linkMessage.set('');
+
+    try {
+      await navigator.clipboard.writeText(link);
+      this.linkMessage.set('Participation link copied.');
+    } catch {
+      this.linkError.set(
+        'Automatic copying is unavailable. Select and copy the link manually.'
+      );
+    } finally {
+      this.copyingLink.set(false);
+    }
   }
 }

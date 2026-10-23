@@ -35,7 +35,8 @@ public class IndividualSessionService {
         .withTableName("cupping_sessions")
         .usingColumns(
             "created_by", "session_name",
-            "mode", "evaluator_capacity")
+            "mode", "evaluator_capacity",
+            "creator_participates")
         .usingGeneratedKeyColumns("session_id");
 
     insertSample = new SimpleJdbcInsert(jdbc)
@@ -156,6 +157,10 @@ public class IndividualSessionService {
         "evaluator_capacity",
         request.evaluatorLimit());
 
+    sessionValues.put(
+        "creator_participates",
+        request.creatorParticipates());
+
     int sessionId = insertSession
         .executeAndReturnKey(sessionValues)
         .intValue();
@@ -224,7 +229,11 @@ public class IndividualSessionService {
     List<SessionRow> rows = jdbc.query("""
         SELECT session_id, session_name, created_by,
                evaluator_capacity,
-               finalized_at IS NOT NULL AS session_finalized
+               (status = 'FINALIZED' AND finalized_at IS NOT NULL)
+                   AS session_finalized,
+               (finalized_at IS NOT NULL
+                   OR status IN ('FINALIZED', 'CANCELLED'))
+                   AS session_closed
         FROM cupping_sessions
         WHERE session_id = ? AND mode = 'INDIVIDUAL'
         """,
@@ -233,7 +242,8 @@ public class IndividualSessionService {
             rs.getString("session_name"),
             rs.getInt("created_by"),
             rs.getInt("evaluator_capacity"),
-            rs.getBoolean("session_finalized")),
+            rs.getBoolean("session_finalized"),
+            rs.getBoolean("session_closed")),
         sessionId);
 
     if (rows.isEmpty()) {
@@ -245,17 +255,21 @@ public class IndividualSessionService {
 
     boolean isCreator = session.createdBy() == userId;
 
-    Integer membership = jdbc.queryForObject("""
-        SELECT COUNT(*) FROM session_evaluators
+    List<Integer> membershipIds = jdbc.query("""
+        SELECT session_evaluator_id
+        FROM session_evaluators
         WHERE session_id = ? AND user_id = ?
         """,
-        Integer.class,
+        (rs, row) -> rs.getInt("session_evaluator_id"),
         sessionId,
         userId);
 
-    boolean isEvaluator = membership != null && membership > 0;
+    Integer sessionEvaluatorId = membershipIds.isEmpty() ? null : membershipIds.get(0);
+
+    boolean isEvaluator = sessionEvaluatorId != null;
+
     boolean finalized = session.finalized();
-    boolean canEvaluate = isEvaluator && !finalized;
+    boolean canEvaluate = isEvaluator && !session.closed();
     boolean sampleDetailsVisible = isCreator || finalized;
 
     if (!isCreator && !isEvaluator) {
@@ -322,7 +336,9 @@ public class IndividualSessionService {
         canEvaluate,
         finalized,
         sampleDetailsVisible,
-        samples);
+        samples,
+        sessionEvaluatorId,
+        session.closed());
   }
 
   private record SessionRow(
@@ -330,7 +346,8 @@ public class IndividualSessionService {
       String sessionName,
       int createdBy,
       int evaluatorLimit,
-      boolean finalized) {
+      boolean finalized,
+      boolean closed) {
   }
 
   // For T08: call only AFTER invitation/account
