@@ -34,6 +34,17 @@
   </section>
   }
 
+  @if (isSavedSession && sessionStarted()) {
+    <div class="actions" style="padding: 12px 24px; align-items: center; gap: 14px;">
+      <button class="btn secondary" type="button"
+        [disabled]="savingDraft() || finalizing() || loadingEvaluations() || evaluationReadOnly()"
+        (click)="saveDraft()">
+        {{ savingDraft() ? 'Saving draft...' : 'Save Draft' }}
+      </button>
+      @if (saveFeedback()) { <span role="status">{{ saveFeedback() }}</span> }
+      @if (evaluationReadOnly()) { <span>Finalized — read only</span> }
+    </div>
+  }
   @if (sessionLoadError()) {
   <section class="panel">
     <div class="content">
@@ -1246,7 +1257,7 @@
                         ">
             <h4>Sample {{ sampleLabel(sample.id) }}</h4>
 
-            <button class="btn ghost" type="button" (click)="editFlavor(sample.id)">
+            <button class="btn ghost" type="button" [disabled]="evaluationReadOnly()" (click)="editFlavor(sample.id)">
               Edit Flavor Test
             </button>
           </div>
@@ -1437,7 +1448,7 @@
 
                                     font-weight: 800;
                                 ">
-                {{ formatScore( calculateFinalScore(sample) ) }} / 100
+                {{ formatScore( officialScore(sample.id) ) }} / 100
               </span>
             </div>
           </div>
@@ -1448,15 +1459,15 @@
     </div>
 
     <div class="review-finalize-note">
-      Finalizing will save this completed session to Session History in this browser.
+      @if (isSavedSession) { The server calculates and stores the official score. Save a draft to preview your total. Finalizing saves all samples to MySQL. } @else { Standalone practice is only stored in this browser; no official total is calculated. }
     </div>
 
     <div class="actions">
-      <button class="btn secondary" type="button" [disabled]="finalizing()" (click)="backToFlavor()">
+      <button class="btn secondary" type="button" [disabled]="finalizing() || evaluationReadOnly()" (click)="backToFlavor()">
         ← Back to Flavor Test
       </button>
 
-      <button class="btn primary" type="button" [disabled]="finalizing()" (click)="finalizeEvaluation()">
+      <button class="btn primary" type="button" [disabled]="finalizing() || savingDraft() || loadingEvaluations() || evaluationReadOnly()" (click)="finalizeEvaluation()">
         {{ finalizing() ? 'Saving...' : 'Finalize Evaluation ✓' }}
       </button>
     </div>

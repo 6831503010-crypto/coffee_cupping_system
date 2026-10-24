@@ -15,10 +15,11 @@
         New Cupping
       </button>
 
-      <button class="btn ghost" type="button" (click)="clearHistory()">Clear History</button>
+      <button class="btn ghost" type="button" (click)="clearHistory()">Clear Browser History</button>
     </div>
   </header>
 
+  @if (historyLoadError()) { <p role="alert">{{ historyLoadError() }}</p> }
   <section class="history-summary" aria-label="History summary">
     <div class="summary-card">
       <strong> {{ sessionCount() }} </strong>
@@ -61,7 +62,8 @@
     <article class="history-card">
       <div class="history-card-head">
         <div>
-          <h2>Session {{ sessionNumber(sessionIndex) }}</h2>
+          <h2>{{ record.sessionName || ('Session ' + sessionNumber(sessionIndex)) }}</h2>
+          <small>{{ record.source === 'database' ? 'Saved in database' : 'Browser-only practice (not database verified)' }}</small>
 
           <div class="history-date">
             {{ formatDate(record.completedAt) }} • {{ record.samples?.length || 0 }} {{
@@ -159,7 +161,7 @@
       <div class="history-card-footer">
         <span class="muted"> Saved in this browser </span>
 
-        <button class="delete-session" type="button" (click)="deleteSession(record.id)">Delete session</button>
+        @if (record.source !== 'database') { <button class="delete-session" type="button" (click)="deleteSession(record.id)">Delete browser record</button> }
       </div>
     </article>
 

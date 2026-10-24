@@ -18,10 +18,11 @@ import th.mfu.cupping.service.CuppingAccessService;
 public class DefectCupEvaluationController {
   private final DefectCupEvaluationRepository repo;
   private final CuppingAccessService access;
+  private final th.mfu.cupping.service.EvaluationScoreService scores;
   
 
-  public DefectCupEvaluationController(DefectCupEvaluationRepository repo, CuppingAccessService access) {
-    this.repo = repo; this.access = access; 
+  public DefectCupEvaluationController(DefectCupEvaluationRepository repo, CuppingAccessService access, th.mfu.cupping.service.EvaluationScoreService scores) {
+    this.repo = repo; this.access = access; this.scores = scores; 
   }
 
   @GetMapping
@@ -58,7 +59,7 @@ access.requireEvaluationWrite(request.evaluationId(), user);
     item.setSweetness(request.sweetness());
 
     item = repo.saveAndFlush(item);
-
+    scores.recalculate(item.getEvaluationId());
     return ResponseEntity.status(HttpStatus.CREATED).body(item);
   }
 
@@ -76,7 +77,9 @@ if (!item.getEvaluationId().equals(request.evaluationId()))
     item.setCleanCup(request.cleanCup());
     item.setSweetness(request.sweetness());
 
-    return repo.saveAndFlush(item);
+    item = repo.saveAndFlush(item);
+    scores.recalculate(item.getEvaluationId());
+    return item;
   }
 
   @DeleteMapping("/{id}")
@@ -88,5 +91,6 @@ if (!item.getEvaluationId().equals(request.evaluationId()))
     access.requireEvaluationWrite(item.getEvaluationId(), user);
     repo.delete(item);
     repo.flush();
+    scores.recalculate(item.getEvaluationId());
   }
 }

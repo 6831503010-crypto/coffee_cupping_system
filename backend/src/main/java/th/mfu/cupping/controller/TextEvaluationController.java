@@ -53,6 +53,7 @@ access.requireEvaluationWrite(request.evaluationId(), user);
     TextEvaluation item = new TextEvaluation();
     item.setEvaluationId(request.evaluationId());
     item.setText(request.text());
+    item.setStage(request.stage() == null ? "GENERAL" : request.stage());
 
     item = repo.saveAndFlush(item);
 
@@ -69,6 +70,7 @@ if (!item.getEvaluationId().equals(request.evaluationId()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change parent evaluation");
 
     item.setText(request.text());
+    if (request.stage() != null) item.setStage(request.stage());
 
     return repo.saveAndFlush(item);
   }

@@ -16,6 +16,12 @@ public class TextEvaluation {
   @Column(name = "`text`", nullable = false, length = 1000)
   private String text;
 
+  @Column(name = "stage", length = 16)
+  private String stage = "GENERAL";
+
+  public String getStage() { return stage; }
+  public void setStage(String value) { stage = value; }
+
   public Integer getTextEvaluationId() { return textEvaluationId; }
   public void setTextEvaluationId(Integer value) { this.textEvaluationId = value; }
 

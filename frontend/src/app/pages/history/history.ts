@@ -1,4 +1,5 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { EvaluationSubmissionService, EvaluationHistoryGroup } from '../../services/evaluation-submission.service';
 import { RouterLink } from '@angular/router';
 import { CuppingModeModal } from '../../shared/cupping-mode-modal/cupping-mode-modal';
 
@@ -29,11 +30,13 @@ interface HistorySample {
   id: number;
   aroma?: AromaEvaluation;
   flavor?: FlavorEvaluation;
-  finalScore?: number;
+  finalScore?: number | null;
 }
 
 interface HistoryRecord {
   id: string;
+  source?: 'database' | 'practice';
+  sessionName?: string;
   completedAt: string;
   samples?: HistorySample[];
 }
@@ -44,7 +47,52 @@ interface HistoryRecord {
   templateUrl: './history.html',
   styleUrl: './history.css'
 })
-export class History {
+export class History implements OnInit {
+  private readonly submissions = inject(EvaluationSubmissionService);
+  private serverRecords: HistoryRecord[] = [];
+  historyLoadError = signal('');
+
+  ngOnInit(): void {
+    this.submissions.history().subscribe({
+      next: groups => {
+        this.serverRecords = groups.map(group => this.mapSavedHistory(group));
+        this.records.set([...this.serverRecords, ...this.readHistory()]);
+      },
+      error: () => this.historyLoadError.set('Database history could not be loaded. Showing browser-only practice records.')
+    });
+  }
+
+  private mapSavedHistory(group: EvaluationHistoryGroup): HistoryRecord {
+    return {
+      id: `db-${group.sessionId}`,
+      source: 'database',
+      sessionName: group.sessionName,
+      completedAt: group.completedAt,
+      samples: group.samples.map((item, index) => ({
+        id: index + 1, finalScore: item.totalScore,
+        aroma: {
+          qualityScore: item.data.aromaQualityScore ?? undefined,
+          qualities: item.data.aromaQualities,
+          otherTastingNotes: item.data.aromaNotes
+        },
+        flavor: {
+          flavor: item.data.flavorScore ?? undefined,
+          aftertaste: item.data.aftertasteScore ?? undefined,
+          acidity: item.data.acidityScore ?? undefined,
+          body: item.data.bodyScore ?? undefined,
+          balance: item.data.balanceScore ?? undefined,
+          overall: item.data.overallScore ?? undefined,
+          uniformity: item.data.cups.map(c => c.uniformity),
+          cleanCup: item.data.cups.map(c => c.cleanCup),
+          sweetness: item.data.cups.map(c => c.sweetness),
+          defectType: item.data.defectType ?? undefined,
+          flavorQualities: item.data.flavorQualities,
+          otherTastingNotes: item.data.flavorNotes
+        }
+      }))
+    };
+  }
+
 
   private readonly HISTORY_KEY =
     'aromaArtisans.cuppingHistory.v1';
@@ -226,10 +274,10 @@ export class History {
   private writeHistory(records: HistoryRecord[]) {
     localStorage.setItem(
       this.HISTORY_KEY,
-      JSON.stringify(records)
+      JSON.stringify(records.filter(record => record.source !== 'database'))
     );
 
-    this.records.set(records);
+    this.records.set([...this.serverRecords, ...records.filter(record => record.source !== 'database')]);
 
     this.currentPage.update(page =>
       Math.min(page, this.totalPages())
@@ -255,6 +303,7 @@ export class History {
 
 
   formatScore(value: unknown): string {
+    if (value === null || value === undefined || value === '') return '—';
     const number = Number(value);
 
     if (!Number.isFinite(number)) {
@@ -394,6 +443,7 @@ export class History {
 
 
   deleteSession(id: string) {
+    if (id.startsWith('db-')) return; // Persisted results are immutable here.
 
     const confirmed = window.confirm(
       'Are you sure you want to delete this cupping session? This action cannot be undone.'
@@ -414,12 +464,12 @@ export class History {
 
   clearHistory() {
 
-    if (!this.records().length) {
+    if (!this.records().some(record => record.source !== 'database')) {
       return;
     }
 
     const confirmed = window.confirm(
-      'Clear all saved cupping history from this browser?'
+      'Clear browser-only practice history? Database records will stay.'
     );
 
     if (!confirmed) {
@@ -430,7 +480,7 @@ export class History {
       this.HISTORY_KEY
     );
 
-    this.records.set([]);
+    this.records.set([...this.serverRecords]);
     this.currentPage.set(1);
     // this.openDetails.set(new Set());
     this.selectedDetails.set(null);

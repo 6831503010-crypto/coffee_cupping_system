@@ -19,9 +19,10 @@ public class EvaluationController {
   private final EvaluationRepository repo;
   private final CuppingAccessService access;
   private final DefectTypeRepository defectTypes;
+  private final th.mfu.cupping.service.EvaluationScoreService scores;
 
-  public EvaluationController(EvaluationRepository repo, CuppingAccessService access, DefectTypeRepository defectTypes) {
-    this.repo = repo; this.access = access; this.defectTypes = defectTypes;
+  public EvaluationController(EvaluationRepository repo, CuppingAccessService access, DefectTypeRepository defectTypes, th.mfu.cupping.service.EvaluationScoreService scores) {
+    this.repo = repo; this.access = access; this.defectTypes = defectTypes; this.scores = scores;
   }
 
   @GetMapping
@@ -48,12 +49,15 @@ public class EvaluationController {
   @Transactional
   public ResponseEntity<Evaluation> create(@Valid @RequestBody EvaluationRequest request, Authentication auth) {
     User user = access.current(auth);
+    validateRequest(request);
 if (request.sessionEvaluatorId() == null || request.sessionSampleId() == null)
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sessionEvaluatorId and sessionSampleId are required");
     access.validateEvaluationPair(request.sessionEvaluatorId(), request.sessionSampleId(), user);
     if (request.defectTypeId() != null && !defectTypes.existsById(request.defectTypeId()))
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Defect type not found");
-    if (request.status() != null && !java.util.Set.of("DRAFT", "FINALIZED").contains(request.status()))
+    if ("FINALIZED".equals(request.status()))
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Finalize through /api/individual-sessions/{id}/my-evaluations to save all child data atomically");
+    if (request.status() != null && !"DRAFT".equals(request.status()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid evaluation status");
     Evaluation item = new Evaluation();
     item.setSessionEvaluatorId(request.sessionEvaluatorId());
@@ -75,11 +79,12 @@ if (request.sessionEvaluatorId() == null || request.sessionSampleId() == null)
     item.setAcidityIntensity(request.acidityIntensity());
     item.setBodyLevel(request.bodyLevel());
     item.setDefectTypeId(request.defectTypeId());
-    item.setTotalScore(request.totalScore());
+    // Client-submitted totals are never trusted.
     item.setStatus(request.status() == null ? "DRAFT" : request.status());
     if ("FINALIZED".equals(item.getStatus())) item.setFinalizedAt(java.time.LocalDateTime.now());
     item = repo.saveAndFlush(item);
-    return ResponseEntity.status(HttpStatus.CREATED).body(item);
+    item.setTotalScore(scores.calculate(item));
+    return ResponseEntity.status(HttpStatus.CREATED).body(repo.saveAndFlush(item));
   }
 
   @PutMapping("/{id}")
@@ -88,13 +93,16 @@ if (request.sessionEvaluatorId() == null || request.sessionSampleId() == null)
     User user = access.current(auth);
     Evaluation item = find(id);
     access.requireEvaluationWrite(id, user);
+    validateRequest(request);
 if (request.sessionEvaluatorId() != null && !item.getSessionEvaluatorId().equals(request.sessionEvaluatorId()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change evaluator");
     if (request.sessionSampleId() != null && !item.getSessionSampleId().equals(request.sessionSampleId()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change session sample");
     if (request.defectTypeId() != null && !defectTypes.existsById(request.defectTypeId()))
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Defect type not found");
-    if (request.status() != null && !java.util.Set.of("DRAFT", "FINALIZED").contains(request.status()))
+    if ("FINALIZED".equals(request.status()))
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Finalize through /api/individual-sessions/{id}/my-evaluations to save all child data atomically");
+    if (request.status() != null && !"DRAFT".equals(request.status()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid evaluation status");
     item.setDryAroma(request.dryAroma());
     item.setBreakAroma(request.breakAroma());
@@ -112,12 +120,35 @@ if (request.sessionEvaluatorId() != null && !item.getSessionEvaluatorId().equals
     item.setAcidityIntensity(request.acidityIntensity());
     item.setBodyLevel(request.bodyLevel());
     item.setDefectTypeId(request.defectTypeId());
-    item.setTotalScore(request.totalScore());
+    // Client-submitted totals are never trusted.
     if (request.status() != null) {
       item.setStatus(request.status());
       if ("FINALIZED".equals(request.status())) item.setFinalizedAt(java.time.LocalDateTime.now());
     }
+    item.setTotalScore(scores.calculate(item));
     return repo.saveAndFlush(item);
+  }
+
+  private void validateRequest(EvaluationRequest request) {
+    checkIntensity(request.dryAroma(), "dryAroma");
+    checkIntensity(request.breakAroma(), "breakAroma");
+    checkIntensity(request.acidityIntensity(), "acidityIntensity");
+    checkIntensity(request.bodyLevel(), "bodyLevel");
+    if (request.colorIntensity() != null &&
+        !java.util.Set.of("Low", "Medium", "High").contains(request.colorIntensity()))
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid colorIntensity");
+    for (var score : java.util.stream.Stream.of(request.aromaQualityScore(), request.flavorScore(),
+        request.aftertasteScore(), request.acidityScore(), request.bodyScore(),
+        request.balanceScore(), request.overallScore()).filter(java.util.Objects::nonNull).toList()) {
+      if (score.compareTo(java.math.BigDecimal.valueOf(6)) < 0 ||
+          score.compareTo(java.math.BigDecimal.TEN) > 0 ||
+          score.multiply(java.math.BigDecimal.valueOf(4)).stripTrailingZeros().scale() > 0)
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Scored categories must be 6–10 in 0.25 increments");
+    }
+  }
+  private void checkIntensity(Integer value, String field) {
+    if (value != null && (value < 1 || value > 5))
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid " + field);
   }
 
   @DeleteMapping("/{id}")
