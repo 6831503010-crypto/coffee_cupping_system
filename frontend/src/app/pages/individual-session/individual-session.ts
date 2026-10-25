@@ -21,16 +21,20 @@ import {
 import {
   IndividualSessionService,
   LibrarySample,
-  NewCoffeeSample,
   SampleChoice,
   SessionView,
   EvaluatorView,
   EvaluatorCandidate
 } from '../../services/individual-session.service';
 
+import {
+  SampleCreateModal,
+  SampleCreateSubmission
+} from '../../shared/sample-create-modal/sample-create-modal';
+
 @Component({
   selector: 'app-individual-session',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, SampleCreateModal],
   templateUrl: './individual-session.html',
   styleUrl: './individual-session.css'
 })
@@ -85,26 +89,12 @@ export class IndividualSession {
   @ViewChild('removeEvaluatorDialog')
   private removeEvaluatorDialog?: ElementRef<HTMLDialogElement>;
 
-  @ViewChild('newSampleDialog')
-  private newSampleDialog?: ElementRef<HTMLDialogElement>;
-
-  readonly newSampleError = signal('');
-  readonly newSampleSuccess = signal('');
+  @ViewChild(SampleCreateModal)
+  private sampleCreateModal?: SampleCreateModal;
 
   openNewSampleModal(): void {
     if (!this.canAddSample()) return;
-    this.newSampleError.set('');
-    this.newSampleSuccess.set('');
-    this.newSampleDialog?.nativeElement.showModal();
-  }
-
-  closeNewSampleModal(): void {
-    this.newSampleDialog?.nativeElement.close();
-  }
-
-  onNewSampleCancel(event: Event): void {
-    event.preventDefault();
-    this.closeNewSampleModal();
+    this.sampleCreateModal?.open();
   }
 
 
@@ -166,19 +156,7 @@ export class IndividualSession {
 
   selectedExistingId: number | null = null;
   existingCode = '';
-  newCode = '';
 
-  draft: NewCoffeeSample = this.emptyDraft();
-
-  private emptyDraft(): NewCoffeeSample {
-    return {
-      sampleName: '',
-      process: '',
-      harvestYear: null,
-      growingLocation: '',
-      ownerProducer: ''
-    };
-  }
 
   constructor() {
     this.setupEvaluatorSearch();
@@ -247,6 +225,11 @@ export class IndividualSession {
     this.existingSampleError() ||
     this.existingCodeError()
   ) {
+    this.focusCreationError(
+      id === null || this.existingSampleError()
+        ? '#existingSample'
+        : '#existingCode'
+    );
     return;
   }
 
@@ -257,54 +240,46 @@ export class IndividualSession {
 
   this.selectedExistingId = null;
   this.existingCode = '';
+  this.revealAddedSample(this.chosen().length - 1);
 }
 
-  addNew() {
-    this.newSampleError.set('');
-    this.newSampleSuccess.set('');
+  addNew(submission: SampleCreateSubmission): void {
+  const modal = this.sampleCreateModal;
+  if (!modal) return;
 
-    if (!this.canAddSample()) {
-      this.newSampleError.set(this.sampleCountMessage());
-      return;
-    }
-
-    const code = this.newCode.trim();
-    const name = this.draft.sampleName.trim();
-
-    if (!code || !name) {
-      this.newSampleError.set('Enter a sample code and sample name.');
-      return;
-    }
-
-    if (code.length > 100 || name.length > 255) {
-      this.newSampleError.set('Sample code or name is too long.');
-      return;
-    }
-
-    if (this.chosen().some(
-      sample => sample.sampleCode.trim().toLowerCase() === code.toLowerCase()
-    )) {
-      this.newSampleError.set('This sample code is already selected. Use a unique code.');
-      return;
-    }
-
-    if (this.draft.harvestYear !== null && !Number.isInteger(this.draft.harvestYear)) {
-      this.newSampleError.set('Enter a whole number for the harvest year.');
-      return;
-    }
-
-    this.chosen.update(items => [
-      ...items,
-      {
-        sampleCode: code,
-        newSample: { ...this.draft, sampleName: name }
-      }
-    ]);
-
-    this.newCode = '';
-    this.draft = this.emptyDraft();
-    this.closeNewSampleModal();
+  if (!this.canAddSample()) {
+    modal.fail(
+      this.saving()
+        ? 'Please wait until session creation finishes.'
+        : this.sampleCountMessage()
+    );
+    return;
   }
+
+  const code = submission.sampleCode.trim();
+
+  if (this.chosen().some(
+    sample =>
+      sample.sampleCode.trim().toLowerCase() === code.toLowerCase()
+  )) {
+    modal.fail(
+      'This sample code is already selected. Use a unique code.',
+      'sampleCode'
+    );
+    return;
+  }
+
+  this.chosen.update(items => [
+    ...items,
+    {
+      sampleCode: code,
+      newSample: { ...submission.sample }
+    }
+  ]);
+
+    modal.complete();
+    this.revealAddedSample(this.chosen().length - 1);
+}
 
   removeSample(index: number) {
     if (this.saving()) return;
@@ -326,31 +301,26 @@ export class IndividualSession {
   createSession() {
     if (this.saving()) return;
 
+    this.creationAttempted.set(true);
+    this.error.set('');
+
+    const firstInvalid =
+      this.sessionNameError()
+        ? '#sessionName'
+        : !this.isEvaluatorCountValid()
+          ? '#evaluatorLimit'
+          : !this.isSampleCountValid()
+            ? '#sampleCount'
+            : this.selectedSamplesError()
+              ? '#selectedSamplesReview'
+              : null;
+
+    if (firstInvalid) {
+      this.focusCreationError(firstInvalid);
+      return;
+    }
+
     const name = this.sessionName.trim();
-
-    if (!name ||
-        !Number.isInteger(this.evaluatorLimit) ||
-        this.evaluatorLimit < 1 ||
-        this.evaluatorLimit > 10) {
-      this.error.set(
-        'Enter a session name and 1–10 evaluators.'
-      );
-      return;
-    }
-
-    if (!this.hasExactSampleCount()) {
-      this.error.set(this.sampleCountMessage());
-      return;
-    }
-
-    const codes = this.chosen().map(
-      s => s.sampleCode.trim().toLowerCase()
-    );
-
-    if (new Set(codes).size !== codes.length) {
-      this.error.set('Sample codes must be unique.');
-      return;
-    }
 
     this.saving.set(true);
     this.error.set('');
@@ -807,5 +777,95 @@ async copyParticipationLink(): Promise<void> {
     } finally {
       this.copyingLink.set(false);
     }
+  }
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  readonly creationAttempted = signal(false);
+
+  sessionNameError(): string {
+    if (!this.creationAttempted()) return '';
+
+    const name = this.sessionName.trim();
+
+    if (!name) return 'Enter a session name.';
+    if (name.length > 255) return 'Use 255 characters or fewer.';
+
+    return '';
+  }
+
+  selectedSamplesError(): string {
+    if (!this.creationAttempted() || !this.isSampleCountValid()) {
+      return '';
+    }
+
+    if (!this.hasExactSampleCount()) {
+      return this.sampleCountMessage();
+    }
+
+    const codes = this.chosen().map(
+      sample => sample.sampleCode.trim().toLowerCase()
+    );
+
+    if (codes.some(code => !code)) {
+      return 'Each selected sample needs a sample code.';
+    }
+
+    if (new Set(codes).size !== codes.length) {
+      return 'Sample codes must be unique.';
+    }
+
+    return '';
+  }
+
+  private focusCreationError(selector: string): void {
+    setTimeout(() => {
+      const target =
+        this.host.nativeElement.querySelector<HTMLElement>(selector);
+
+      if (!target) return;
+
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({
+        behavior: 'auto',
+        block: 'center',
+        inline: 'nearest'
+      });
+    }, 0);
+  }
+
+  readonly highlightedSampleIndex = signal<number | null>(null);
+
+  private sampleHighlightTimer?: ReturnType<typeof setTimeout>;
+
+  private revealAddedSample(index: number): void {
+    clearTimeout(this.sampleHighlightTimer);
+    this.highlightedSampleIndex.set(index);
+
+    // Wait until Angular renders the newly added row.
+    setTimeout(() => {
+      if (this.destroyRef.destroyed) return;
+
+      const row = this.host.nativeElement.querySelector<HTMLElement>(
+        `#selected-sample-${index}`
+      );
+
+      if (!row) return;
+
+      row.focus({ preventScroll: true });
+      row.scrollIntoView({
+        behavior: window.matchMedia(
+          '(prefers-reduced-motion: reduce)'
+        ).matches ? 'auto' : 'smooth',
+        block: 'center',
+        inline: 'nearest'
+      });
+
+      this.sampleHighlightTimer = setTimeout(() => {
+        if (!this.destroyRef.destroyed) {
+          this.highlightedSampleIndex.set(null);
+        }
+      }, 2000);
+    }, 0);
   }
 }

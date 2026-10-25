@@ -1,0 +1,124 @@
+<dialog #dialog aria-labelledby="sampleCreateTitle" aria-describedby="sampleCreateDescription"
+  (cancel)="onCancel($event)">
+  <header class="modal-heading">
+    <h2 id="sampleCreateTitle">Create a new sample</h2>
+
+    <button type="button" class="close-button" aria-label="Close new sample form" [disabled]="pending()"
+      (click)="close()">
+      ×
+    </button>
+  </header>
+
+  <form (ngSubmit)="submit()" novalidate>
+    <p id="sampleCreateDescription" class="help">
+      {{ description }}
+    </p>
+
+    @if (contextMessage) {
+    <p class="help" aria-live="polite">{{ contextMessage }}</p>
+    }
+
+    <fieldset [disabled]="pending()">
+      @if (showSampleCode) {
+      <div class="field">
+        <label for="sampleCreateCode">Sample Code *</label>
+        <input id="sampleCreateCode" name="sampleCode" [(ngModel)]="sampleCode"
+          (ngModelChange)="clearFieldError('sampleCode')" maxlength="100" required placeholder="e.g. 102"
+          [class.input-error]="!!fieldErrors().sampleCode" [attr.aria-invalid]="!!fieldErrors().sampleCode"
+          [attr.aria-describedby]="
+              fieldErrors().sampleCode ? 'sampleCreateCodeError' : null
+            " />
+
+        @if (fieldErrors().sampleCode) {
+        <p id="sampleCreateCodeError" class="field-error" role="alert">
+          {{ fieldErrors().sampleCode }}
+        </p>
+        }
+      </div>
+      }
+
+      @for (field of textFields; track field.key) {
+      <div class="field">
+        <label [for]="'sampleCreate-' + field.key">
+          {{ field.label }}
+        </label>
+        <input [id]="'sampleCreate-' + field.key" [name]="field.key" [(ngModel)]="draft[field.key]"
+          (ngModelChange)="clearFieldError(field.key)" maxlength="255" [required]="field.required"
+          [class.input-error]="!!fieldErrors()[field.key]" [attr.aria-invalid]="!!fieldErrors()[field.key]"
+          [attr.aria-describedby]="
+              fieldErrors()[field.key]
+                ? 'sampleCreateError-' + field.key
+                : null
+            " />
+
+        @if (fieldErrors()[field.key]) {
+        <p [id]="'sampleCreateError-' + field.key" class="field-error" role="alert">
+          {{ fieldErrors()[field.key] }}
+        </p>
+        }
+      </div>
+      }
+
+      <div class="field">
+        <label for="sampleCreateProcess">Process (optional)</label>
+        <select id="sampleCreateProcess" name="process" [(ngModel)]="draft.process"
+          (ngModelChange)="clearFieldError('process')" [class.input-error]="!!fieldErrors().process"
+          [attr.aria-invalid]="!!fieldErrors().process" [attr.aria-describedby]="
+            fieldErrors().process ? 'sampleCreateProcessError' : null
+          ">
+          <option value="">Select process</option>
+          <option value="NATURAL">NATURAL</option>
+          <option value="WASHED">WASHED</option>
+          <option value="HONEY">HONEY</option>
+        </select>
+
+        @if (fieldErrors().process) {
+        <p id="sampleCreateProcessError" class="field-error" role="alert">
+          {{ fieldErrors().process }}
+        </p>
+        }
+      </div>
+
+            <div class="field">
+              <span id="sampleCreateYearLabel">
+                Harvest Year (optional)
+              </span>
+
+              <div class="year-options" role="group" tabindex="-1" aria-labelledby="sampleCreateYearLabel"
+                [class.input-error]="!!fieldErrors().harvestYear" [attr.aria-invalid]="!!fieldErrors().harvestYear"
+                [attr.aria-describedby]="
+                        fieldErrors().harvestYear
+                          ? 'sampleCreateYearHelp sampleCreateYearError'
+                          : 'sampleCreateYearHelp'
+                      ">
+                @for (year of harvestYears; track year) {
+                <button type="button" class="year-button" [class.selected]="draft.harvestYear === year"
+                  [attr.aria-pressed]="draft.harvestYear === year" (click)="toggleYear(year)">
+                  {{ year }}
+                </button>
+                }
+              </div>
+
+              <p id="sampleCreateYearHelp" class="help">
+                Click the selected year again to clear it.
+              </p>
+
+              @if (fieldErrors().harvestYear) {
+              <p id="sampleCreateYearError" class="field-error" role="alert">
+                {{ fieldErrors().harvestYear }}
+              </p>
+              }
+            </div>
+            </fieldset>
+
+    @if (fieldErrors().harvestYear) {
+    <p id="sampleCreateYearError" class="field-error" role="alert">
+      {{ fieldErrors().harvestYear }}
+    </p>
+    }
+
+    <button type="submit" class="submit-button" [disabled]="pending() || submitDisabled">
+      {{ pending() ? 'Processing…' : submitLabel }}
+    </button>
+  </form>
+</dialog>

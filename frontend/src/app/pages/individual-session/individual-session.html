@@ -11,14 +11,25 @@
   <section class="setup-section">
     <h2>Session Settings</h2>
 
-    <label for="sessionName">Session Name</label>
-    <input id="sessionName" [(ngModel)]="sessionName" maxlength="255" placeholder="e.g. Morning Coffee Evaluation" />
+    <label for="sessionName">Session Name *</label>
+
+    <input id="sessionName" [(ngModel)]="sessionName" maxlength="255" required [disabled]="saving()"
+      placeholder="e.g. Morning Coffee Evaluation" [class.input-error]="!!sessionNameError()"
+      [attr.aria-invalid]="!!sessionNameError()" [attr.aria-describedby]="
+        sessionNameError() ? 'sessionNameError' : null
+      " />
+
+    @if (sessionNameError()) {
+    <p id="sessionNameError" class="field-error" role="alert">
+      {{ sessionNameError() }}
+    </p>
+    }
 
     <label for="evaluatorLimit">
       Maximum Number of Evaluators
     </label>
 
-    <div class="number-stepper">
+    <div class="number-stepper" [class.input-error]="!isEvaluatorCountValid()">
       <button type="button" aria-label="Decrease evaluator capacity" [disabled]="saving() || evaluatorLimit <= 1"
         (click)="adjustEvaluatorCount(-1)">
         −
@@ -26,7 +37,7 @@
 
       <input id="evaluatorLimit" type="number" min="1" max="10" step="1" required [(ngModel)]="evaluatorLimit"
         [disabled]="saving()" [attr.aria-invalid]="!isEvaluatorCountValid()"
-        [attr.aria-describedby]="!isEvaluatorCountValid() ? 'evaluatorCountError' : null" />
+        [attr.aria-describedby]="!isEvaluatorCountValid() ? 'evaluatorCountError' : null" [class.input-error]="!isEvaluatorCountValid()"/>
 
       <button type="button" aria-label="Increase evaluator capacity" [disabled]="saving() || evaluatorLimit >= 10"
         (click)="adjustEvaluatorCount(1)">
@@ -35,35 +46,45 @@
     </div>
 
     @if (!isEvaluatorCountValid()) {
-    <p id="evaluatorCountError" class="error" role="alert">
+    <p id="evaluatorCountError" class="field-error" role="alert">
       Enter a whole number from 1 to 10.
     </p>
     }
 
     <label for="sampleCount">Number of Coffee Samples</label>
 
-    <div class="number-stepper">
+    <div class="number-stepper" [class.input-error]="!isSampleCountValid()">
       <button type="button" aria-label="Decrease sample count" [disabled]="saving() || (sampleCount ?? 1) <= 1"
         (click)="adjustSampleCount(-1)">
         −
       </button>
 
-      <input id="sampleCount" type="number" min="1" max="10" step="1" required [(ngModel)]="sampleCount"
-        [disabled]="saving()" aria-describedby="sampleCountHelp" />
+      <input id="sampleCount" type="number" min="1" max="10" step="1" required [(ngModel)]="sampleCount" [disabled]="saving()"
+        [class.input-error]="!isSampleCountValid()" [attr.aria-invalid]="!isSampleCountValid()" [attr.aria-describedby]="
+          !isSampleCountValid()
+            ? 'sampleCountHelp sampleCountError'
+            : 'sampleCountHelp'
+        " />
 
       <button type="button" aria-label="Increase sample count" [disabled]="saving() || (sampleCount ?? 0) >= 10"
         (click)="adjustSampleCount(1)">
         +
       </button>
     </div>
+    @if (!isSampleCountValid()) {
+    <p id="sampleCountError" class="field-error" role="alert">
+      Enter a whole number from 1 to 10.
+    </p>
+    }
 
     <p id="sampleCountHelp" class="help">
       Choose 1–10 coffee samples. This is separate from the number of evaluators.
     </p>
-    <p aria-live="polite" [class.error]="!isSampleCountValid() || chosen().length > (sampleCount ?? 0)"
-      [class.help]="isSampleCountValid() && chosen().length <= (sampleCount ?? 0)">
+    @if (isSampleCountValid()) {
+    <p class="help" aria-live="polite">
       {{ sampleCountMessage() }}
     </p>
+    }
 
     <label class="checkbox-label">
       <input type="checkbox" [(ngModel)]="creatorParticipates" />
@@ -126,61 +147,22 @@
     </button>
   </section>
 
-  <dialog #newSampleDialog class="sample-modal" aria-labelledby="newSampleTitle" aria-describedby="newSampleDescription"
-    (cancel)="onNewSampleCancel($event)">
-    <div class="sample-modal-heading">
-      <h2 id="newSampleTitle">Create a new sample</h2>
-      <button type="button" class="sample-modal-close" aria-label="Close new sample form"
-        (click)="closeNewSampleModal()">×</button>
-    </div>
 
-    <form class="sample-modal-form" (ngSubmit)="addNew()">
-      <p id="newSampleDescription" class="help">
-        Add a coffee to this session. New samples are saved when you create the session.
-      </p>
-      <p class="help" aria-live="polite">
-        {{ chosen().length }} of {{ sampleCount }} samples selected.
-        {{ sampleCountMessage() }}
-      </p>
+  <section id="selectedSamplesReview" class="setup-section" tabindex="-1" aria-labelledby="selectedSamplesTitle"
+    [class.selection-error]="!!selectedSamplesError()" [attr.aria-describedby]="
+      selectedSamplesError() ? 'selectedSamplesError' : null
+    ">
+    <h2 id="selectedSamplesTitle">Review Selected Samples</h2>
 
-      <label for="newSampleCode">Sample Code *</label>
-      <input id="newSampleCode" name="newSampleCode" [(ngModel)]="newCode" maxlength="100" required autofocus
-        placeholder="e.g. 102" />
-
-      <label for="newSampleName">Sample Name *</label>
-      <input id="newSampleName" name="newSampleName" [(ngModel)]="draft.sampleName" maxlength="255" required />
-
-      <label for="newSampleProcess">Process</label>
-      <input id="newSampleProcess" name="newSampleProcess" [(ngModel)]="draft.process" maxlength="100" />
-
-      <label for="newSampleYear">Harvest Year</label>
-      <input id="newSampleYear" name="newSampleYear" type="number" step="1" [(ngModel)]="draft.harvestYear" />
-
-      <label for="newSampleLocation">Growing Location</label>
-      <input id="newSampleLocation" name="newSampleLocation" [(ngModel)]="draft.growingLocation" maxlength="255" />
-
-      <label for="newSampleProducer">Owner / Producer</label>
-      <input id="newSampleProducer" name="newSampleProducer" [(ngModel)]="draft.ownerProducer" maxlength="255" />
-
-      @if (newSampleError()) {
-      <p class="error" role="alert">{{ newSampleError() }}</p>
-      }
-      @if (newSampleSuccess()) {
-      <p class="sample-modal-success" role="status">{{ newSampleSuccess() }}</p>
-      }
-
-      <button type="submit" class="sample-modal-submit" [disabled]="!canAddSample()">
-        Add Sample
-      </button>
-      <p class="help">Close with × or Escape when you are finished.</p>
-    </form>
-  </dialog>
-
-  <section class="setup-section">
-    <h2>Review Selected Samples</h2>
+    @if (selectedSamplesError()) {
+    <p id="selectedSamplesError" class="field-error" role="alert">
+      {{ selectedSamplesError() }}
+    </p>
+    }
 
     @for (sample of chosen(); track $index; let i = $index) {
-    <div class="sample-row">
+    <div class="sample-row" [id]="'selected-sample-' + i" tabindex="-1"
+      [class.newly-added]="highlightedSampleIndex() === i">
       <span>
         {{ i + 1 }}.
         {{ sample.sampleCode }} —
@@ -198,16 +180,15 @@
     <p aria-live="polite">
       {{ chosen().length }} of {{ isSampleCountValid() ? sampleCount : '—' }} samples selected.
     </p>
+    @if (!selectedSamplesError()) {
     <p class="help">{{ sampleCountMessage() }}</p>
+    }
 
     @if (error()) {
     <p class="error" role="alert">{{ error() }}</p>
     }
 
-    <button type="button" [disabled]="
-    saving() ||
-    !hasExactSampleCount() ||
-    !isEvaluatorCountValid()" (click)="createSession()">
+    <button type="button" [disabled]="saving()" (click)="createSession()">
       {{ saving() ? 'Creating...' : 'Create Session' }}
     </button>
   </section>
@@ -470,44 +451,9 @@
   }
   }
 
-  <dialog #removeEvaluatorDialog class="sample-modal" aria-labelledby="removeEvaluatorTitle"
-    aria-describedby="removeEvaluatorDescription" (cancel)="onRemoveEvaluatorCancel($event)">
-    <div class="sample-modal-heading">
-      <h2 id="removeEvaluatorTitle">Remove evaluator?</h2>
-
-      <button type="button" class="sample-modal-close" aria-label="Close removal confirmation"
-        (click)="closeRemoveEvaluatorModal()">
-        ×
-      </button>
-    </div>
-
-    <div class="remove-evaluator-content">
-      <p id="removeEvaluatorDescription">
-        @if (evaluatorToRemove(); as evaluator) {
-        @if (evaluator.creator) {
-        Remove yourself as an evaluator?
-        You will remain the session creator and can still manage this session.
-        } @else {
-        Remove <strong>{{ evaluator.name }}</strong>
-        ({{ evaluator.email }}) from this session?
-        }
-        }
-      </p>
-
-      <p class="help">
-        Removal frees an evaluator place. Evaluators with saved evaluations
-        cannot be removed.
-      </p>
-
-      <div class="remove-evaluator-actions">
-        <button type="button" class="modal-cancel-button" autofocus (click)="closeRemoveEvaluatorModal()">
-          Cancel
-        </button>
-
-        <button type="button" class="modal-remove-button" (click)="confirmEvaluatorRemoval()">
-          Remove evaluator
-        </button>
-      </div>
-    </div>
-  </dialog>
+  <app-sample-create-modal [showSampleCode]="true" submitLabel="Add Sample"
+    description="Add a coffee to this session. New samples are saved when you create the session." [contextMessage]="
+      chosen().length + ' of ' + sampleCount +
+      ' samples selected. ' + sampleCountMessage()
+    " [submitDisabled]="!canAddSample()" (sampleSubmitted)="addNew($event)"></app-sample-create-modal>
 </main>

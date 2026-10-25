@@ -448,3 +448,64 @@
     padding-inline: 16px;
   }
 }
+
+/* Specific enough to override the normal setup input border. */
+.setup-section input.input-error:not([type="checkbox"]),
+.setup-section select.input-error,
+.number-stepper.input-error,
+.setup-section.selection-error {
+  border-color: #b42318;
+}
+
+.setup-section input.input-error:focus,
+.setup-section select.input-error:focus,
+.setup-section.selection-error:focus {
+  outline: 2px solid #b42318;
+  outline-offset: 2px;
+}
+
+.number-stepper.input-error>input:focus {
+  outline-offset: -3px;
+}
+
+.number-stepper.input-error {
+  margin-bottom: 0;
+}
+
+.setup-section>.field-error {
+  margin: 0;
+  color: #b42318;
+}
+
+#sessionName,
+#evaluatorLimit,
+#sampleCount,
+#selectedSamplesReview {
+  scroll-margin-block: 100px;
+}
+
+.sample-row.newly-added {
+  border-color: #795548;
+  box-shadow: 0 0 0 2px rgb(121 85 72 / 20%);
+}
+
+.sample-row[tabindex="-1"]:focus-visible {
+  outline: 2px solid #795548;
+  outline-offset: 3px;
+}
+
+.setup-section #existingSample.input-error,
+.setup-section #existingCode.input-error {
+  border-color: #b42318;
+}
+
+.setup-section #existingSample.input-error:focus,
+.setup-section #existingCode.input-error:focus {
+  outline: 2px solid #b42318;
+  outline-offset: 2px;
+}
+
+#existingSample,
+#existingCode {
+  scroll-margin-block: 100px;
+}
