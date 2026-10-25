@@ -1,12 +1,19 @@
-import { Component, inject,signal } from '@angular/core';
+import { Component, ViewChild,inject,signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CuppingModeModal } from '../../shared/cupping-mode-modal/cupping-mode-modal';
 import { CoffeeInventoryService, InventorySample } from '../../services/coffee-inventory.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs';
+
+import {
+  SampleFormModal,
+  SampleFormSubmission
+} from '../../shared/sample-form-modal/sample-form-modal';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, CuppingModeModal],
+  imports: [RouterLink, CuppingModeModal, SampleFormModal],
   templateUrl: './home.html',
   styleUrl: './home.css'
 })
@@ -76,6 +83,53 @@ export class Home {
         }
 
       });
+  }
+
+  @ViewChild(SampleFormModal)
+  private sampleFormModal?: SampleFormModal;
+
+  readonly savingSample = signal(false);
+  readonly sampleSuccess = signal('');
+
+  openNewSampleModal(): void {
+    if (this.savingSample()) return;
+
+    this.sampleSuccess.set('');
+    this.sampleFormModal?.open();
+  }
+
+  createSample(submission: SampleFormSubmission): void {
+    const modal = this.sampleFormModal;
+    if (!modal) return;
+
+    if (this.savingSample()) {
+      modal.fail('Please wait until the current sample finishes saving.');
+      return;
+    }
+
+    this.savingSample.set(true);
+    this.sampleSuccess.set('');
+
+    this.inventory.create(submission.sample).pipe(
+      finalize(() => this.savingSample.set(false))
+    ).subscribe({
+      next: () => {
+        modal.complete();
+        this.sampleSuccess.set('Coffee sample saved to your inventory.');
+        this.loadInventoryPreview();
+      },
+      error: (response: HttpErrorResponse) => {
+        modal.fail(
+          response.status === 400
+            ? 'Check the entered sample details.'
+            : response.status === 401
+              ? 'Your session has expired. Please sign in again.'
+              : response.status === 403
+                ? 'You do not have permission to create this sample.'
+                : 'Could not save your sample. Your entered details are still here.'
+        );
+      }
+    });
   }
 
 

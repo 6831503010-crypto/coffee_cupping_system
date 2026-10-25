@@ -54,9 +54,17 @@
       </div>
       <div class="home-inventory-actions">
         <a class="landing-btn secondary" routerLink="/inventory">View All</a>
-        <a class="landing-btn primary" routerLink="/inventory" [queryParams]="{ new: '1' }">+ New Sample</a>
+        <button class="landing-btn primary" type="button" [disabled]="savingSample()" (click)="openNewSampleModal()"
+          aria-haspopup="dialog">
+          + New Sample
+        </button>
       </div>
     </div>
+    @if (sampleSuccess()) {
+    <p class="home-inventory-muted" role="status">
+      {{ sampleSuccess() }}
+    </p>
+    }
     @if (!inventoryLoading() && !inventoryError()) {
       <div class="home-inventory-summary">
         <span><strong>{{ inventoryTotal() }}</strong> saved samples</span>
@@ -162,6 +170,9 @@
   </div>
 </dialog> -->
 <app-cupping-mode-modal #modeModal></app-cupping-mode-modal>
+<app-sample-form-modal [showSampleCode]="false" submitLabel="Save Sample"
+  description="Save coffee details to your inventory for use in future cupping sessions."
+  [submitDisabled]="savingSample()" (sampleSubmitted)="createSample($event)"></app-sample-form-modal>
 
 
 <footer class="site-footer">

@@ -451,9 +451,9 @@
   }
   }
 
-  <app-sample-create-modal [showSampleCode]="true" submitLabel="Add Sample"
+  <app-sample-form-modal [showSampleCode]="true" submitLabel="Add Sample"
     description="Add a coffee to this session. New samples are saved when you create the session." [contextMessage]="
       chosen().length + ' of ' + sampleCount +
       ' samples selected. ' + sampleCountMessage()
-    " [submitDisabled]="!canAddSample()" (sampleSubmitted)="addNew($event)"></app-sample-create-modal>
+    " [submitDisabled]="!canAddSample()" (sampleSubmitted)="addNew($event)"></app-sample-form-modal>
 </main>

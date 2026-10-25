@@ -17,20 +17,12 @@
   @if (message()) { <p class="inventory-message" role="status">{{ message() }}</p> }
   @if (error()) { <p class="inventory-error" role="alert">{{ error() }} <button type="button" (click)="load()">Retry</button></p> }
 
-  @if (formOpen()) {
-    <section class="inventory-editor" aria-labelledby="inventoryEditorTitle">
-      <h2 id="inventoryEditorTitle">{{ editingId() === null ? 'Create Coffee Sample' : 'Edit Coffee Sample' }}</h2>
-      <p class="muted">These details will be available when you select samples for a new session.</p>
-      <form (ngSubmit)="save()">
-        <app-coffee-sample-fields [sample]="draft" idPrefix="inventory-editor" [disabled]="busy()" />
-        @if (formError()) { <p class="inventory-error" role="alert">{{ formError() }}</p> }
-        <div class="form-actions">
-          <button type="submit" class="primary-action" [disabled]="busy()">{{ busy() ? 'Saving…' : 'Save Sample' }}</button>
-          <button type="button" class="secondary-action" [disabled]="busy()" (click)="cancel()">Cancel</button>
-        </div>
-      </form>
-    </section>
-  }
+  <app-sample-form-modal [showSampleCode]="false" [title]="editingId() === null ? 'Create a new sample' : 'Edit sample'"
+    [submitLabel]="editingId() === null ? 'Save Sample' : 'Save Changes'" [description]="
+      editingId() === null
+        ? 'Save coffee details to your inventory for use in future cupping sessions.'
+        : 'Update the details of your coffee sample.'
+    " [submitDisabled]="busy()" (sampleSubmitted)="saveSample($event)"></app-sample-form-modal>
 
   <section class="inventory-list" aria-labelledby="mySamplesTitle">
     <div class="inventory-list-top">

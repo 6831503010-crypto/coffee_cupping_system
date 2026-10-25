@@ -1,19 +1,23 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { AfterViewInit,Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { CoffeeInventoryService, CoffeeSampleDraft, InventorySample,
-  coffeeSampleError, emptyCoffeeSample } from '../../services/coffee-inventory.service';
+import { CoffeeInventoryService, InventorySample } from '../../services/coffee-inventory.service';
 import { CoffeeSampleFields } from '../../shared/coffee-sample-fields/coffee-sample-fields';
+
+import {
+  SampleFormModal,
+  SampleFormSubmission
+} from '../../shared/sample-form-modal/sample-form-modal';
 
 @Component({
   selector: 'app-inventory',
-  imports: [FormsModule, RouterLink, CoffeeSampleFields],
+  imports: [FormsModule, RouterLink ,SampleFormModal],
   templateUrl: './inventory.html',
   styleUrl: './inventory.css'
 })
-export class Inventory {
+export class Inventory implements AfterViewInit {
   private readonly inventory = inject(CoffeeInventoryService);
   private readonly route = inject(ActivatedRoute);
 
@@ -22,9 +26,9 @@ export class Inventory {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly message = signal('');
-  readonly formError = signal('');
+
   readonly editingId = signal<number | null>(null);
-  readonly formOpen = signal(false);
+
   readonly search = signal('');
   readonly deleteTarget = signal<InventorySample | null>(null);
   readonly inSessions = computed(() => this.samples().filter(s => s.sessionCount > 0).length);
@@ -35,12 +39,20 @@ export class Inventory {
         .some(value => (value ?? '').toLowerCase().includes(q)));
   });
 
-  draft: CoffeeSampleDraft = emptyCoffeeSample();
+
   @ViewChild('deleteDialog') private deleteDialog?: ElementRef<HTMLDialogElement>;
+
+  @ViewChild(SampleFormModal)
+  private sampleFormModal?: SampleFormModal;
 
   constructor() {
     this.load();
-    if (this.route.snapshot.queryParamMap.get('new') === '1') this.openNew();
+  }
+
+  ngAfterViewInit(): void {
+    if (this.route.snapshot.queryParamMap.get('new') === '1') {
+      this.openNew();
+    }
   }
 
   load(): void {
@@ -53,59 +65,25 @@ export class Inventory {
   }
 
   openNew(): void {
-    this.draft = emptyCoffeeSample();
+    if (this.busy()) return;
+
     this.editingId.set(null);
-    this.formError.set('');
     this.message.set('');
-    this.formOpen.set(true);
+    this.sampleFormModal?.open();
   }
 
   openEdit(sample: InventorySample): void {
-    if (sample.sessionCount > 0) return;
-    this.draft = {
-      sampleName: sample.sampleName, process: sample.process ?? '',
-      harvestYear: sample.harvestYear, growingLocation: sample.growingLocation ?? '',
-      ownerProducer: sample.ownerProducer ?? ''
-    };
+    if (this.busy() || sample.sessionCount > 0) return;
+
     this.editingId.set(sample.sampleId);
-    this.formError.set('');
     this.message.set('');
-    this.formOpen.set(true);
-  }
 
-  cancel(): void {
-    if (this.busy()) return;
-    this.formOpen.set(false);
-    this.formError.set('');
-  }
-
-  save(): void {
-    if (this.busy()) return;
-    const err = coffeeSampleError(this.draft);
-    if (err) { this.formError.set(err); return; }
-    const payload: CoffeeSampleDraft = {
-      sampleName: this.draft.sampleName.trim(),
-      process: this.draft.process.trim(),
-      harvestYear: this.draft.harvestYear,
-      growingLocation: this.draft.growingLocation.trim(),
-      ownerProducer: this.draft.ownerProducer.trim()
-    };
-    this.busy.set(true);
-    this.formError.set('');
-    const id = this.editingId();
-    const request = id === null ? this.inventory.create(payload) : this.inventory.update(id, payload);
-    request.pipe(finalize(() => this.busy.set(false))).subscribe({
-      next: () => {
-        this.formOpen.set(false);
-        this.message.set(id === null ? 'Coffee sample saved to your inventory.' : 'Coffee sample updated.');
-        this.load();
-      },
-      error: (response: HttpErrorResponse) => {
-        this.formError.set(response.status === 409
-          ? 'This coffee is already used in a session and cannot be edited.'
-          : response.status === 400 ? 'Check the entered sample details.'
-          : 'Could not save your sample. Your changes are still here.');
-      }
+    this.sampleFormModal?.open({
+      sampleName: sample.sampleName,
+      process: sample.process ?? '',
+      harvestYear: sample.harvestYear,
+      growingLocation: sample.growingLocation ?? '',
+      ownerProducer: sample.ownerProducer ?? ''
     });
   }
 
@@ -139,6 +117,56 @@ export class Inventory {
         this.error.set(response.status === 409
           ? 'This sample is used in a cupping session and cannot be deleted.'
           : 'Could not delete the sample. Please try again.');
+      }
+    });
+  }
+
+  saveSample(submission: SampleFormSubmission): void {
+    const modal = this.sampleFormModal;
+    if (!modal) return;
+
+    if (this.busy()) {
+      modal.fail('Please wait until the current operation finishes.');
+      return;
+    }
+
+    const id = this.editingId();
+
+    const request = id === null
+      ? this.inventory.create(submission.sample)
+      : this.inventory.update(id, submission.sample);
+
+    this.busy.set(true);
+    this.message.set('');
+
+    request.pipe(
+      finalize(() => this.busy.set(false))
+    ).subscribe({
+      next: () => {
+        modal.complete();
+        this.editingId.set(null);
+        this.search.set('');
+
+        this.message.set(
+          id === null
+            ? 'Coffee sample saved to your inventory.'
+            : 'Coffee sample updated.'
+        );
+
+        this.load();
+      },
+      error: (response: HttpErrorResponse) => {
+        modal.fail(
+          response.status === 409
+            ? 'The operation conflicts with the current sample state. Samples used in sessions cannot be edited.'
+            : response.status === 400
+              ? 'Check the entered sample details.'
+              : response.status === 401
+                ? 'Your session has expired. Please sign in again.'
+                : response.status === 403
+                  ? 'You do not have permission to save this sample.'
+                  : 'Could not save your sample. Your entered details are still here.'
+        );
       }
     });
   }

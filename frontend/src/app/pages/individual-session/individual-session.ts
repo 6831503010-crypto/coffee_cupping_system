@@ -28,13 +28,13 @@ import {
 } from '../../services/individual-session.service';
 
 import {
-  SampleCreateModal,
-  SampleCreateSubmission
-} from '../../shared/sample-create-modal/sample-create-modal';
+  SampleFormModal,
+  SampleFormSubmission
+} from '../../shared/sample-form-modal/sample-form-modal';
 
 @Component({
   selector: 'app-individual-session',
-  imports: [FormsModule, RouterLink, SampleCreateModal],
+  imports: [FormsModule, RouterLink, SampleFormModal],
   templateUrl: './individual-session.html',
   styleUrl: './individual-session.css'
 })
@@ -89,12 +89,12 @@ export class IndividualSession {
   @ViewChild('removeEvaluatorDialog')
   private removeEvaluatorDialog?: ElementRef<HTMLDialogElement>;
 
-  @ViewChild(SampleCreateModal)
-  private sampleCreateModal?: SampleCreateModal;
+  @ViewChild(SampleFormModal)
+  private sampleFormModal?: SampleFormModal;
 
   openNewSampleModal(): void {
     if (!this.canAddSample()) return;
-    this.sampleCreateModal?.open();
+    this.sampleFormModal?.open();
   }
 
 
@@ -243,8 +243,8 @@ export class IndividualSession {
   this.revealAddedSample(this.chosen().length - 1);
 }
 
-  addNew(submission: SampleCreateSubmission): void {
-  const modal = this.sampleCreateModal;
+  addNew(submission: SampleFormSubmission): void {
+  const modal = this.sampleFormModal;
   if (!modal) return;
 
   if (!this.canAddSample()) {

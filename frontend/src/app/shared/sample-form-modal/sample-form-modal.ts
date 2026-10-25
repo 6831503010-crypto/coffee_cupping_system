@@ -17,7 +17,7 @@ export interface SampleDraft {
   ownerProducer: string;
 }
 
-export interface SampleCreateSubmission {
+export interface SampleFormSubmission {
   sampleCode: string;
   sample: SampleDraft;
 }
@@ -31,21 +31,22 @@ type Field =
   | 'ownerProducer';
 
 @Component({
-  selector: 'app-sample-create-modal',
+  selector: 'app-sample-form-modal',
   standalone: true,
   imports: [FormsModule],
-  templateUrl: './sample-create-modal.html',
-  styleUrl: './sample-create-modal.css'
+  templateUrl: './sample-form-modal.html',
+  styleUrl: './sample-form-modal.css'
 })
-export class SampleCreateModal {
+export class SampleFormModal {
   @Input() showSampleCode = false;
   @Input() submitLabel = 'Create sample';
   @Input() description = 'Enter the coffee sample details.';
   @Input() contextMessage = '';
   @Input() submitDisabled = false;
+  @Input() title = 'Create a new sample';
 
   @Output() sampleSubmitted =
-    new EventEmitter<SampleCreateSubmission>();
+    new EventEmitter<SampleFormSubmission>();
 
   @ViewChild('dialog')
   private dialog?: ElementRef<HTMLDialogElement>;
@@ -78,7 +79,16 @@ export class SampleCreateModal {
 
   get harvestYears(): number[] {
     const year = new Date().getFullYear();
-    return [year, year - 1, year - 2];
+    const years = [year, year - 1, year - 2];
+
+    if (
+      this.originalHarvestYear !== null &&
+      !years.includes(this.originalHarvestYear)
+    ) {
+      years.push(this.originalHarvestYear);
+    }
+
+    return years.sort((a, b) => b - a);
   }
 
   private emptyDraft(): SampleDraft {
@@ -91,14 +101,23 @@ export class SampleCreateModal {
     };
   }
 
-  open(): void {
+  open(initialSample?: SampleDraft): void {
     const dialog = this.dialog?.nativeElement;
     if (!dialog || dialog.open || this.pending()) return;
 
+    // Copy values so typing does not change the inventory card.
+    this.draft = initialSample
+      ? { ...initialSample }
+      : this.emptyDraft();
+
+    this.sampleCode = '';
+    this.originalProcess = initialSample?.process ?? '';
+    this.originalHarvestYear = initialSample?.harvestYear ?? null;
+
     this.error.set('');
     this.fieldErrors.set({});
-    dialog.showModal();
 
+    dialog.showModal();
     dialog.querySelector<HTMLInputElement>('input')?.focus();
   }
 
@@ -134,6 +153,8 @@ export class SampleCreateModal {
     this.draft = this.emptyDraft();
     this.error.set('');
     this.fieldErrors.set({});
+    this.originalProcess = '';
+    this.originalHarvestYear = null;
   }
 
   // Parent calls this when accepting or saving fails.
@@ -214,7 +235,7 @@ export class SampleCreateModal {
 
     if (
       sample.process &&
-      !['NATURAL', 'WASHED', 'HONEY'].includes(sample.process)
+      !this.processOptions.includes(sample.process)
     ) {
       errors.process = 'Select a valid process.';
     }
@@ -238,5 +259,21 @@ export class SampleCreateModal {
       sampleCode: this.showSampleCode ? sampleCode : '',
       sample
     });
+  }
+
+  private originalProcess = '';
+  private originalHarvestYear: number | null = null;
+
+  get processOptions(): string[] {
+    const options = ['NATURAL', 'WASHED', 'HONEY'];
+
+    if (
+      this.originalProcess &&
+      !options.includes(this.originalProcess)
+    ) {
+      options.push(this.originalProcess);
+    }
+
+    return options;
   }
 }
