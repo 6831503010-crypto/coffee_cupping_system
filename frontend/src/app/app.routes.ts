@@ -8,6 +8,7 @@ import { authGuard } from './guards/auth.guard';
 import { Guide } from './pages/guide/guide';
 import { IndividualSession } from './pages/individual-session/individual-session';
 import { JoinSession} from './pages/join-session/join-session';
+import { Inventory } from './pages/inventory/inventory';
 
 
 export const routes: Routes = [
@@ -22,6 +23,11 @@ export const routes: Routes = [
   {
     path: '',
     component: Home,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'inventory',
+    component: Inventory,
     canActivate: [authGuard]
   },
   {

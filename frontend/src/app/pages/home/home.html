@@ -45,6 +45,43 @@
 
   </section>
 
+  <section class="home-inventory" aria-labelledby="homeInventoryTitle">
+    <div class="home-inventory-header">
+      <div>
+        <p class="section-kicker">YOUR COFFEE LIBRARY</p>
+        <h2 id="homeInventoryTitle">My Coffee Inventory</h2>
+        <p>Save coffee samples once and reuse them across cupping sessions.</p>
+      </div>
+      <div class="home-inventory-actions">
+        <a class="landing-btn secondary" routerLink="/inventory">View All</a>
+        <a class="landing-btn primary" routerLink="/inventory" [queryParams]="{ new: '1' }">+ New Sample</a>
+      </div>
+    </div>
+    @if (!inventoryLoading() && !inventoryError()) {
+      <div class="home-inventory-summary">
+        <span><strong>{{ inventoryTotal() }}</strong> saved samples</span>
+        <span><strong>{{ inSessionTotal() }}</strong> used in sessions</span>
+      </div>
+    }
+    @if (inventoryLoading()) { <p class="home-inventory-muted">Loading your samples…</p> }
+    @else if (inventoryError()) {
+      <p class="home-inventory-muted">{{ inventoryError() }} <button type="button" (click)="loadInventoryPreview()">Retry</button></p>
+    } @else if (recentSamples().length === 0) {
+      <div class="home-inventory-empty">No coffee samples yet. Add one to get started.</div>
+    } @else {
+      <div class="home-inventory-cards">
+        @for (sample of recentSamples(); track sample.sampleId) {
+          <a routerLink="/inventory" class="home-inventory-card">
+            <span class="inventory-icon" aria-hidden="true">☕</span>
+            <strong>{{ sample.sampleName }}</strong>
+            <span>{{ sample.growingLocation || 'Origin not specified' }}</span>
+            <small>{{ sample.process || 'Process not specified' }} · {{ sample.harvestYear ?? 'Year unknown' }}</small>
+          </a>
+        }
+      </div>
+    }
+  </section>
+
   <section class="landing-cta">
 
     <div>

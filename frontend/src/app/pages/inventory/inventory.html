@@ -1,0 +1,85 @@
+<main class="inventory-page">
+  <a routerLink="/" class="inventory-back">← Back to Home</a>
+  <div class="inventory-heading">
+    <div>
+      <p class="inventory-eyebrow">YOUR PRIVATE COFFEE LIBRARY</p>
+      <h1>My Coffee Inventory</h1>
+      <p>Save coffee details once and reuse them in future cupping sessions.</p>
+    </div>
+    <button type="button" class="primary-action" [disabled]="busy()" (click)="openNew()">+ New Sample</button>
+  </div>
+
+  <div class="inventory-stats" aria-label="Inventory summary">
+    <div><strong>{{ samples().length }}</strong><span>Total samples</span></div>
+    <div><strong>{{ inSessions() }}</strong><span>Used in sessions</span></div>
+  </div>
+
+  @if (message()) { <p class="inventory-message" role="status">{{ message() }}</p> }
+  @if (error()) { <p class="inventory-error" role="alert">{{ error() }} <button type="button" (click)="load()">Retry</button></p> }
+
+  @if (formOpen()) {
+    <section class="inventory-editor" aria-labelledby="inventoryEditorTitle">
+      <h2 id="inventoryEditorTitle">{{ editingId() === null ? 'Create Coffee Sample' : 'Edit Coffee Sample' }}</h2>
+      <p class="muted">These details will be available when you select samples for a new session.</p>
+      <form (ngSubmit)="save()">
+        <app-coffee-sample-fields [sample]="draft" idPrefix="inventory-editor" [disabled]="busy()" />
+        @if (formError()) { <p class="inventory-error" role="alert">{{ formError() }}</p> }
+        <div class="form-actions">
+          <button type="submit" class="primary-action" [disabled]="busy()">{{ busy() ? 'Saving…' : 'Save Sample' }}</button>
+          <button type="button" class="secondary-action" [disabled]="busy()" (click)="cancel()">Cancel</button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="inventory-list" aria-labelledby="mySamplesTitle">
+    <div class="inventory-list-top">
+      <h2 id="mySamplesTitle">Saved Samples</h2>
+      <label class="search-box">Search <input type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Name, process, origin…" /></label>
+    </div>
+    @if (loading()) {
+      <p class="muted">Loading coffee samples…</p>
+    } @else if (error()) {
+      <p class="muted">Inventory data is unavailable. Retry loading to see your saved samples.</p>
+    } @else if (!filtered().length) {
+      <div class="inventory-empty">
+        @if (samples().length) { <p>No samples match your search.</p> }
+        @else { <p>Your inventory is empty. Create your first coffee sample.</p>
+          <button class="primary-action" type="button" (click)="openNew()">Create First Sample</button> }
+      </div>
+    } @else {
+      <div class="sample-grid">
+        @for (sample of filtered(); track sample.sampleId) {
+          <article class="inventory-card">
+            <div class="sample-card-top"><span class="sample-icon" aria-hidden="true">☕</span>
+              @if (sample.sessionCount > 0) { <span class="usage-badge">In {{ sample.sessionCount }} session{{ sample.sessionCount === 1 ? '' : 's' }}</span> }
+              @else { <span class="usage-badge available">Not yet used</span> }
+            </div>
+            <h3>{{ sample.sampleName }}</h3>
+            <p class="sample-subtitle">{{ sample.growingLocation || 'Origin not specified' }}</p>
+            <dl>
+              <div><dt>Process</dt><dd>{{ sample.process || '—' }}</dd></div>
+              <div><dt>Harvest</dt><dd>{{ sample.harvestYear ?? '—' }}</dd></div>
+              <div><dt>Producer</dt><dd>{{ sample.ownerProducer || '—' }}</dd></div>
+            </dl>
+            @if (sample.sessionCount === 0) {
+              <div class="card-actions">
+                <button type="button" class="secondary-action" [disabled]="busy()" (click)="openEdit(sample)">Edit</button>
+                <button type="button" class="delete-action" [disabled]="busy()" (click)="askDelete(sample)">Delete</button>
+              </div>
+            } @else {
+              <p class="read-only-note">Used in a session — details locked to preserve evaluation history.</p>
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+  <p class="inventory-help">Creating a sample here does not start a session. <a routerLink="/individual/new">Create a cupping session</a> to evaluate it.</p>
+</main>
+<dialog #deleteDialog class="delete-dialog" aria-labelledby="deleteTitle" (cancel)="cancelDelete()">
+  <h2 id="deleteTitle">Delete coffee sample?</h2>
+  <p>Delete <strong>{{ deleteTarget()?.sampleName }}</strong> from your inventory? This cannot be undone.</p>
+  <div class="form-actions"><button type="button" class="delete-action" [disabled]="busy()" (click)="confirmDelete()">{{ busy() ? 'Deleting…' : 'Delete Sample' }}</button>
+    <button type="button" class="secondary-action" [disabled]="busy()" (click)="cancelDelete()">Cancel</button></div>
+</dialog>

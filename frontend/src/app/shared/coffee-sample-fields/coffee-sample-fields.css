@@ -1,0 +1,6 @@
+.sample-fields { display: grid; gap: .6rem; }
+.sample-fields label { margin-top: .3rem; color: var(--espresso, #422b20); font-weight: 700; }
+.sample-fields input { display: block; width: 100%; box-sizing: border-box; border: 1px solid #d6c9c0;
+  border-radius: 9px; padding: .78rem; font: inherit; background: white; color: var(--espresso, #422b20); }
+.sample-fields input:focus-visible { outline: 2px solid var(--mocha, #79543b); outline-offset: 1px; }
+.sample-fields input:disabled { opacity: .6; }

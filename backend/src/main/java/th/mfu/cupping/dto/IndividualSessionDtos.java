@@ -13,7 +13,7 @@ public final class IndividualSessionDtos {
   public record NewSample(
       @NotBlank @Size(max = 255) String sampleName,
       @Size(max = 100) String process,
-      Integer harvestYear,
+      @Min(1900) @Max(2100) Integer harvestYear,
       @Size(max = 255) String growingLocation,
       @Size(max = 255) String ownerProducer) {
   }

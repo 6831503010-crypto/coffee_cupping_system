@@ -270,3 +270,20 @@
 .nav-logout:hover {
   color: var(--crema);
 }
+
+/* Personal coffee inventory preview */
+.home-inventory { max-width:1180px; margin:0 auto 50px; padding:36px 20px 44px; border-top:1px solid var(--line); }
+.home-inventory-header { display:flex; justify-content:space-between; align-items:center; gap:22px; }
+.home-inventory h2 { color:var(--espresso); font-size:clamp(30px,3.5vw,43px); margin:0 0 12px; }
+.home-inventory-header p { color:var(--mocha); line-height:1.5; }
+.home-inventory-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.home-inventory-actions .landing-btn { min-width:120px; }
+.home-inventory-summary { display:flex; gap:30px; margin:26px 0; color:var(--mocha); }
+.home-inventory-summary strong { color:var(--espresso); font-size:24px; margin-right:6px; }
+.home-inventory-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.home-inventory-card { display:flex; flex-direction:column; gap:8px; padding:22px; border:1px solid var(--line); border-radius:16px; text-decoration:none; color:var(--espresso); background:var(--foam); }
+.home-inventory-card:hover { border-color:var(--mocha); }
+.home-inventory-card .inventory-icon { font-size:25px; }.home-inventory-card strong { overflow-wrap:anywhere; font-size:18px; }
+.home-inventory-card span:not(.inventory-icon),.home-inventory-card small,.home-inventory-muted { color:var(--mocha); }
+.home-inventory-empty { padding:30px; border-radius:14px; border:1px dashed var(--line); color:var(--mocha); }
+@media(max-width:720px) { .home-inventory-header { flex-direction:column; align-items:flex-start; } .home-inventory-cards { grid-template-columns:1fr; } }
