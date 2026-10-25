@@ -1,0 +1,24 @@
+<div class="sample-fields">
+  <label [for]="idPrefix + '-name'">Sample Name *</label>
+  <input [id]="idPrefix + '-name'" type="text" maxlength="255" required
+    [disabled]="disabled" [(ngModel)]="sample.sampleName" [ngModelOptions]="{ standalone: true }"
+    placeholder="e.g. Ethiopia Sidama Natural" />
+
+  <label [for]="idPrefix + '-process'">Process</label>
+  <input [id]="idPrefix + '-process'" type="text" maxlength="100"
+    [disabled]="disabled" [(ngModel)]="sample.process" [ngModelOptions]="{ standalone: true }"
+    placeholder="e.g. Washed / Natural / Honey" />
+
+  <label [for]="idPrefix + '-year'">Harvest Year</label>
+  <input [id]="idPrefix + '-year'" type="number" step="1" min="1900" max="2100"
+    [disabled]="disabled" [(ngModel)]="sample.harvestYear" [ngModelOptions]="{ standalone: true }" />
+
+  <label [for]="idPrefix + '-location'">Growing Location</label>
+  <input [id]="idPrefix + '-location'" type="text" maxlength="255"
+    [disabled]="disabled" [(ngModel)]="sample.growingLocation" [ngModelOptions]="{ standalone: true }"
+    placeholder="e.g. Chiang Rai, Thailand" />
+
+  <label [for]="idPrefix + '-producer'">Owner / Producer</label>
+  <input [id]="idPrefix + '-producer'" type="text" maxlength="255"
+    [disabled]="disabled" [(ngModel)]="sample.ownerProducer" [ngModelOptions]="{ standalone: true }" />
+</div>

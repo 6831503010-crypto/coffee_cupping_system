@@ -1,0 +1,24 @@
+package th.mfu.cupping.dto;
+import java.math.BigDecimal;
+public record EvaluationRequest(
+    Integer sessionEvaluatorId,
+    Integer sessionSampleId,
+    String status,
+    Integer dryAroma,
+    Integer breakAroma,
+    String colorIntensity,
+    BigDecimal aromaQualityScore,
+    BigDecimal flavorScore,
+    BigDecimal aftertasteScore,
+    BigDecimal acidityScore,
+    BigDecimal bodyScore,
+    BigDecimal balanceScore,
+    BigDecimal uniformityScore,
+    BigDecimal cleanCupScore,
+    BigDecimal sweetnessScore,
+    BigDecimal overallScore,
+    Integer acidityIntensity,
+    Integer bodyLevel,
+    Integer defectTypeId,
+    BigDecimal totalScore
+) {}

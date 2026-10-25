@@ -1,0 +1,61 @@
+:host {
+  display: block;
+}
+
+.join-shell {
+  max-width: 850px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 24px;
+  color: var(--espresso);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.panel-head h2 {
+  overflow-wrap: anywhere;
+}
+
+.content {
+  line-height: 1.7;
+}
+
+.capacity {
+  display: inline-block;
+  margin: 0 0 12px;
+}
+
+.join-error {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.join-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--mocha);
+  outline-offset: 4px;
+}
+
+@media (max-width: 520px) {
+
+  .actions,
+  .join-buttons {
+    flex-direction: column;
+  }
+
+  .join-buttons {
+    width: 100%;
+  }
+}

@@ -85,7 +85,8 @@ public class AuthService {
     return new AuthUserResponse(
         user.getUserId(),
         user.getName(),
-        user.getEmail());
+        user.getEmail(),
+        user.getQualificationStatus());
   }
 
   public AuthUserResponse getCurrentUser(
@@ -100,6 +101,7 @@ public class AuthService {
     return new AuthUserResponse(
         user.getUserId(),
         user.getName(),
-        user.getEmail());
+        user.getEmail(),
+        user.getQualificationStatus());
   }
 }

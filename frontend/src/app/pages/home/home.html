@@ -1,35 +1,10 @@
-<header class="site-header">
-  <a class="brand" routerLink="/" aria-label="Coffee Cupping System home" (click)="closeMenu()">
-    <span class="bean" aria-hidden="true"></span>
 
-    <span class="brand-text">
-      <strong>Coffee Cupping</strong>
-      <strong>System</strong>
-    </span>
-  </a>
-
-  <nav class="site-nav" id="siteNav" aria-label="Primary navigation" [class.open]="menuOpen()">
-    <a routerLink="/" (click)="closeMenu()">HOME</a>
-
-    <a routerLink="/about" (click)="closeMenu()">ABOUT</a>
-
-    <a routerLink="/history" (click)="closeMenu()">HISTORY</a>
-    <button class="nav-logout" type="button" (click)="logout()">
-      LOGOUT
-    </button>
-  </nav>
-
-  <button class="menu-toggle" type="button" aria-label="Open navigation" [attr.aria-expanded]="menuOpen()"
-    aria-controls="siteNav" (click)="toggleMenu()">
-    ☰
-  </button>
-</header>
 
 <main>
   <section class="landing-hero">
 
     <div class="hero-art">
-      <img src="images/coffee-hero-screenshot.png" alt="Artisan coffee in a glass cup">
+      <img src="images/coffee-hero-screenshot-black.png" alt="Artisan coffee in a glass cup">
     </div>
 
     <div class="hero-copy">
@@ -50,9 +25,10 @@
 
       <div class="hero-actions">
 
-        <a class="landing-btn primary" routerLink="/cupping">
+        <button class="landing-btn primary" type="button" (click)="modeModal.openModeDialog()">
           Start Cupping
-        </a>
+        </button>
+
 
         <a class="landing-btn secondary" routerLink="/history">
           View History
@@ -69,6 +45,51 @@
 
   </section>
 
+  <section class="home-inventory" aria-labelledby="homeInventoryTitle">
+    <div class="home-inventory-header">
+      <div>
+        <p class="section-kicker">YOUR COFFEE LIBRARY</p>
+        <h2 id="homeInventoryTitle">My Coffee Inventory</h2>
+        <p>Save coffee samples once and reuse them across cupping sessions.</p>
+      </div>
+      <div class="home-inventory-actions">
+        <a class="landing-btn secondary" routerLink="/inventory">View All</a>
+        <button class="landing-btn primary" type="button" [disabled]="savingSample()" (click)="openNewSampleModal()"
+          aria-haspopup="dialog">
+          + New Sample
+        </button>
+      </div>
+    </div>
+    @if (sampleSuccess()) {
+    <p class="home-inventory-muted" role="status">
+      {{ sampleSuccess() }}
+    </p>
+    }
+    @if (!inventoryLoading() && !inventoryError()) {
+      <div class="home-inventory-summary">
+        <span><strong>{{ inventoryTotal() }}</strong> saved samples</span>
+        <span><strong>{{ inSessionTotal() }}</strong> used in sessions</span>
+      </div>
+    }
+    @if (inventoryLoading()) { <p class="home-inventory-muted">Loading your samples…</p> }
+    @else if (inventoryError()) {
+      <p class="home-inventory-muted">{{ inventoryError() }} <button type="button" (click)="loadInventoryPreview()">Retry</button></p>
+    } @else if (recentSamples().length === 0) {
+      <div class="home-inventory-empty">No coffee samples yet. Add one to get started.</div>
+    } @else {
+      <div class="home-inventory-cards">
+        @for (sample of recentSamples(); track sample.sampleId) {
+          <a routerLink="/inventory" class="home-inventory-card">
+            <span class="inventory-icon" aria-hidden="true">☕</span>
+            <strong>{{ sample.sampleName }}</strong>
+            <span>{{ sample.growingLocation || 'Origin not specified' }}</span>
+            <small>{{ sample.process || 'Process not specified' }} · {{ sample.harvestYear ?? 'Year unknown' }}</small>
+          </a>
+        }
+      </div>
+    }
+  </section>
+
   <section class="landing-cta">
 
     <div>
@@ -81,12 +102,78 @@
       </h2>
     </div>
 
-    <a class="landing-btn primary" routerLink="/cupping">
+    <button class="landing-btn primary" type="button" (click)="modeModal.openModeDialog()">
       Create Session →
-    </a>
+    </button>
 
   </section>
 </main>
+
+<!-- <dialog #cuppingModeDialog class="cupping-mode-dialog" aria-labelledby="modeDialogTitle"
+  aria-describedby="modeDialogDescription" (click)="onModeDialogClick($event)">
+
+  <div class="mode-dialog-header">
+    <div>
+      <h2 id="modeDialogTitle">
+        Choose Cupping Mode
+      </h2>
+
+      <p id="modeDialogDescription">
+        How would you like to start your
+        coffee cupping session?
+      </p>
+    </div>
+
+    <button type="button" class="mode-close-btn" aria-label="Close dialog" (click)="closeModeDialog()">
+      &times;
+    </button>
+  </div>
+
+  <div class="mode-options">
+
+    <button type="button" class="mode-option" (click)="selectIndividualMode()">
+
+      <span class="mode-option-icon" aria-hidden="true">
+        ☕
+      </span>
+
+      <strong>Individual Cupping</strong>
+
+      <span class="mode-option-description">
+        Create a session, choose evaluators,
+        and select coffee samples.
+      </span>
+
+      <span class="mode-action">
+        Continue →
+      </span>
+    </button>
+
+    <button type="button" class="mode-option" disabled>
+
+      <span class="mode-option-icon" aria-hidden="true">
+        ♙
+      </span>
+
+      <strong>Organizational Cupping</strong>
+
+      <span class="mode-option-description">
+        Organize a coffee evaluation event
+        with multiple judges.
+      </span>
+
+      <span class="mode-coming-soon">
+        Coming Soon
+      </span>
+    </button>
+
+  </div>
+</dialog> -->
+<app-cupping-mode-modal #modeModal></app-cupping-mode-modal>
+<app-sample-form-modal [showSampleCode]="false" submitLabel="Save Sample"
+  description="Save coffee details to your inventory for use in future cupping sessions."
+  [submitDisabled]="savingSample()" (sampleSubmitted)="createSample($event)"></app-sample-form-modal>
+
 
 <footer class="site-footer">
   <span>Coffee Cupping System</span>

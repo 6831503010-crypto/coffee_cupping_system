@@ -6,6 +6,10 @@ import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { authGuard } from './guards/auth.guard';
 import { Guide } from './pages/guide/guide';
+import { IndividualSession } from './pages/individual-session/individual-session';
+import { JoinSession} from './pages/join-session/join-session';
+import { Inventory } from './pages/inventory/inventory';
+
 
 export const routes: Routes = [
   {
@@ -19,6 +23,11 @@ export const routes: Routes = [
   {
     path: '',
     component: Home,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'inventory',
+    component: Inventory,
     canActivate: [authGuard]
   },
   {
@@ -40,5 +49,20 @@ export const routes: Routes = [
     path: 'guide',
     component: Guide,
     canActivate: [authGuard]
-  }
+  },
+  {
+    path: 'join/:token',
+    component: JoinSession,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'individual/new',
+    component: IndividualSession,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'individual/:id',
+    component: IndividualSession,
+    canActivate: [authGuard]
+  },
 ];

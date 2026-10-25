@@ -1,5 +1,7 @@
 import {
   Component,
+  OnInit,
+  DestroyRef,
   computed,
   ElementRef,
   inject,
@@ -15,7 +17,14 @@ import {
 } from '@angular/forms';
 
 import { CoffeeSample } from '../../models/coffee-sample';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
+import { EvaluationSubmissionService, EvaluationSamplePayload, SavedEvaluation } from '../../services/evaluation-submission.service';
+import {
+  IndividualSessionService,
+  SessionView
+} from '../../services/individual-session.service';
 
 @Component({
   selector: 'app-cupping',
@@ -26,12 +35,125 @@ import { Router, RouterLink } from '@angular/router';
   templateUrl: './cupping.html',
   styleUrl: './cupping.css'
 })
-export class Cupping {
+export class Cupping implements OnInit {
 
   private readonly HISTORY_KEY =
     'aromaArtisans.cuppingHistory.v1';
 
   private readonly router = inject(Router);
+
+  private readonly route = inject(ActivatedRoute);
+  private readonly individualSessions = inject(IndividualSessionService);
+  private readonly evaluations = inject(EvaluationSubmissionService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly sessionIdParam =
+    this.route.snapshot.queryParamMap.get('sessionId');
+
+  readonly isSavedSession = this.sessionIdParam !== null;
+
+  loadingSession = signal(false);
+  sessionLoadError = signal('');
+  savedSession = signal<SessionView | null>(null);
+  savingDraft = signal(false);
+  saveFeedback = signal('');
+  evaluationReadOnly = signal(false);
+  loadingEvaluations = signal(false);
+  private readonly officialScores = signal<Record<number, number | null>>({});
+
+  officialScore(position: number): number | null {
+    return this.officialScores()[position] ?? null;
+  }
+
+
+  ngOnInit(): void {
+    if (!this.isSavedSession) {
+      return;
+    }
+
+    const sessionId = Number(this.sessionIdParam);
+
+    if (!Number.isSafeInteger(sessionId) || sessionId < 1) {
+      this.sessionLoadError.set('Invalid session ID.');
+      return;
+    }
+
+    this.loadingSession.set(true);
+
+    this.individualSessions.get(sessionId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: session => {
+          this.loadingSession.set(false);
+
+          if (session.sessionEvaluatorId == null) {
+            this.sessionLoadError.set(
+              'You are not an evaluator for this session.'
+            );
+            return;
+          }
+
+          if (session.samples.length === 0) {
+            this.sessionLoadError.set(
+              'This session does not contain any coffee samples.'
+            );
+            return;
+          }
+
+          if (session.closed) this.evaluationReadOnly.set(true);
+          this.savedSession.set(session);
+
+          // Preserve sequential positions for Previous/Next navigation.
+          // Database IDs and full sample details remain in savedSession.
+          this.samples.set(
+            session.samples.map((_, index) =>
+              this.createSample(index + 1)
+            )
+          );
+
+          this.selectedSampleCount.set(session.samples.length);
+          this.activeSample.set(1);
+          this.currentStage.set('aroma');
+
+          this.aromaLocked.set(false);
+          this.aromaValidationActive.set(false);
+          this.aromaErrorSamples.set([]);
+          this.flavorValidationActive.set(false);
+          this.flavorErrorSamples.set([]);
+
+          this.aromaForm.enable({ emitEvent: false });
+          this.loadAromaForm(1);
+          this.sessionStarted.set(true);
+          this.loadingEvaluations.set(true);
+          this.evaluations.load(sessionId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: saved => { this.restoreEvaluations(saved); this.loadingEvaluations.set(false); },
+              error: () => {
+                this.loadingEvaluations.set(false);
+                this.evaluationReadOnly.set(true);
+                this.sessionLoadError.set('Unable to reload saved evaluations. Refresh before editing.');
+              }
+            });
+        },
+        error: () => {
+          this.loadingSession.set(false);
+          this.sessionLoadError.set(
+            'Unable to load this session. Check your login and access, then refresh.'
+          );
+        }
+      });
+  }
+
+  sampleDetails(position: number) {
+    return this.savedSession()?.samples[position - 1];
+  }
+
+  sampleLabel(position: number): string {
+    return this.sampleDetails(position)?.sampleCode
+      ?? String(position);
+  }
+
 
   finalizing = signal(false);
   readonly fivePointScale = [1, 2, 3, 4, 5];
@@ -856,6 +978,10 @@ goToReview() {
 
 
   startCupping() {
+    if (this.isSavedSession) {
+      return;
+    }
+
 
     const count = this.sampleCount.value;
     this.currentStage.set('aroma');
@@ -1396,6 +1522,7 @@ goToReview() {
 
   formatScore(value: unknown): string {
 
+    if (value === null || value === undefined || value === '') return '—';
     const number = Number(value);
 
     if (!Number.isFinite(number)) {
@@ -1409,42 +1536,6 @@ goToReview() {
             number.toFixed(2)
           )
         );
-  }
-
-
-  calculateBaseScore(
-    sample: CoffeeSample
-  ): number {
-
-    return (
-      (Number(sample.aroma.qualityScore) || 0) +
-      (Number(sample.flavor.flavor) || 0) +
-      (Number(sample.flavor.aftertaste) || 0) +
-      (Number(sample.flavor.acidity) || 0) +
-      (Number(sample.flavor.body) || 0) +
-      this.calculateCupScore(
-        sample.flavor.uniformity
-      ) +
-      this.calculateCupScore(
-        sample.flavor.cleanCup
-      ) +
-      (Number(sample.flavor.balance) || 0) +
-      this.calculateCupScore(
-        sample.flavor.sweetness
-      ) +
-      (Number(sample.flavor.overall) || 0)
-    );
-  }
-
-
-  calculateFinalScore(
-    sample: CoffeeSample
-  ): number {
-
-    return (
-      this.calculateBaseScore(sample) +
-      this.calculateDefectDeduction(sample)
-    );
   }
 
 
@@ -1507,70 +1598,152 @@ goToReview() {
   }
 
 
-  finalizeEvaluation() {
+  private syncCurrentForm(): void {
+    if (this.currentStage() === 'aroma' && !this.aromaLocked()) {
+      this.saveAromaForm();
+    }
+    if (this.currentStage() === 'flavor') {
+      this.saveFlavorForm();
+    }
+  }
 
-    if (this.finalizing()) {
+  private submissionSamples(): EvaluationSamplePayload[] {
+    const session = this.savedSession();
+    if (!session) return [];
+    return this.samples().map((sample, index) => {
+      const assigned = session.samples[index];
+      return {
+        sessionSampleId: assigned.sessionSampleId,
+        dryAroma: sample.aroma.dry,
+        breakAroma: sample.aroma.break,
+        colorIntensity: sample.aroma.color,
+        aromaQualityScore: sample.aroma.qualityScore,
+        flavorScore: sample.flavor.flavor,
+        aftertasteScore: sample.flavor.aftertaste,
+        acidityScore: sample.flavor.acidity,
+        bodyScore: sample.flavor.body,
+        balanceScore: sample.flavor.balance,
+        overallScore: sample.flavor.overall,
+        acidityIntensity: sample.flavor.acidityIntensity,
+        bodyLevel: sample.flavor.bodyLevel,
+        defectType: sample.flavor.defectType,
+        aromaQualities: [...sample.aroma.qualities],
+        flavorQualities: [...sample.flavor.flavorQualities],
+        cups: Array.from({ length: 5 }, (_, cup) => ({
+          cupNumber: cup + 1,
+          uniformity: sample.flavor.uniformity[cup],
+          cleanCup: sample.flavor.cleanCup[cup],
+          sweetness: sample.flavor.sweetness[cup]
+        })),
+        aromaNotes: sample.aroma.otherTastingNotes,
+        flavorNotes: sample.flavor.otherTastingNotes
+      };
+    });
+  }
+
+  private restoreEvaluations(saved: SavedEvaluation[]): void {
+    const session = this.savedSession();
+    if (!session) return;
+    const byId = new Map(saved.map(item => [item.sessionSampleId, item]));
+    const scored: Record<number, number | null> = {};
+    this.samples.update(samples => samples.map((sample, index) => {
+      const persisted = byId.get(session.samples[index].sessionSampleId);
+      if (!persisted) return sample;
+      const p = persisted.data;
+      scored[sample.id] = persisted.totalScore;
+      return {
+        ...sample,
+        aroma: {
+          dry: p.dryAroma, break: p.breakAroma, color: p.colorIntensity,
+          qualityScore: p.aromaQualityScore, qualities: [...(p.aromaQualities || [])],
+          otherTastingNotes: p.aromaNotes || ''
+        },
+        flavor: {
+          flavor: p.flavorScore, aftertaste: p.aftertasteScore,
+          acidity: p.acidityScore, body: p.bodyScore, balance: p.balanceScore,
+          overall: p.overallScore, acidityIntensity: p.acidityIntensity,
+          bodyLevel: p.bodyLevel, defectType: p.defectType as 'taint' | 'fault' | null,
+          flavorQualities: [...(p.flavorQualities || [])],
+          otherTastingNotes: p.flavorNotes || '',
+          uniformity: Array.from({ length: 5 }, (_, cup) =>
+            p.cups?.find(c => c.cupNumber === cup + 1)?.uniformity ?? false),
+          cleanCup: Array.from({ length: 5 }, (_, cup) =>
+            p.cups?.find(c => c.cupNumber === cup + 1)?.cleanCup ?? false),
+          sweetness: Array.from({ length: 5 }, (_, cup) =>
+            p.cups?.find(c => c.cupNumber === cup + 1)?.sweetness ?? false)
+        }
+      };
+    }));
+    this.officialScores.set(scored);
+    if (saved.some(item => item.status === 'FINALIZED')) {
+      this.evaluationReadOnly.set(true);
+      this.aromaLocked.set(true);
+      this.aromaForm.disable({ emitEvent: false });
+      this.flavorForm.disable({ emitEvent: false });
+      this.currentStage.set('review');
+    }
+    this.loadAromaForm(this.activeSample());
+    this.loadFlavorForm(this.activeSample());
+  }
+
+  async saveDraft(): Promise<void> {
+    const session = this.savedSession();
+    if (!session || this.savingDraft() || this.finalizing() ||
+        this.evaluationReadOnly() || this.loadingEvaluations()) return;
+    this.syncCurrentForm();
+    this.savingDraft.set(true);
+    this.saveFeedback.set('');
+    try {
+      const saved = await firstValueFrom(
+        this.evaluations.save(session.sessionId, this.submissionSamples(), false)
+      );
+      this.officialScores.set(Object.fromEntries(saved.map(item => [
+        session.samples.findIndex(s => s.sessionSampleId === item.sessionSampleId) + 1,
+        item.totalScore
+      ])));
+      this.saveFeedback.set('Draft saved to the database.');
+    } catch {
+      this.saveFeedback.set('Draft was not saved. Your current form values are still here; retry.');
+    } finally {
+      this.savingDraft.set(false);
+    }
+  }
+
+  async finalizeEvaluation(): Promise<void> {
+    if (this.finalizing() || this.loadingEvaluations() || this.evaluationReadOnly()) return;
+    this.syncCurrentForm();
+    const session = this.savedSession();
+    if (!session) {
+      // Standalone practice is browser-local only, never presented as a database result.
+      const now = new Date().toISOString();
+      const record = {
+        id: `practice-${Date.now()}`, completedAt: now,
+        samples: this.samples().map(sample => ({ ...sample, finalScore: null }))
+      };
+      localStorage.setItem(this.HISTORY_KEY, JSON.stringify([
+        record, ...this.readExistingHistory()
+      ]));
+      await this.router.navigate(['/history']);
       return;
     }
-
     this.finalizing.set(true);
-
-    const completedAt =
-      new Date().toISOString();
-
-    const savedSamples =
-      this.samples().map(sample => ({
-        id: sample.id,
-
-        aroma: {
-          ...sample.aroma,
-          qualities: [
-            ...sample.aroma.qualities
-          ]
-        },
-
-        flavor: {
-          ...sample.flavor,
-
-          uniformity: [
-            ...sample.flavor.uniformity
-          ],
-
-          cleanCup: [
-            ...sample.flavor.cleanCup
-          ],
-
-          sweetness: [
-            ...sample.flavor.sweetness
-          ],
-
-          flavorQualities: [
-            ...sample.flavor.flavorQualities
-          ],
-        },
-
-        finalScore:
-          this.calculateFinalScore(sample)
-      }));
-
-    const record = {
-      id: `${Date.now()}`,
-      completedAt,
-      samples: savedSamples
-    };
-
-    const existing =
-      this.readExistingHistory();
-
-    localStorage.setItem(
-      this.HISTORY_KEY,
-      JSON.stringify([
-        record,
-        ...existing
-      ])
-    );
-
-    this.router.navigate(['/history']);
+    this.saveFeedback.set('');
+    try {
+      const result = await firstValueFrom(
+        this.evaluations.save(session.sessionId, this.submissionSamples(), true)
+      );
+      if (!result.length || result.some(item => item.status !== 'FINALIZED')) {
+        throw new Error('Server did not confirm finalization');
+      }
+      this.evaluationReadOnly.set(true);
+      await this.router.navigate(['/history']);
+    } catch {
+      this.saveFeedback.set(
+        'Finalization was not confirmed. Your form values remain intact. Refresh to check database state before retrying.'
+      );
+    } finally {
+      this.finalizing.set(false);
+    }
   }
 
   areAllSweetnessSelected(): boolean {

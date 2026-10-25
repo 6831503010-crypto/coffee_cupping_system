@@ -1,0 +1,60 @@
+<dialog #cuppingModeDialog class="cupping-mode-dialog" aria-labelledby="modeDialogTitle"
+  aria-describedby="modeDialogDescription" (click)="onModeDialogClick($event)">
+
+  <div class="mode-dialog-header">
+    <div>
+      <h2 id="modeDialogTitle">
+        Choose Cupping Mode
+      </h2>
+
+      <p id="modeDialogDescription">
+        How would you like to start your
+        coffee cupping session?
+      </p>
+    </div>
+
+    <button type="button" class="mode-close-btn" aria-label="Close dialog" (click)="closeModeDialog()">
+      &times;
+    </button>
+  </div>
+
+  <div class="mode-options">
+
+    <button type="button" class="mode-option" (click)="selectIndividualMode()">
+
+      <span class="mode-option-icon" aria-hidden="true">
+        ☕
+      </span>
+
+      <strong>Individual Cupping</strong>
+
+      <span class="mode-option-description">
+        Create a session, choose evaluators,
+        and select coffee samples.
+      </span>
+
+      <span class="mode-action">
+        Continue →
+      </span>
+    </button>
+
+    <button type="button" class="mode-option" disabled>
+
+      <span class="mode-option-icon" aria-hidden="true">
+        ♙
+      </span>
+
+      <strong>Organizational Cupping</strong>
+
+      <span class="mode-option-description">
+        Organize a coffee evaluation event
+        with multiple judges.
+      </span>
+
+      <span class="mode-coming-soon">
+        Coming Soon
+      </span>
+    </button>
+
+  </div>
+</dialog>

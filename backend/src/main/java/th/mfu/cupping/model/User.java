@@ -31,6 +31,12 @@ public class User {
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
 
+  @Column(name = "qualification_status", length = 50)
+  private String qualificationStatus;
+
+  @Column(name = "qualification_confirmed_at")
+  private LocalDateTime qualificationConfirmedAt;
+
   public User() {
   }
 
@@ -65,6 +71,7 @@ public class User {
     this.email = email;
   }
 
+  @com.fasterxml.jackson.annotation.JsonIgnore
   public String getPasswordHash() {
     return passwordHash;
   }
@@ -72,6 +79,14 @@ public class User {
   public void setPasswordHash(String passwordHash) {
     this.passwordHash = passwordHash;
   }
+
+  public void setQualificationStatus(String qualificationStatus) { this.qualificationStatus = qualificationStatus; }
+
+  public void setQualificationConfirmedAt(LocalDateTime qualificationConfirmedAt) { this.qualificationConfirmedAt = qualificationConfirmedAt; }
+
+  public String getQualificationStatus() { return qualificationStatus; }
+
+  public LocalDateTime getQualificationConfirmedAt() { return qualificationConfirmedAt; }
 
   public LocalDateTime getCreatedAt() {
     return createdAt;
