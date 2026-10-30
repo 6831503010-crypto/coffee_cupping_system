@@ -5,6 +5,7 @@ import { CuppingModeModal } from '../../shared/cupping-mode-modal/cupping-mode-m
 import { CoffeeInventoryService, InventorySample } from '../../services/coffee-inventory.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
+import { ToastService } from '../../shared/toast-notification/toast.service';
 
 import {
   SampleFormModal,
@@ -24,6 +25,7 @@ export class Home {
   private readonly router =
     inject(Router);
   private readonly inventory = inject(CoffeeInventoryService);
+  private readonly toast = inject(ToastService);
   readonly recentSamples = signal<InventorySample[]>([]);
   readonly inventoryTotal = signal(0);
   readonly inSessionTotal = signal(0);
@@ -89,12 +91,10 @@ export class Home {
   private sampleFormModal?: SampleFormModal;
 
   readonly savingSample = signal(false);
-  readonly sampleSuccess = signal('');
 
   openNewSampleModal(): void {
     if (this.savingSample()) return;
 
-    this.sampleSuccess.set('');
     this.sampleFormModal?.open();
   }
 
@@ -108,14 +108,13 @@ export class Home {
     }
 
     this.savingSample.set(true);
-    this.sampleSuccess.set('');
 
     this.inventory.create(submission.sample).pipe(
       finalize(() => this.savingSample.set(false))
     ).subscribe({
       next: () => {
         modal.complete();
-        this.sampleSuccess.set('Coffee sample saved to your inventory.');
+        this.toast.success('Coffee sample saved to your inventory.');
         this.loadInventoryPreview();
       },
       error: (response: HttpErrorResponse) => {

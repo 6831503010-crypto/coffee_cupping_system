@@ -51,11 +51,6 @@
         <a class="landing-btn secondary" routerLink="/inventory">View All</a>
       </div>
     </div>
-    @if (sampleSuccess()) {
-    <p class="home-inventory-muted" role="status">
-      {{ sampleSuccess() }}
-    </p>
-    }
     @if (!inventoryLoading() && !inventoryError()) {
       <div class="home-inventory-summary">
         <span><strong>{{ inventoryTotal() }}</strong> saved samples</span>
@@ -195,7 +190,7 @@
 </dialog> -->
 <app-cupping-mode-modal #modeModal></app-cupping-mode-modal>
 <app-sample-form-modal [showSampleCode]="false" submitLabel="Save Sample"
-  description="Save coffee details to your inventory for use in future cupping sessions."
+  description=""
   [submitDisabled]="savingSample()" (sampleSubmitted)="createSample($event)"></app-sample-form-modal>
 
 

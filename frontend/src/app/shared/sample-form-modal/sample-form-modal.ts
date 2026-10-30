@@ -64,12 +64,12 @@ export class SampleFormModal {
     },
     {
       key: 'growingLocation',
-      label: 'Growing Location (optional)',
+      label: 'Growing Location',
       required: false
     },
     {
       key: 'ownerProducer',
-      label: 'Owner / Producer (optional)',
+      label: 'Owner / Producer',
       required: false
     }
   ] as const;

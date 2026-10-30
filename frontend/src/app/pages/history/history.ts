@@ -1,7 +1,8 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { EvaluationSubmissionService, EvaluationHistoryGroup } from '../../services/evaluation-submission.service';
 import { RouterLink } from '@angular/router';
 import { CuppingModeModal } from '../../shared/cupping-mode-modal/cupping-mode-modal';
+import { IndividualSessionService } from '../../services/individual-session.service';
 
 interface AromaEvaluation {
   qualityScore?: string | number;
@@ -54,6 +55,44 @@ interface HistoryRecord {
 })
 export class History implements OnInit {
   private readonly submissions = inject(EvaluationSubmissionService);
+  private readonly sessions = inject(IndividualSessionService);
+  private readonly loadingEvaluatorCounts = new Set<number>();
+  readonly evaluatorCounts = signal<Record<number, { joined: number; capacity: number }>>({});
+
+  constructor() {
+    // Load only the selected session. The existing session endpoint provides
+    // joined evaluator count and capacity; historical results are unchanged.
+    effect(() => {
+      const record = this.activeRecord();
+      if (record?.source === 'database') {
+        this.loadEvaluatorCount(Number(record.id.replace(/^db-/, '')));
+      }
+    });
+  }
+
+  private loadEvaluatorCount(sessionId: number): void {
+    if (!Number.isInteger(sessionId) || this.loadingEvaluatorCounts.has(sessionId) ||
+        this.evaluatorCounts()[sessionId]) return;
+
+    this.loadingEvaluatorCounts.add(sessionId);
+    this.sessions.get(sessionId).subscribe({
+      next: session => {
+        this.evaluatorCounts.update(current => ({
+          ...current,
+          [sessionId]: { joined: session.joinedEvaluators, capacity: session.evaluatorLimit }
+        }));
+        this.loadingEvaluatorCounts.delete(sessionId);
+      },
+      error: () => this.loadingEvaluatorCounts.delete(sessionId)
+    });
+  }
+
+  evaluatorCountLabel(record: HistoryRecord): string {
+    if (record.source !== 'database') return '—';
+    const count = this.evaluatorCounts()[Number(record.id.replace(/^db-/, ''))];
+    return count ? `${count.joined} / ${count.capacity}` : '—';
+  }
+
   private serverRecords: HistoryRecord[] = [];
   historyLoadError = signal('');
 
@@ -109,75 +148,140 @@ export class History implements OnInit {
 
   records = signal<HistoryRecord[]>(this.readHistory());
 
+  // Client-side history view state. The backend/API data remains unchanged.
   readonly pageSize = 5;
   readonly currentPage = signal(1);
+  readonly searchQuery = signal('');
+  readonly statusFilter = signal<'all' | 'finalized' | 'closed'>('all');
+  readonly selectedSessionId = signal<string | null>(null);
+  readonly selectedSampleIndex = signal(0);
 
   readonly sortedRecords = computed(() =>
     [...this.records()].sort((a, b) => {
       const aTime = Date.parse(a.completedAt);
       const bTime = Date.parse(b.completedAt);
-
       return (Number.isNaN(bTime) ? 0 : bTime)
         - (Number.isNaN(aTime) ? 0 : aTime);
     })
   );
 
-  readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.records().length / this.pageSize))
-  );
+  readonly filteredRecords = computed(() => {
+    const query = this.searchQuery().trim().toLocaleLowerCase();
+    const status = this.statusFilter();
 
+    return this.sortedRecords().filter(record => {
+      const matchesSearch = !query ||
+        (record.sessionName || '').toLocaleLowerCase().includes(query);
+      const matchesStatus = status === 'all' ||
+        (status === 'closed' ? this.isIncomplete(record) :
+          !this.isIncomplete(record) && record.completionOutcome !== 'IN_PROGRESS');
+      return matchesSearch && matchesStatus;
+    });
+  });
+
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredRecords().length / this.pageSize))
+  );
   readonly pageStartIndex = computed(() =>
     (this.currentPage() - 1) * this.pageSize
   );
-
   readonly paginatedRecords = computed(() =>
-    this.sortedRecords().slice(
-      this.pageStartIndex(),
-      this.pageStartIndex() + this.pageSize
+    this.filteredRecords().slice(
+      this.pageStartIndex(), this.pageStartIndex() + this.pageSize
     )
   );
-
   readonly showingFrom = computed(() =>
-    this.records().length === 0 ? 0 : this.pageStartIndex() + 1
+    this.filteredRecords().length === 0 ? 0 : this.pageStartIndex() + 1
   );
-
   readonly showingTo = computed(() =>
-    Math.min(
-      this.pageStartIndex() + this.pageSize,
-      this.records().length
-    )
+    Math.min(this.pageStartIndex() + this.pageSize, this.filteredRecords().length)
   );
-
   readonly pageNumbers = computed(() => {
     const total = this.totalPages();
-    const start = Math.max(
-      1,
-      Math.min(this.currentPage() - 2, total - 4)
-    );
+    const start = Math.max(1, Math.min(this.currentPage() - 2, total - 4));
+    return Array.from({ length: Math.min(5, total) }, (_, index) => start + index);
+  });
+  readonly finalizedCount = computed(() => this.records().filter(record =>
+    !this.isIncomplete(record) && record.completionOutcome !== 'IN_PROGRESS'
+  ).length);
+  readonly closedCount = computed(() => this.records().filter(record =>
+    this.isIncomplete(record)
+  ).length);
 
-    return Array.from(
-      { length: Math.min(5, total) },
-      (_, index) => start + index
-    );
+  // The first item on a history page is shown until a user chooses another.
+  readonly activeRecord = computed(() => {
+    const pageRecords = this.paginatedRecords();
+    return pageRecords.find(record => record.id === this.selectedSessionId())
+      ?? pageRecords[0] ?? null;
+  });
+  readonly activeSample = computed(() => {
+    const samples = this.activeRecord()?.samples ?? [];
+    return samples[Math.min(this.selectedSampleIndex(), samples.length - 1)] ?? null;
+  });
+  readonly activeSamplePage = computed(() => {
+    const count = this.activeRecord()?.samples?.length ?? 0;
+    return count === 0 ? 0 : Math.min(this.selectedSampleIndex(), count - 1) + 1;
+  });
+  readonly activeSessionNumber = computed(() => {
+    const active = this.activeRecord();
+    if (!active) return 0;
+    return this.sortedRecords().findIndex(record => record.id === active.id) + 1;
+  });
+
+  setSearch(query: string): void {
+    this.searchQuery.set(query);
+    this.resetViewSelection();
+  }
+
+  setStatusFilter(filter: 'all' | 'finalized' | 'closed'): void {
+    this.statusFilter.set(filter);
+    this.resetViewSelection();
+  }
+
+  private resetViewSelection(): void {
+    this.currentPage.set(1);
+    this.selectedSessionId.set(null);
+    this.selectedSampleIndex.set(0);
+    this.closeSampleDetails();
+  }
+
+  selectSession(id: string): void {
+    this.selectedSessionId.set(id);
+    this.selectedSampleIndex.set(0);
+    this.closeSampleDetails();
+  }
+
+  selectSample(index: number): void {
+    const length = this.activeRecord()?.samples?.length ?? 0;
+    if (Number.isInteger(index) && index >= 0 && index < length) {
+      this.selectedSampleIndex.set(index);
+      this.closeSampleDetails();
+    }
+  }
+
+  readonly samplePageNumbers = computed(() => {
+    const count = this.activeRecord()?.samples?.length ?? 0;
+    const selected = this.activeSamplePage();
+    const start = Math.max(1, Math.min(selected - 2, count - 4));
+    return Array.from({ length: Math.min(5, count) }, (_, index) => start + index);
   });
 
   goToPage(page: number): void {
-    if (
-      !Number.isInteger(page) ||
-      page < 1 ||
-      page > this.totalPages()
-    ) {
-      return;
-    }
-
-    this.closeSampleDetails();
+    if (!Number.isInteger(page) || page < 1 || page > this.totalPages()) return;
     this.currentPage.set(page);
+    this.selectedSessionId.set(null);
+    this.selectedSampleIndex.set(0);
+    this.closeSampleDetails();
   }
 
   sessionNumber(indexOnPage: number): number {
-    return this.records().length
-      - this.pageStartIndex()
-      - indexOnPage;
+    return this.sortedRecords().length - this.pageStartIndex() - indexOnPage;
+  }
+
+  statusLabel(record: HistoryRecord): string {
+    if (this.isIncomplete(record)) return 'Closed';
+    if (record.completionOutcome === 'IN_PROGRESS') return 'In progress';
+    return 'Finalized';
   }
 
   // openDetails = signal<Set<string>>(new Set());
@@ -400,36 +504,6 @@ export class History implements OnInit {
   }
 
 
-  // toggleDetails(
-  //   sessionId: string,
-  //   sampleId: number
-  // ) {
-
-  //   const key =
-  //     `${sessionId}-${sampleId}`;
-
-  //   const updated =
-  //     new Set(this.openDetails());
-
-  //   if (updated.has(key)) {
-  //     updated.delete(key);
-  //   } else {
-  //     updated.add(key);
-  //   }
-
-  //   this.openDetails.set(updated);
-  // }
-
-
-  // isDetailsOpen(
-  //   sessionId: string,
-  //   sampleId: number
-  // ): boolean {
-
-  //   return this.openDetails().has(
-  //     `${sessionId}-${sampleId}`
-  //   );
-  // }
   selectedDetails = signal<{
     sessionNumber: number;
     sample: HistorySample;
