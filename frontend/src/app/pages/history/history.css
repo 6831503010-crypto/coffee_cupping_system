@@ -329,27 +329,6 @@
   flex-wrap: wrap;
 }
 .sample-pagination > span { color: var(--mocha); font-size: 12px; }
-.browser-session-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 12px 20px;
-  border-top: 1px solid var(--line);
-  color: var(--mocha);
-  font-size: 12px;
-}
-.delete-session {
-  border: 0;
-  background: transparent;
-  color: var(--danger);
-  padding: 5px;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 650;
-  cursor: pointer;
-}
 .history-incomplete-note, .no-sample-results, .select-session-empty {
   background: #faf2e9;
   border: 1px solid var(--line);

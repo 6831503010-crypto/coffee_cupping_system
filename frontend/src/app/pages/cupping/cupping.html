@@ -30,12 +30,8 @@
       <h1>From aroma to final cup.</h1>
 
       <p style="color: var(--crema)">
-        @if (isSavedSession) {
         {{ savedSession()?.sessionName || 'Individual Cupping' }}
         • Evaluate your selected coffee samples
-        } @else {
-        Multi-step digital cupping form • Choose 1–10 samples before starting
-        }
       </p>
     </div>
 
@@ -124,62 +120,7 @@
   </div>
   }
 
-  @if (!isSavedSession && !sessionStarted()) {
-
-  <section class="sample-setup">
-    <div class="sample-setup-inner">
-      <div class="sample-setup-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Z" />
-
-          <path d="M17 9h2a3 3 0 0 1 0 6h-2M7 3v2M11 3v2M15 3v2" />
-        </svg>
-      </div>
-
-      <div class="eyebrow">Before you begin</div>
-
-      <h2>How many coffee samples will you evaluate?</h2>
-
-      <p>
-        Enter the number of samples for this cupping session. The system will create the same Aroma, Flavor, and
-        Review forms for each sample.
-      </p>
-
-      <div class="sample-count-row">
-        <div class="sample-count-field">
-          <label for="sampleCountInput">
-            Number of samples
-
-            <span class="required-mark" aria-hidden="true"> * </span>
-          </label>
-
-          <div class="sample-stepper">
-            <button class="sample-stepper-btn" type="button" aria-label="Decrease number of samples"
-              [disabled]="decreaseDisabled()" (click)="changeSampleCount(-1)">
-              −
-            </button>
-
-            <input id="sampleCountInput" type="number" min="1" max="10" step="1" placeholder="1–10" inputmode="numeric"
-              autocomplete="off" [formControl]="sampleCount" (input)="clearSampleCountError()"
-              (keydown.enter)="startCupping()" />
-
-            <button class="sample-stepper-btn" type="button" aria-label="Increase number of samples"
-              [disabled]="increaseDisabled()" (click)="changeSampleCount(1)">
-              +
-            </button>
-          </div>
-        </div>
-
-        <button class="btn primary" type="button" (click)="startCupping()">Start Cupping →</button>
-      </div>
-
-      <div class="sample-count-error" aria-live="polite">{{ sampleCountError() }}</div>
-
-      <div class="sample-limit-note">Maximum 10 samples per session</div>
-    </div>
-  </section>
-
-  } @if (sessionStarted()) {
+  @if (sessionStarted()) {
 
   <div class="progress cupping-progress">
     <div class="steps">
@@ -1499,10 +1440,6 @@
       </article>
       }
     </div>
-
-    <!-- <div class="review-finalize-note">
-      @if (isSavedSession) { The backend calculates and stores the official score when you save or finalize. Finalizing saves all samples to MySQL. } @else { Standalone practice is only stored in this browser; no official total is calculated. }
-    </div> -->
 
     <div class="actions review-finalize-actions">
       <!-- <button class="btn secondary" type="button" [disabled]="finalizing() || evaluationReadOnly()" (click)="backToFlavor()">

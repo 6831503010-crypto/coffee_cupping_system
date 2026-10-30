@@ -38,9 +38,6 @@ import {
 })
 export class Cupping implements OnInit {
 
-  private readonly HISTORY_KEY =
-    'aromaArtisans.cuppingHistory.v1';
-
   private readonly router = inject(Router);
 
   private readonly route = inject(ActivatedRoute);
@@ -288,6 +285,9 @@ private startTimingUpdates(): void {
 
   ngOnInit(): void {
     if (!this.isSavedSession) {
+      // A cupping evaluation must belong to a saved database session.
+      // Direct legacy /cupping links now open the normal session-creation flow.
+      void this.router.navigate(['/individual/new'], { replaceUrl: true });
       return;
     }
 
@@ -1149,18 +1149,6 @@ goToReview() {
   @ViewChild('cuppingPanel')
   cuppingPanel?: ElementRef<HTMLElement>;
 
-  sampleCount = new FormControl<number | null>(
-    null,
-    {
-      validators: [
-        Validators.required,
-        Validators.min(1),
-        Validators.max(10)
-      ]
-    }
-  );
-
-  sampleCountError = signal('');
   currentStage = signal<'aroma' | 'flavor' | 'review'>('aroma');
 
   sessionStarted = signal(false);
@@ -1176,130 +1164,6 @@ goToReview() {
 
   flavorErrorSamples = signal<number[]>([]);
 
-
-  changeSampleCount(change: number) {
-
-    const value = this.sampleCount.value;
-
-    let count =
-      typeof value === 'number'
-        ? value
-        : Number(value);
-
-    if (
-      !Number.isInteger(count) ||
-      count < 1 ||
-      count > 10
-    ) {
-      count = 1;
-    } else {
-      count += change;
-    }
-
-    count = Math.max(
-      1,
-      Math.min(10, count)
-    );
-
-    this.sampleCount.setValue(count);
-
-    this.sampleCountError.set('');
-  }
-
-
-  decreaseDisabled(): boolean {
-
-    const count = this.sampleCount.value;
-
-    return (
-      count === null ||
-      !Number.isInteger(count) ||
-      count <= 1 ||
-      count > 10
-    );
-  }
-
-
-  increaseDisabled(): boolean {
-
-    const count = this.sampleCount.value;
-
-    return (
-      Number.isInteger(count) &&
-      count !== null &&
-      count >= 10
-    );
-  }
-
-
-  clearSampleCountError() {
-    this.sampleCountError.set('');
-  }
-
-
-  startCupping() {
-    if (this.isSavedSession) {
-      return;
-    }
-
-
-    const count = this.sampleCount.value;
-    this.currentStage.set('aroma');
-    if (
-      count === null ||
-      !Number.isInteger(count) ||
-      count < 1 ||
-      count > 10
-    ) {
-
-      this.sampleCountError.set(
-        'Please enter a whole number from 1 to 10.'
-      );
-
-      return;
-    }
-
-    this.selectedSampleCount.set(count);
-    const newSamples = Array.from(
-      { length: count },
-      (_, index) =>
-        this.createSample(index + 1)
-    );
-
-    this.aromaLocked.set(false);
-
-    this.aromaValidationActive.set(false);
-
-    this.aromaErrorSamples.set([]);
-
-    this.flavorValidationActive.set(false);
-
-    this.flavorErrorSamples.set([]);
-
-    this.aromaForm.enable({
-      emitEvent: false
-    });
-
-    this.samples.set(newSamples);
-
-    this.activeSample.set(1);
-
-    this.loadAromaForm(1);
-
-    this.sampleCountError.set('');
-
-    this.sessionStarted.set(true);
-
-    requestAnimationFrame(() => {
-
-      this.cuppingPanel?.nativeElement
-        .scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-
-    });
-  }
 
   samples = signal<CoffeeSample[]>([]);
 
@@ -1839,25 +1703,6 @@ goToReview() {
   }
 
 
-  private readExistingHistory(): any[] {
-
-    try {
-
-      const parsed = JSON.parse(
-        localStorage.getItem(this.HISTORY_KEY) || '[]'
-      );
-
-      return Array.isArray(parsed)
-        ? parsed
-        : [];
-
-    } catch {
-
-      return [];
-    }
-  }
-
-
   private syncCurrentForm(): void {
     if (this.currentStage() === 'aroma' && !this.aromaLocked()) {
       this.saveAromaForm();
@@ -1974,16 +1819,8 @@ goToReview() {
     this.syncCurrentForm();
     const session = this.savedSession();
     if (!session) {
-      // Standalone practice is browser-local only, never presented as a database result.
-      const now = new Date().toISOString();
-      const record = {
-        id: `practice-${Date.now()}`, completedAt: now,
-        samples: this.samples().map(sample => ({ ...sample, finalScore: null }))
-      };
-      localStorage.setItem(this.HISTORY_KEY, JSON.stringify([
-        record, ...this.readExistingHistory()
-      ]));
-      await this.router.navigate(['/history']);
+      // Never finalize an evaluation outside a database-backed session.
+      this.saveFeedback.set('Create a cupping session before saving an evaluation.');
       return;
     }
     this.finalizing.set(true);
@@ -2130,20 +1967,17 @@ goToReview() {
     try {
       const session = this.savedSession();
 
-      if (session) {
-        const progress = await firstValueFrom(
-          this.evaluations.lockAroma(
-            session.sessionId,
-            this.submissionSamples()
-          )
-        );
-
-        if (!progress.aromaLocked) {
-          throw new Error('Backend did not confirm the aroma lock');
-        }
+      if (!session) {
+        throw new Error('An active database session is required to lock aroma.');
       }
 
-      // Practice keeps its existing local-only behavior.
+      const progress = await firstValueFrom(
+        this.evaluations.lockAroma(session.sessionId, this.submissionSamples())
+      );
+      if (!progress.aromaLocked) {
+        throw new Error('Backend did not confirm the aroma lock');
+      }
+
       this.aromaLocked.set(true);
       this.aromaForm.disable({ emitEvent: false });
       this.aromaLockDialog?.nativeElement.close();

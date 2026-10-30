@@ -35,8 +35,7 @@ interface HistorySample {
 }
 
 interface HistoryRecord {
-  id: string;
-  source?: 'database' | 'practice';
+  id: number;
   sessionName?: string;
   completedAt: string;
   samples?: HistorySample[];
@@ -64,8 +63,8 @@ export class History implements OnInit {
     // joined evaluator count and capacity; historical results are unchanged.
     effect(() => {
       const record = this.activeRecord();
-      if (record?.source === 'database') {
-        this.loadEvaluatorCount(Number(record.id.replace(/^db-/, '')));
+      if (record) {
+        this.loadEvaluatorCount(record.id);
       }
     });
   }
@@ -88,28 +87,25 @@ export class History implements OnInit {
   }
 
   evaluatorCountLabel(record: HistoryRecord): string {
-    if (record.source !== 'database') return '—';
-    const count = this.evaluatorCounts()[Number(record.id.replace(/^db-/, ''))];
+    const count = this.evaluatorCounts()[record.id];
     return count ? `${count.joined} / ${count.capacity}` : '—';
   }
 
-  private serverRecords: HistoryRecord[] = [];
   historyLoadError = signal('');
 
   ngOnInit(): void {
     this.submissions.history().subscribe({
       next: groups => {
-        this.serverRecords = groups.map(group => this.mapSavedHistory(group));
-        this.records.set([...this.serverRecords, ...this.readHistory()]);
+        this.records.set(groups.map(group => this.mapSavedHistory(group)));
+        this.historyLoadError.set('');
       },
-      error: () => this.historyLoadError.set('Database history could not be loaded. Showing browser-only practice records.')
+      error: () => this.historyLoadError.set('Could not load session history. Please refresh and try again.')
     });
   }
 
   private mapSavedHistory(group: EvaluationHistoryGroup): HistoryRecord {
     return {
-      id: `db-${group.sessionId}`,
-      source: 'database',
+      id: group.sessionId,
       sessionName: group.sessionName,
       completedAt: group.completedAt,
       sessionClosed: group.sessionClosed,
@@ -143,17 +139,15 @@ export class History implements OnInit {
   }
 
 
-  private readonly HISTORY_KEY =
-    'aromaArtisans.cuppingHistory.v1';
-
-  records = signal<HistoryRecord[]>(this.readHistory());
+  // Session history comes exclusively from the existing backend endpoint.
+  records = signal<HistoryRecord[]>([]);
 
   // Client-side history view state. The backend/API data remains unchanged.
   readonly pageSize = 5;
   readonly currentPage = signal(1);
   readonly searchQuery = signal('');
   readonly statusFilter = signal<'all' | 'finalized' | 'closed'>('all');
-  readonly selectedSessionId = signal<string | null>(null);
+  readonly selectedSessionId = signal<number | null>(null);
   readonly selectedSampleIndex = signal(0);
 
   readonly sortedRecords = computed(() =>
@@ -245,7 +239,7 @@ export class History implements OnInit {
     this.closeSampleDetails();
   }
 
-  selectSession(id: string): void {
+  selectSession(id: number): void {
     this.selectedSessionId.set(id);
     this.selectedSampleIndex.set(0);
     this.closeSampleDetails();
@@ -368,35 +362,6 @@ export class History implements OnInit {
       ? this.formatDate(records[0].completedAt)
       : '—';
   });
-
-
-  private readHistory(): HistoryRecord[] {
-    try {
-      const parsed = JSON.parse(
-        localStorage.getItem(this.HISTORY_KEY) || '[]'
-      );
-
-      return Array.isArray(parsed)
-        ? parsed
-        : [];
-    } catch {
-      return [];
-    }
-  }
-
-
-  private writeHistory(records: HistoryRecord[]) {
-    localStorage.setItem(
-      this.HISTORY_KEY,
-      JSON.stringify(records.filter(record => record.source !== 'database'))
-    );
-
-    this.records.set([...this.serverRecords, ...records.filter(record => record.source !== 'database')]);
-
-    this.currentPage.update(page =>
-      Math.min(page, this.totalPages())
-    );
-  }
 
 
   formatDate(value: string): string {
@@ -525,50 +490,6 @@ export class History implements OnInit {
     this.selectedDetails.set(null);
   }
 
-
-  deleteSession(id: string) {
-    if (id.startsWith('db-')) return; // Persisted results are immutable here.
-
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this cupping session? This action cannot be undone.'
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    const updated =
-      this.records().filter(
-        record => record.id !== id
-      );
-
-    this.writeHistory(updated);
-  }
-
-
-  clearHistory() {
-
-    if (!this.records().some(record => record.source !== 'database')) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      'Clear browser-only practice history? Database records will stay.'
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    localStorage.removeItem(
-      this.HISTORY_KEY
-    );
-
-    this.records.set([...this.serverRecords]);
-    this.currentPage.set(1);
-    // this.openDetails.set(new Set());
-    this.selectedDetails.set(null);
-  }
 
   formatDuration(seconds: number | null | undefined): string {
   if (seconds == null || !Number.isFinite(seconds) || seconds < 0) {
