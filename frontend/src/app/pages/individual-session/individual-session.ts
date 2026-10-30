@@ -115,6 +115,7 @@ export class IndividualSession {
     this.route.snapshot.paramMap.get('id');
 
   sessionName = '';
+  sessionDescription = '';
   evaluatorLimit = 1;
   sampleCount: number | null = 1;
 
@@ -169,6 +170,27 @@ export class IndividualSession {
 
   selectedExistingId: number | null = null;
   existingCode = '';
+  sampleSearch = '';
+
+  get filteredSavedSamples(): LibrarySample[] {
+    const query = this.sampleSearch.trim().toLowerCase();
+    if (!query) return this.savedSamples();
+    return this.savedSamples().filter(sample =>
+      [sample.sampleName, sample.process, sample.growingLocation, sample.ownerProducer,
+        sample.harvestYear?.toString()]
+        .some(value => (value ?? '').toLowerCase().includes(query))
+    );
+  }
+
+  isChosenSample(sampleId: number): boolean {
+    return this.chosen().some(sample => sample.sampleId === sampleId);
+  }
+
+  selectExistingSample(sampleId: number): void {
+    if (!this.canAddSample() || this.isChosenSample(sampleId)) return;
+    this.selectedExistingId = sampleId;
+    this.existingSampleError.set('');
+  }
 
 
   constructor() {
@@ -345,15 +367,14 @@ export class IndividualSession {
 
     this.api.create({
       sessionName: name,
+      description: this.sessionDescription.trim() || null,
       evaluatorLimit: this.evaluatorLimit,
       creatorParticipates: this.creatorParticipates,
       samples: this.chosen()
     }).subscribe({
       next: result => {
         this.saving.set(false);
-        this.router.navigate([
-          '/individual', result.sessionId
-        ]);
+        this.router.navigate(['/individual', result.sessionId]);
       },
       error: () => {
         this.saving.set(false);

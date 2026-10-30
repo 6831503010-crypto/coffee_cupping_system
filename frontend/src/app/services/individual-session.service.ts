@@ -53,6 +53,7 @@ export interface SessionView {
 
 export interface CreateIndividualSessionRequest {
   sessionName: string;
+  description: string | null;
   evaluatorLimit: number;
   creatorParticipates: boolean;
   samples: SampleChoice[];

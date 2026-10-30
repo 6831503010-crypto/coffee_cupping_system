@@ -4,194 +4,230 @@
 
 
   @if (sessionIdParam === null) {
+  <div class="creation-page">
+    <header class="creation-page-heading">
+      <h1>Create Individual Session</h1>
+    </header>
 
-  <h1>Create Individual Session</h1>
-  <p>Configure evaluators and choose coffee samples.</p>
+    <div class="creation-grid">
+      <div class="creation-main">
+        <section class="setup-section creation-step-card" aria-labelledby="creationInformationTitle">
+          <div class="creation-step-heading">
+            <span class="creation-step-number" aria-hidden="true">1</span>
+            <div>
+              <h2 id="creationInformationTitle">Session Information</h2>
+            </div>
+          </div>
 
-  <section class="setup-section">
-    <h2>Session Settings</h2>
+          <div class="creation-field">
+            <label for="sessionName">Session Name <span class="required-mark">*</span></label>
+            <input id="sessionName" [(ngModel)]="sessionName" maxlength="255" required [disabled]="saving()"
+              placeholder="e.g. Morning Coffee Evaluation" [class.input-error]="!!sessionNameError()"
+              [attr.aria-invalid]="!!sessionNameError()"
+              [attr.aria-describedby]="sessionNameError() ? 'sessionNameError' : null" />
+            @if (sessionNameError()) {
+              <p id="sessionNameError" class="field-error" role="alert">{{ sessionNameError() }}</p>
+            }
+          </div>
 
-    <label for="sessionName">Session Name *</label>
+          <div class="creation-field">
+            <label for="sessionDescription">Session Description</label>
+            <textarea id="sessionDescription" [(ngModel)]="sessionDescription" maxlength="500" rows="3"
+              [disabled]="saving()" placeholder="Add a description (optional)"></textarea>
+          </div>
+        </section>
 
-    <input id="sessionName" [(ngModel)]="sessionName" maxlength="255" required [disabled]="saving()"
-      placeholder="e.g. Morning Coffee Evaluation" [class.input-error]="!!sessionNameError()"
-      [attr.aria-invalid]="!!sessionNameError()" [attr.aria-describedby]="
-        sessionNameError() ? 'sessionNameError' : null
-      " />
+        <section class="setup-section creation-step-card" aria-labelledby="creationSettingsTitle">
+          <div class="creation-step-heading">
+            <span class="creation-step-number" aria-hidden="true">2</span>
+            <div>
+              <h2 id="creationSettingsTitle">Session Settings</h2>
+              <p class="creation-section-note">Set the number of evaluators and coffee samples.</p>
+            </div>
+          </div>
 
-    @if (sessionNameError()) {
-    <p id="sessionNameError" class="field-error" role="alert">
-      {{ sessionNameError() }}
-    </p>
-    }
+          <div class="creation-settings-grid">
+            <div class="creation-field">
+              <label for="evaluatorLimit">Number of Evaluators <span class="required-mark">*</span></label>
+              <div class="number-stepper" [class.input-error]="!isEvaluatorCountValid()">
+                <button type="button" aria-label="Decrease evaluator capacity"
+                  [disabled]="saving() || evaluatorLimit <= 1" (click)="adjustEvaluatorCount(-1)">−</button>
+                <input id="evaluatorLimit" type="number" min="1" max="10" step="1" required
+                  [(ngModel)]="evaluatorLimit" [disabled]="saving()"
+                  [attr.aria-invalid]="!isEvaluatorCountValid()"
+                  [attr.aria-describedby]="!isEvaluatorCountValid() ? 'evaluatorCountError' : null"
+                  [class.input-error]="!isEvaluatorCountValid()" />
+                <button type="button" aria-label="Increase evaluator capacity"
+                  [disabled]="saving() || evaluatorLimit >= 10" (click)="adjustEvaluatorCount(1)">+</button>
+              </div>
+              @if (!isEvaluatorCountValid()) {
+                <p id="evaluatorCountError" class="field-error" role="alert">Enter a whole number from 1 to 10.</p>
+              }
+            </div>
 
-    <label for="evaluatorLimit">
-      Maximum Number of Evaluators
-    </label>
+            <div class="creation-field">
+              <label for="sampleCount">Number of Coffee Samples <span class="required-mark">*</span></label>
+              <div class="number-stepper" [class.input-error]="!isSampleCountValid()">
+                <button type="button" aria-label="Decrease sample count"
+                  [disabled]="saving() || (sampleCount ?? 1) <= 1" (click)="adjustSampleCount(-1)">−</button>
+                <input id="sampleCount" type="number" min="1" max="10" step="1" required
+                  [(ngModel)]="sampleCount" [disabled]="saving()"
+                  [class.input-error]="!isSampleCountValid()"
+                  [attr.aria-invalid]="!isSampleCountValid()"
+                  [attr.aria-describedby]="!isSampleCountValid() ? 'sampleCountError' : null" />
+                <button type="button" aria-label="Increase sample count"
+                  [disabled]="saving() || (sampleCount ?? 0) >= 10" (click)="adjustSampleCount(1)">+</button>
+              </div>
+              @if (!isSampleCountValid()) {
+                <p id="sampleCountError" class="field-error" role="alert">Enter a whole number from 1 to 10.</p>
+              }
+            </div>
+          </div>
 
-    <div class="number-stepper" [class.input-error]="!isEvaluatorCountValid()">
-      <button type="button" aria-label="Decrease evaluator capacity" [disabled]="saving() || evaluatorLimit <= 1"
-        (click)="adjustEvaluatorCount(-1)">
-        −
-      </button>
+          <label class="checkbox-label creation-participation">
+            <input type="checkbox" [(ngModel)]="creatorParticipates" [disabled]="saving()" />
+            <span>I want to participate as an evaluator</span>
+          </label>
+          <p class="creation-helper creation-participation-note">
+            @if (creatorParticipates) {
+              You will occupy 1 of the {{ evaluatorLimit }} evaluator slots.
+            } @else {
+              You will manage the session without occupying an evaluator slot.
+            }
+          </p>
+        </section>
 
-      <input id="evaluatorLimit" type="number" min="1" max="10" step="1" required [(ngModel)]="evaluatorLimit"
-        [disabled]="saving()" [attr.aria-invalid]="!isEvaluatorCountValid()"
-        [attr.aria-describedby]="!isEvaluatorCountValid() ? 'evaluatorCountError' : null" [class.input-error]="!isEvaluatorCountValid()"/>
+        <section class="setup-section creation-step-card" aria-labelledby="creationSamplesTitle">
+          <div class="creation-step-heading creation-samples-heading">
+            <span class="creation-step-number" aria-hidden="true">3</span>
+            <div class="creation-heading-grow">
+              <h2 id="creationSamplesTitle">Select Coffee Samples</h2>
+              <p class="creation-section-note">Choose from inventory or create a new sample.</p>
+            </div>
+            <button type="button" class="create-sample-trigger creation-secondary-action"
+              [disabled]="!canAddSample()" (click)="openNewSampleModal()" aria-haspopup="dialog">
+              + Create New Sample
+            </button>
+          </div>
 
-      <button type="button" aria-label="Increase evaluator capacity" [disabled]="saving() || evaluatorLimit >= 10"
-        (click)="adjustEvaluatorCount(1)">
-        +
-      </button>
+          <div class="creation-sample-search">
+            <label for="existingSampleSearch">Search Saved Samples</label>
+            <div class="creation-search-input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input id="existingSampleSearch" [(ngModel)]="sampleSearch" type="search"
+                placeholder="Search name, process, or origin..." autocomplete="off" />
+            </div>
+          </div>
+
+          <div id="existingSample" class="creation-sample-table-wrap"
+            tabindex="-1" [class.input-error]="!!existingSampleError()"
+            role="group" aria-label="Choose a saved coffee sample"
+            [attr.aria-describedby]="existingSampleError() ? 'existingSampleError' : null">
+            <table class="creation-sample-table">
+              <thead><tr><th scope="col">Select</th><th scope="col">Coffee Sample</th>
+                <th scope="col">Origin</th><th scope="col">Process</th><th scope="col">Harvest</th></tr></thead>
+              <tbody>
+                @for (sample of filteredSavedSamples; track sample.sampleId) {
+                  <tr [class.creation-sample-selected]="selectedExistingId === sample.sampleId"
+                    [class.creation-sample-added]="isChosenSample(sample.sampleId)">
+                    <td>
+                      <input type="radio" name="existingSavedSample" [value]="sample.sampleId"
+                        [checked]="selectedExistingId === sample.sampleId"
+                        [disabled]="saving() || isChosenSample(sample.sampleId) || !canAddSample()"
+                        (change)="selectExistingSample(sample.sampleId)"
+                        [attr.aria-label]="'Select ' + sample.sampleName" />
+                    </td>
+                    <td><span class="creation-sample-name">{{ sample.sampleName }}</span>
+                      @if (isChosenSample(sample.sampleId)) { <span class="creation-added-label">Added</span> }
+                    </td>
+                    <td>{{ sample.growingLocation || '—' }}</td>
+                    <td>{{ sample.process || '—' }}</td>
+                    <td>{{ sample.harvestYear ?? '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="creation-no-samples">
+                    {{ savedSamples().length ? 'No samples match your search.' : 'No saved samples yet. Create a new sample to get started.' }}
+                  </td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          @if (existingSampleError()) {
+            <p id="existingSampleError" class="field-error" role="alert">{{ existingSampleError() }}</p>
+          }
+
+          <div class="creation-add-sample-row">
+            <div class="creation-field">
+              <label for="existingCode">Session Sample Code <span class="required-mark">*</span></label>
+              <input id="existingCode" [(ngModel)]="existingCode" (ngModelChange)="existingCodeError.set('')"
+                maxlength="100" placeholder="e.g. 101" [disabled]="!canAddSample()"
+                [class.input-error]="!!existingCodeError()" [attr.aria-invalid]="!!existingCodeError()"
+                [attr.aria-describedby]="existingCodeError() ? 'existingCodeError' : null" />
+              @if (existingCodeError()) {
+                <p id="existingCodeError" class="field-error" role="alert">{{ existingCodeError() }}</p>
+              }
+            </div>
+            <button type="button" class="creation-add-action"
+              [disabled]="!canAddSample()" (click)="addExisting()">Add Selected Sample</button>
+          </div>
+
+          <div id="selectedSamplesReview" class="creation-selected-section" tabindex="-1"
+            aria-labelledby="selectedSamplesTitle" [class.selection-error]="!!selectedSamplesError()"
+            [attr.aria-describedby]="selectedSamplesError() ? 'selectedSamplesError' : null">
+            <div class="creation-selected-header">
+              <h3 id="selectedSamplesTitle">Selected Samples</h3>
+              <span class="creation-count-label">{{ chosen().length }} / {{ isSampleCountValid() ? sampleCount : '—' }}</span>
+            </div>
+            @if (selectedSamplesError()) {
+              <p id="selectedSamplesError" class="field-error" role="alert">{{ selectedSamplesError() }}</p>
+            }
+            @for (sample of chosen(); track $index; let i = $index) {
+              <div class="sample-row creation-chosen-row" [id]="'selected-sample-' + i"
+                tabindex="-1" [class.newly-added]="highlightedSampleIndex() === i">
+                <span class="creation-chosen-index">{{ i + 1 }}</span>
+                <span class="creation-chosen-name">{{ displayName(sample) }}
+                  <small>Code: {{ sample.sampleCode }}</small>
+                </span>
+                <button type="button" class="creation-remove-action" [disabled]="saving()"
+                  (click)="removeSample(i)">Remove</button>
+              </div>
+            } @empty {
+              <p class="creation-empty-selected">No samples selected yet.</p>
+            }
+            <p class="creation-helper" aria-live="polite">{{ sampleCountMessage() }}</p>
+          </div>
+        </section>
+        @if (error()) {
+          <p class="error creation-form-error" role="alert">{{ error() }}</p>
+        }
+      </div>
+
+      <aside class="creation-aside" aria-label="Session summary and creation actions">
+        <section class="creation-summary-card">
+          <div class="creation-summary-heading">
+            <span class="creation-summary-icon" aria-hidden="true">☕</span>
+            <div><h2>Session Summary</h2><p>Review your current settings.</p></div>
+          </div>
+          <dl class="creation-summary-list">
+            <div><dt>Session Name</dt><dd>{{ sessionName.trim() || '—' }}</dd></div>
+            @if (sessionDescription.trim()) {
+              <div><dt>Description</dt><dd>{{ sessionDescription.trim() }}</dd></div>
+            }
+            <div><dt>Maximum Evaluators</dt><dd>{{ isEvaluatorCountValid() ? evaluatorLimit : '—' }}</dd></div>
+            <div><dt>Coffee Samples</dt><dd>{{ chosen().length }} / {{ isSampleCountValid() ? sampleCount : '—' }}</dd></div>
+            <div><dt>Your Participation</dt><dd>{{ creatorParticipates ? 'Evaluator & creator' : 'Creator only' }}</dd></div>
+          </dl>
+          <div class="creation-summary-actions">
+            <button type="button" class="creation-submit" [disabled]="saving()" (click)="createSession()">
+              {{ saving() ? 'Creating...' : 'Create Session' }}
+            </button>
+            <a routerLink="/" class="creation-cancel">Cancel</a>
+          </div>
+        </section>
+      </aside>
     </div>
-
-    @if (!isEvaluatorCountValid()) {
-    <p id="evaluatorCountError" class="field-error" role="alert">
-      Enter a whole number from 1 to 10.
-    </p>
-    }
-
-    <label for="sampleCount">Number of Coffee Samples</label>
-
-    <div class="number-stepper" [class.input-error]="!isSampleCountValid()">
-      <button type="button" aria-label="Decrease sample count" [disabled]="saving() || (sampleCount ?? 1) <= 1"
-        (click)="adjustSampleCount(-1)">
-        −
-      </button>
-
-      <input id="sampleCount" type="number" min="1" max="10" step="1" required [(ngModel)]="sampleCount" [disabled]="saving()"
-        [class.input-error]="!isSampleCountValid()" [attr.aria-invalid]="!isSampleCountValid()" [attr.aria-describedby]="
-          !isSampleCountValid()
-            ? 'sampleCountHelp sampleCountError'
-            : 'sampleCountHelp'
-        " />
-
-      <button type="button" aria-label="Increase sample count" [disabled]="saving() || (sampleCount ?? 0) >= 10"
-        (click)="adjustSampleCount(1)">
-        +
-      </button>
-    </div>
-    @if (!isSampleCountValid()) {
-    <p id="sampleCountError" class="field-error" role="alert">
-      Enter a whole number from 1 to 10.
-    </p>
-    }
-
-    <p id="sampleCountHelp" class="help">
-      Choose 1–10 coffee samples. This is separate from the number of evaluators.
-    </p>
-    @if (isSampleCountValid()) {
-    <p class="help" aria-live="polite">
-      {{ sampleCountMessage() }}
-    </p>
-    }
-
-    <label class="checkbox-label">
-      <input type="checkbox" [(ngModel)]="creatorParticipates" />
-      I want to participate as an evaluator
-    </label>
-
-    <p class="help">
-      @if (creatorParticipates) {
-      You will occupy 1 of the
-      {{ evaluatorLimit }} evaluator slots.
-      } @else {
-      You will manage the session without
-      occupying an evaluator slot.
-      }
-    </p>
-  </section>
-
-  <section class="setup-section">
-    <div class="sample-section-heading">
-      <h2>Select Existing Coffee Samples</h2>
-      <button type="button" class="create-sample-trigger" [disabled]="!canAddSample()" (click)="openNewSampleModal()"
-        aria-haspopup="dialog">
-        Create a new sample
-      </button>
-    </div>
-
-    <label for="existingSample">Saved Samples</label>
-    <select id="existingSample" [(ngModel)]="selectedExistingId" (ngModelChange)="existingSampleError.set('')"
-      [class.input-error]="!!existingSampleError()" [attr.aria-invalid]="existingSampleError() ? 'true' : null"
-      [attr.aria-describedby]="existingSampleError() ? 'existingSampleError' : null">
-      <option [ngValue]="null">Select a coffee</option>
-
-      @for (sample of savedSamples(); track sample.sampleId) {
-      <option [ngValue]="sample.sampleId">
-        {{ sample.sampleName }}
-      </option>
-      }
-    </select>
-
-    @if (existingSampleError()) {
-    <p id="existingSampleError" class="field-error" role="alert">
-      {{ existingSampleError() }}
-    </p>
-    }
-
-    <label for="existingCode">Session Sample Code</label>
-    <input id="existingCode" [(ngModel)]="existingCode" (ngModelChange)="existingCodeError.set('')" maxlength="100"
-      placeholder="e.g. 101" [class.input-error]="!!existingCodeError()"
-      [attr.aria-invalid]="existingCodeError() ? 'true' : null"
-      [attr.aria-describedby]="existingCodeError() ? 'existingCodeError' : null" />
-
-    @if (existingCodeError()) {
-    <p id="existingCodeError" class="field-error" role="alert">
-      {{ existingCodeError() }}
-    </p>
-    }
-
-    <button type="button" [disabled]="!canAddSample()" (click)="addExisting()">
-      Add Existing Sample
-    </button>
-  </section>
-
-
-  <section id="selectedSamplesReview" class="setup-section" tabindex="-1" aria-labelledby="selectedSamplesTitle"
-    [class.selection-error]="!!selectedSamplesError()" [attr.aria-describedby]="
-      selectedSamplesError() ? 'selectedSamplesError' : null
-    ">
-    <h2 id="selectedSamplesTitle">Review Selected Samples</h2>
-
-    @if (selectedSamplesError()) {
-    <p id="selectedSamplesError" class="field-error" role="alert">
-      {{ selectedSamplesError() }}
-    </p>
-    }
-
-    @for (sample of chosen(); track $index; let i = $index) {
-    <div class="sample-row" [id]="'selected-sample-' + i" tabindex="-1"
-      [class.newly-added]="highlightedSampleIndex() === i">
-      <span>
-        {{ i + 1 }}.
-        {{ sample.sampleCode }} —
-        {{ displayName(sample) }}
-      </span>
-
-      <button type="button" [disabled]="saving()" (click)="removeSample(i)">
-        Remove
-      </button>
-    </div>
-    } @empty {
-    <p>No samples selected yet.</p>
-    }
-
-    <p aria-live="polite">
-      {{ chosen().length }} of {{ isSampleCountValid() ? sampleCount : '—' }} samples selected.
-    </p>
-    @if (!selectedSamplesError()) {
-    <p class="help">{{ sampleCountMessage() }}</p>
-    }
-
-    @if (error()) {
-    <p class="error" role="alert">{{ error() }}</p>
-    }
-
-    <button type="button" [disabled]="saving()" (click)="createSession()">
-      {{ saving() ? 'Creating...' : 'Create Session' }}
-    </button>
-  </section>
+  </div>
 
   } @else {
 
