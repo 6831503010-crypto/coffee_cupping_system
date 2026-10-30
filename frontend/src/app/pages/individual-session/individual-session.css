@@ -1,9 +1,9 @@
 .individual-container {
   box-sizing: border-box;
   width: 100%;
-  max-width: 1180px;
+  max-width: none;
   margin: 2rem auto;
-  padding: 1.5rem 20px;
+  padding: 1.5rem var(--page-gutter);
   color: #3e2723;
 }
 

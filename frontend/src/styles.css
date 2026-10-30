@@ -22,6 +22,8 @@ TEAM RULE:
     --line:#d9c7b5;
     --danger:#9a3f34;
     --shadow:0 16px 40px rgba(59,36,24,.12);
+    /* Consistent outer horizontal spacing for every application page. */
+    --page-gutter:50px;
   }
 
   *{box-sizing:border-box}
@@ -36,7 +38,7 @@ TEAM RULE:
     min-height:100vh;
   }
 
-  .shell{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+  .shell{width:100%;max-width:none;margin:0 auto;padding:28px var(--page-gutter) 60px}
   .hero{
     display:flex;align-items:center;justify-content:space-between;gap:22px;
     background:linear-gradient(135deg,var(--espresso),#4d2e1f);
@@ -1142,3 +1144,7 @@ TEAM RULE:
   .individual-container .session-dashboard-grid .setup-section{padding:1rem}
   .individual-container .session-dashboard-grid .evaluator-card{align-items:flex-start}
 }
+
+/* Keep the same outer gutter across pages without forcing desktop spacing on phones. */
+@media (max-width:900px){:root{--page-gutter:24px}}
+@media (max-width:600px){:root{--page-gutter:16px}}

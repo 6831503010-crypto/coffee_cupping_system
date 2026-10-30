@@ -44,7 +44,7 @@ export class SiteHeader {
   );
 
   readonly showFullNavigation = computed(() =>
-    this.currentPath() === '/' && !!this.currentUser()
+    !this.isAuthPage() && !!this.currentUser()
   );
 
   readonly showAccount = computed(() =>

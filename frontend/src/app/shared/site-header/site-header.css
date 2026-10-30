@@ -4,6 +4,7 @@
   z-index: 30;
   background: #fff;
   color: var(--espresso, #3e2723);
+  box-shadow: 0 3px 13px rgb(62 39 35 / 9%);
 }
 
 [hidden] {
@@ -13,9 +14,9 @@
 .site-header {
   position: relative;
   box-sizing: border-box;
-  max-width: 1180px;
+  width: 100%;
   margin: 0 auto;
-  padding: 24px 20px;
+  padding: 17px var(--page-gutter);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -23,8 +24,8 @@
 }
 
 .site-header.compact {
-  padding-top: 18px;
-  padding-bottom: 18px;
+  padding-top: 14px;
+  padding-bottom: 14px;
 }
 
 .brand {
@@ -75,7 +76,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 28px;
+  gap: 58px; /* Keep Home / About / Guide visually separate from the account control. */
   min-width: 0;
 }
 
@@ -185,8 +186,8 @@
   right: 0;
   z-index: 1;
   box-sizing: border-box;
-  width: 100%;
-  min-width: 180px;
+  width: 270px;
+  max-width: calc(100vw - 32px);
   padding-top: 8px;
 }
 
@@ -196,6 +197,58 @@
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 8px 24px rgb(62 39 35 / 12%);
+}
+
+/* Shared account navigation keeps inventory and history available on every page. */
+.account-menu-label {
+  display: block;
+  padding: 10px 12px 6px;
+  color: var(--mocha, #795548);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .09em;
+}
+
+.account-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.account-menu-link svg,
+.account-logout svg {
+  flex: 0 0 auto;
+  color: var(--mocha, #795548);
+}
+
+.account-menu-link:hover:not(.account-menu-placeholder),
+.account-menu-link:focus-visible {
+  background: var(--foam, #f7f2ed);
+}
+
+/* Profile has no page yet: show its place without routing to a nonexistent page. */
+.account-menu-placeholder {
+  cursor: default;
+}
+
+.account-menu-soon {
+  margin-left: auto;
+  color: var(--mocha, #795548);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.account-menu-divider {
+  height: 1px;
+  margin: 6px 8px;
+  background: var(--line, #e7ddd5);
 }
 
 .account-logout {
@@ -225,6 +278,7 @@
 
 .account-trigger:focus-visible,
 .account-logout:focus-visible,
+.account-menu-link:focus-visible,
 .menu-toggle:focus-visible,
 .site-nav a:focus-visible,
 .brand:focus-visible {
@@ -272,7 +326,7 @@
   .site-header.compact {
     flex-wrap: wrap;
     gap: 12px;
-    padding: 16px;
+    padding: 16px var(--page-gutter);
   }
 
   .header-actions {

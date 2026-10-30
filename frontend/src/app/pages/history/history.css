@@ -5,9 +5,9 @@
 .history-shell {
   box-sizing: border-box;
   width: 100%;
-  max-width: 1180px;
+  width: 100%;
   margin: 0 auto;
-  padding: 28px 20px 70px;
+  padding: 28px var(--page-gutter) 70px;
 }
 
 .history-header {

@@ -36,11 +36,6 @@
 
       </div>
 
-      <div class="hero-contact">
-        <span>STRUCTURED EVALUATION</span>
-        <span>•</span>
-        <span>SESSION RECORDS</span>
-      </div>
     </div>
 
   </section>
@@ -54,10 +49,6 @@
       </div>
       <div class="home-inventory-actions">
         <a class="landing-btn secondary" routerLink="/inventory">View All</a>
-        <button class="landing-btn primary" type="button" [disabled]="savingSample()" (click)="openNewSampleModal()"
-          aria-haspopup="dialog">
-          + New Sample
-        </button>
       </div>
     </div>
     @if (sampleSuccess()) {
@@ -71,42 +62,75 @@
         <span><strong>{{ inSessionTotal() }}</strong> used in sessions</span>
       </div>
     }
-    @if (inventoryLoading()) { <p class="home-inventory-muted">Loading your samples…</p> }
-    @else if (inventoryError()) {
-      <p class="home-inventory-muted">{{ inventoryError() }} <button type="button" (click)="loadInventoryPreview()">Retry</button></p>
-    } @else if (recentSamples().length === 0) {
-      <div class="home-inventory-empty">No coffee samples yet. Add one to get started.</div>
+    @if (inventoryLoading()) {
+      <p class="home-inventory-muted" role="status">Loading your samples…</p>
+    } @else if (inventoryError()) {
+      <p class="home-inventory-muted" role="alert">{{ inventoryError() }} <button type="button" (click)="loadInventoryPreview()">Retry</button></p>
     } @else {
+      @if (recentSamples().length === 0) {
+        <p class="home-inventory-muted home-inventory-empty-message">Your inventory is empty. Add your first coffee sample to get started.</p>
+      }
       <div class="home-inventory-cards">
         @for (sample of recentSamples(); track sample.sampleId) {
-          <a routerLink="/inventory" class="home-inventory-card">
-            <span class="inventory-icon" aria-hidden="true">☕</span>
+          <a routerLink="/inventory" class="home-inventory-card" [attr.aria-label]="'View ' + sample.sampleName + ' in Coffee Inventory'">
+            <span class="inventory-card-heading">
+              <span class="inventory-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z" />
+                  <path d="M17 9h2a3 3 0 0 1 0 6h-2M3 21h16M7 3v2M12 3v2" />
+                </svg>
+              </span>
+              <span class="inventory-card-arrow" aria-hidden="true">↗</span>
+            </span>
             <strong>{{ sample.sampleName }}</strong>
-            <span>{{ sample.growingLocation || 'Origin not specified' }}</span>
-            <small>{{ sample.process || 'Process not specified' }} · {{ sample.harvestYear ?? 'Year unknown' }}</small>
+            <span class="inventory-card-details">
+              <span class="sample-origin">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>
+                </svg>
+                {{ sample.growingLocation || 'Origin not specified' }}
+              </span>
+              <span class="sample-meta">
+                <span class="sample-meta-chip">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20 4c-9 0-15 3.5-15 11a5 5 0 0 0 5 5c7.5 0 11-6 10-16Z"/>
+                    <path d="M5 19c2-5 6-8 11-11"/>
+                  </svg>
+                  {{ sample.process || 'Process unknown' }}
+                </span>
+                <span class="sample-meta-chip">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="16" rx="2"/>
+                    <path d="M7 3v4M17 3v4M3 10h18"/>
+                  </svg>
+                  {{ sample.harvestYear ?? 'Year unknown' }}
+                </span>
+              </span>
+            </span>
           </a>
         }
+        <button class="home-inventory-card home-inventory-add" type="button"
+          [disabled]="savingSample()" (click)="openNewSampleModal()" aria-haspopup="dialog">
+          <span class="inventory-add-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+          </span>
+          <strong>{{ recentSamples().length === 0 ? 'Add First Sample' : 'Add New Sample' }}</strong>
+          <span class="inventory-add-caption">Save a coffee to your library</span>
+        </button>
       </div>
     }
   </section>
 
   <section class="landing-cta">
-
     <div>
-      <p class="section-kicker">
-        READY TO CUP?
-      </p>
-
-      <h2>
-        Start your next evaluation.
-      </h2>
+      <p class="section-kicker">READY TO CUP?</p>
+      <h2>Start your next evaluation.</h2>
     </div>
-
     <button class="landing-btn primary" type="button" (click)="modeModal.openModeDialog()">
       Create Session →
     </button>
-
   </section>
+
 </main>
 
 <!-- <dialog #cuppingModeDialog class="cupping-mode-dialog" aria-labelledby="modeDialogTitle"

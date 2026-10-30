@@ -1,5 +1,5 @@
 :host { display:block; }
-.inventory-page { max-width:1180px; padding:40px 20px 80px; margin:0 auto; color:var(--espresso,#3e2723); }
+.inventory-page { width:100%; max-width:none; padding:40px var(--page-gutter) 80px; margin:0 auto; color:var(--espresso,#3e2723); }
 .inventory-back { display:inline-block; color:var(--mocha,#72503c); margin-bottom:28px; font-weight:700; text-decoration:none; }
 .inventory-heading { display:flex; align-items:center; justify-content:space-between; gap:24px; }
 .inventory-heading h1 { margin:6px 0 12px; font-size:clamp(32px,4vw,50px); }
