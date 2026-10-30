@@ -18,17 +18,39 @@ import th.mfu.cupping.service.CuppingAccessService;
 public class TextEvaluationController {
   private final TextEvaluationRepository repo;
   private final CuppingAccessService access;
-  
+
+  @jakarta.persistence.PersistenceContext
+  private jakarta.persistence.EntityManager entityManager;
+
+  private void protectAromaNote(
+      Integer evaluationId,
+      String stage,
+      User user) {
+
+    // Unknown/legacy stages are protected conservatively.
+    // Only explicitly labeled Flavor notes bypass the aroma check.
+    if (!"FLAVOR".equals(stage)) {
+      access.requireAromaEditable(evaluationId, user);
+    }
+  }
 
   public TextEvaluationController(TextEvaluationRepository repo, CuppingAccessService access) {
-    this.repo = repo; this.access = access; 
+    this.repo = repo;
+    this.access = access;
   }
 
   @GetMapping
   public List<TextEvaluation> list(Authentication auth) {
     User user = access.current(auth);
     return repo.findAll().stream()
-        .filter(item -> { try { access.requireEvaluationRead(item.getEvaluationId(), user); return true; } catch (org.springframework.web.server.ResponseStatusException ex) { return false; } })
+        .filter(item -> {
+          try {
+            access.requireEvaluationRead(item.getEvaluationId(), user);
+            return true;
+          } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return false;
+          }
+        })
         .toList();
   }
 
@@ -41,14 +63,20 @@ public class TextEvaluationController {
   }
 
   private TextEvaluation find(Integer id) {
-    return repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TextEvaluation not found"));
+    return repo.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TextEvaluation not found"));
   }
 
   @PostMapping
   @Transactional
   public ResponseEntity<TextEvaluation> create(@Valid @RequestBody TextEvaluationRequest request, Authentication auth) {
     User user = access.current(auth);
-access.requireEvaluationWrite(request.evaluationId(), user);
+    access.requireEvaluationWrite(request.evaluationId(), user);
+
+    protectAromaNote(
+        request.evaluationId(),
+        request.stage(),
+        user);
 
     TextEvaluation item = new TextEvaluation();
     item.setEvaluationId(request.evaluationId());
@@ -62,15 +90,30 @@ access.requireEvaluationWrite(request.evaluationId(), user);
 
   @PutMapping("/{id}")
   @Transactional
-  public TextEvaluation update(@PathVariable Integer id, @Valid @RequestBody TextEvaluationRequest request, Authentication auth) {
+  public TextEvaluation update(@PathVariable Integer id, @Valid @RequestBody TextEvaluationRequest request,
+      Authentication auth) {
     User user = access.current(auth);
     TextEvaluation item = find(id);
     access.requireEvaluationWrite(item.getEvaluationId(), user);
-if (!item.getEvaluationId().equals(request.evaluationId()))
+
+    entityManager.refresh(item);
+
+    protectAromaNote(
+        item.getEvaluationId(),
+        item.getStage(),
+        user);
+
+    protectAromaNote(
+        item.getEvaluationId(),
+        request.stage() == null ? item.getStage() : request.stage(),
+        user);
+
+    if (!item.getEvaluationId().equals(request.evaluationId()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change parent evaluation");
 
     item.setText(request.text());
-    if (request.stage() != null) item.setStage(request.stage());
+    if (request.stage() != null)
+      item.setStage(request.stage());
 
     return repo.saveAndFlush(item);
   }
@@ -82,6 +125,14 @@ if (!item.getEvaluationId().equals(request.evaluationId()))
     User user = access.current(auth);
     TextEvaluation item = find(id);
     access.requireEvaluationWrite(item.getEvaluationId(), user);
+
+    entityManager.refresh(item);
+
+    protectAromaNote(
+        item.getEvaluationId(),
+        item.getStage(),
+        user);
+
     repo.delete(item);
     repo.flush();
   }

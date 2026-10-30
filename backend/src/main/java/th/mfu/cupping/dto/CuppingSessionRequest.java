@@ -11,5 +11,6 @@ public record CuppingSessionRequest(
     String status,
     String resultVisibility,
     @Min(1) @Max(10) Integer evaluatorLimit,
-    Boolean creatorParticipates) {
+    Boolean creatorParticipates,
+    Boolean acknowledgeIncomplete) {
 }

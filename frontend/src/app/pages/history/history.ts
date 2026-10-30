@@ -39,6 +39,11 @@ interface HistoryRecord {
   sessionName?: string;
   completedAt: string;
   samples?: HistorySample[];
+  sessionClosed?: boolean;
+  completionOutcome?: EvaluationHistoryGroup['completionOutcome'];
+  sessionTimer?: EvaluationHistoryGroup['sessionTimer'];
+  evaluatorTimer?: EvaluationHistoryGroup['evaluatorTimer'];
+  creatorOnly?: boolean;
 }
 
 @Component({
@@ -68,6 +73,11 @@ export class History implements OnInit {
       source: 'database',
       sessionName: group.sessionName,
       completedAt: group.completedAt,
+      sessionClosed: group.sessionClosed,
+      completionOutcome: group.completionOutcome,
+      sessionTimer: group.sessionTimer,
+      evaluatorTimer: group.evaluatorTimer,
+      creatorOnly: group.creatorOnly,
       samples: group.samples.map((item, index) => ({
         id: index + 1, finalScore: item.totalScore,
         aroma: {
@@ -484,5 +494,66 @@ export class History implements OnInit {
     this.currentPage.set(1);
     // this.openDetails.set(new Set());
     this.selectedDetails.set(null);
+  }
+
+  formatDuration(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(seconds) || seconds < 0) {
+    return '—';
+  }
+
+  const total = Math.floor(seconds);
+
+  return [
+    Math.floor(total / 3600),
+    Math.floor((total % 3600) / 60),
+    total % 60
+  ]
+    .map(value => String(value).padStart(2, '0'))
+    .join(':');
+}
+
+sessionDurationLabel(record: HistoryRecord): string {
+  if (record.sessionTimer?.elapsedSeconds != null) {
+    return this.formatDuration(record.sessionTimer.elapsedSeconds);
+  }
+
+  if (!record.sessionClosed) {
+    return record.sessionTimer?.startedAt
+      ? 'In progress'
+      : 'Not started';
+  }
+
+    return '—';
+  }
+
+  completionLabel(record: HistoryRecord): string {
+      switch (record.completionOutcome) {
+        case 'FINALIZED':
+          return 'Finalized';
+        case 'INCOMPLETE_SESSION_CLOSED':
+          return 'Incomplete — Session Closed';
+        case 'IN_PROGRESS':
+          return 'In progress';
+        default:
+          return 'Finalized — legacy record';
+      }
+    }
+
+    isIncomplete(record: HistoryRecord): boolean {
+    return record.completionOutcome === 'INCOMPLETE_SESSION_CLOSED';
+  }
+
+  evaluationDurationLabel(record: HistoryRecord): string {
+    const timer = record.evaluatorTimer;
+
+    if (
+      this.isIncomplete(record) &&
+      timer &&
+      timer.startedAt === null
+    ) {
+      return 'Not started';
+    }
+
+    return this.formatDuration(timer?.elapsedSeconds);
   }
 }

@@ -1,10 +1,26 @@
 <div class="shell">
-  @if (!sessionStarted()) {
-
+  @if (savedSession()?.sessionEvaluatorId != null) {
   <div>
-    <a class="back-link" routerLink="/"> ← Back to Home </a>
-  </div>
+    <button type="button" class="back-link session-return-button" [disabled]="
+          returningToSession() ||
+          lockingAroma() ||
+          loadingEvaluations() ||
+          savingDraft() ||
+          finalizing()
+        " (click)="backToSession()">
+      {{ returningToSession()
+      ? 'Saving and returning…'
+      : '← Back to Session' }}
+    </button>
 
+    @if (returnToSessionError()) {
+    <p role="alert">{{ returnToSessionError() }}</p>
+    }
+  </div>
+  } @else if (!sessionStarted()) {
+  <div>
+    <a class="back-link" routerLink="/">← Back to Home</a>
+  </div>
   }
 
   <header class="hero">
@@ -34,6 +50,35 @@
   </section>
   }
 
+  @if (isSavedSession && savedSession() && !sessionStarted()
+  && !sessionLoadError()) {
+  <section class="panel">
+    <div class="content">
+      @if (loadingEvaluations()) {
+      <p role="status">Loading your evaluation…</p>
+      } @else {
+      <h2>Ready to begin?</h2>
+
+      <p>Your evaluation time: <strong>00:00:00</strong></p>
+
+      <p>
+        Timing starts when you select Begin Evaluation and continues
+        if you leave or refresh this page.
+      </p>
+
+      <button class="btn primary" type="button" [disabled]="beginningEvaluation() || evaluationReadOnly()"
+        (click)="beginEvaluation()">
+        {{ beginningEvaluation() ? 'Starting…' : 'Begin Evaluation' }}
+      </button>
+
+      @if (beginError()) {
+      <p role="alert">{{ beginError() }}</p>
+      }
+      }
+    </div>
+  </section>
+  }
+
   @if (isSavedSession && sessionStarted()) {
     <div class="actions" style="padding: 12px 24px; align-items: center; gap: 14px;">
       <button class="btn secondary" type="button"
@@ -42,7 +87,17 @@
         {{ savingDraft() ? 'Saving draft...' : 'Save Draft' }}
       </button>
       @if (saveFeedback()) { <span role="status">{{ saveFeedback() }}</span> }
-      @if (evaluationReadOnly()) { <span>Finalized — read only</span> }
+      @if (evaluationReadOnly()) {
+      <span>
+        @if (evaluationTiming()?.completionOutcome === 'INCOMPLETE_SESSION_CLOSED') {
+        Incomplete — Session Closed
+        } @else if (evaluationTiming()?.completionOutcome === 'FINALIZED') {
+        Finalized — read only
+        } @else {
+        Evaluation is read only
+        }
+      </span>
+      }
     </div>
   }
   @if (sessionLoadError()) {
@@ -52,6 +107,21 @@
       <a class="back-link" routerLink="/">← Back to Home</a>
     </div>
   </section>
+  }
+
+  @if (isSavedSession && evaluationTiming() && sessionStarted()) {
+  <div class="actions" style="padding: 12px 24px; align-items: center; gap: 14px;">
+    <span>
+      Your evaluation time:
+      <strong style="font-variant-numeric: tabular-nums;">
+        {{ evaluationTimeDisplay() }}
+      </strong>
+    </span>
+
+    @if (timingSyncError()) {
+    <span role="status">{{ timingSyncError() }}</span>
+    }
+  </div>
   }
 
   @if (!isSavedSession && !sessionStarted()) {
@@ -598,7 +668,14 @@
 
         }
 
-        <button class="btn primary" type="button" (click)="confirmAroma()">Confirm Aroma Stage 🔒</button>
+        <button class="btn primary" type="button" [disabled]="
+            returningToSession() ||
+            lockingAroma() ||
+            savingDraft() ||
+            finalizing()
+          " (click)="confirmAroma()">
+          Confirm Aroma Stage 🔒
+        </button>
 
         } @else {
 
@@ -1233,49 +1310,204 @@
     </div>
 
     <div class="content">
-      <div class="sample-title">
-        <h3>Review all samples</h3>
+      <nav class="review-sample-nav" aria-label="Choose sample to review">
+        @for (item of samples(); track item.id) {
+        <button type="button" class="review-sample-button" [class.selected]="reviewSample()?.id === item.id"
+          [attr.aria-pressed]="reviewSample()?.id === item.id" (click)="selectReviewSample(item.id)">
+          Sample {{ sampleLabel(item.id) }}
+        </button>
+        }
+      </nav>
 
-        <span class="pill"> Aroma locked • Flavor editable until finalization </span>
-      </div>
-
-      <div class="review-list">
-        @for ( sample of samples(); track sample.id ) {
-
-        <article class="review-card">
-
-          <div style="
-                            display: flex;
-
-                            justify-content: space-between;
-
-                            gap: 10px;
-
-                            align-items: center;
-
-                            margin-bottom: 12px;
-                        ">
-            <h4>Sample {{ sampleLabel(sample.id) }}</h4>
-
-            <button class="btn ghost" type="button" [disabled]="evaluationReadOnly()" (click)="editFlavor(sample.id)">
-              Edit Flavor Test
-            </button>
+      @if (reviewSample(); as sample) {
+      <article class="review-summary-card">
+        <header class="review-summary-heading">
+          <div class="review-summary-title">
+            <h3>Sample {{ sampleLabel(sample.id) }}</h3>
+            <span class="review-lock-badge">Aroma locked</span>
           </div>
 
-        </article>
+          <button class="btn ghost" type="button" [disabled]="evaluationReadOnly()" (click)="editFlavor(sample.id)">
+            Edit Flavor
+          </button>
+        </header>
 
+        <div class="review-score-grid">
+          @for (tile of reviewScoreTiles(sample); track tile.label) {
+          <div class="review-score-tile">
+            <span>{{ tile.label }}</span>
+            <div class="review-score-value">
+              <strong>{{ formatScore(tile.value) }}</strong>
+              <span>/ 10</span>
+            </div>
+
+            @if (tile.detail) {
+            <small>{{ tile.detail }}</small>
+            }
+          </div>
+          }
+        </div>
+
+        <div class="review-defect-strip" [class.has-defects]="getDefectiveCupCount(sample) > 0">
+          <strong>Defects</strong>
+
+          @if (getDefectiveCupCount(sample) > 0) {
+            <span>
+              {{ getDefectiveCupCount(sample) }}
+              {{ cupLabel(getDefectiveCupCount(sample)) }}
+              ×
+              {{ reviewDefectName(sample) }}
+              ({{ getDefectPoints(sample.flavor.defectType) }})
+              =
+              −{{ formatDefectDeduction(sample) }}
+            </span>
+          } @else {
+          <span>None</span>
+          }
+        </div>
+
+        <div class="review-total">
+          <strong>
+            {{ evaluationReadOnly() ? 'Official total' : 'Estimated total' }}
+          </strong>
+
+          <div>
+            <strong class="review-total-value">
+              {{ formatScore(
+              evaluationReadOnly()
+              ? officialScores()[sample.id]
+              : estimatedReviewTotal(sample)
+              ) }}
+            </strong>
+            <span>/ 100</span>
+          </div>
+        </div>
+
+        <div class="review-descriptor-grid">
+          <section>
+            <h4>Aroma descriptors</h4>
+
+            <div class="review-descriptor-chips">
+              @for (
+              group of groupSelectedQualities(sample.aroma.qualities);
+              track group.parent
+              ) {
+              <span class="review-descriptor-chip">
+                {{ group.parent }}
+                @if (group.children.length) {
+                → {{ group.children.join(', ') }}
+                }
+              </span>
+              } @empty {
+              <span>None selected</span>
+              }
+            </div>
+
+            @if (sample.aroma.otherTastingNotes?.trim()) {
+            <h5>Aroma Notes</h5>
+            <p class="review-summary-notes">
+              {{ sample.aroma.otherTastingNotes }}
+            </p>
+            }
+          </section>
+
+          <section>
+            <h4>Flavor descriptors</h4>
+
+            <div class="review-descriptor-chips">
+              @for (
+              group of groupSelectedQualities(sample.flavor.flavorQualities);
+              track group.parent
+              ) {
+              <span class="review-descriptor-chip">
+                {{ group.parent }}
+                @if (group.children.length) {
+                → {{ group.children.join(', ') }}
+                }
+              </span>
+              } @empty {
+              <span>None selected</span>
+              }
+            </div>
+
+            @if (sample.flavor.otherTastingNotes?.trim()) {
+            <h5>Flavor Notes</h5>
+            <p class="review-summary-notes">
+              {{ sample.flavor.otherTastingNotes }}
+            </p>
+            }
+          </section>
+        </div>
+
+        <!-- Recreate the disclosure when switching samples. -->
+        @for (detailSample of [sample]; track detailSample.id) {
+        <details class="review-more-details">
+          <summary>View intensity &amp; cup details</summary>
+
+          <dl class="review-intensity-list">
+            <div>
+              <dt>Dry aroma intensity</dt>
+              <dd>{{ formatScore(sample.aroma.dry) }} / 5</dd>
+            </div>
+            <div>
+              <dt>Break aroma intensity</dt>
+              <dd>{{ formatScore(sample.aroma.break) }} / 5</dd>
+            </div>
+            <div>
+              <dt>Color intensity</dt>
+              <dd>{{ sample.aroma.color || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Acidity intensity</dt>
+              <dd>{{ formatScore(sample.flavor.acidityIntensity) }} / 5</dd>
+            </div>
+            <div>
+              <dt>Body level</dt>
+              <dd>{{ formatScore(sample.flavor.bodyLevel) }} / 5</dd>
+            </div>
+          </dl>
+
+          <div class="review-cup-table-wrapper">
+            <table class="review-cup-table">
+              <caption>Cup checks for Sample {{ sampleLabel(sample.id) }}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Cup</th>
+                  <th scope="col">Uniformity</th>
+                  <th scope="col">Clean Cup</th>
+                  <th scope="col">Sweetness</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (
+                passed of sample.flavor.uniformity;
+                track $index;
+                let i = $index
+                ) {
+                <tr>
+                  <th scope="row">{{ i + 1 }}</th>
+                  <td>{{ passed ? 'Pass' : 'Fail' }}</td>
+                  <td>{{ sample.flavor.cleanCup[i] ? 'Pass' : 'Fail' }}</td>
+                  <td>{{ sample.flavor.sweetness[i] ? 'Pass' : 'Fail' }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
         }
-      </div>
+      </article>
+      }
     </div>
 
-    <div class="review-finalize-note">
+    <!-- <div class="review-finalize-note">
       @if (isSavedSession) { The backend calculates and stores the official score when you save or finalize. Finalizing saves all samples to MySQL. } @else { Standalone practice is only stored in this browser; no official total is calculated. }
-    </div>
+    </div> -->
 
-    <div class="actions">
-      <button class="btn secondary" type="button" [disabled]="finalizing() || evaluationReadOnly()" (click)="backToFlavor()">
+    <div class="actions review-finalize-actions">
+      <!-- <button class="btn secondary" type="button" [disabled]="finalizing() || evaluationReadOnly()" (click)="backToFlavor()">
         ← Back to Flavor Test
-      </button>
+      </button> -->
 
       <button class="btn primary" type="button" [disabled]="finalizing() || savingDraft() || loadingEvaluations() || evaluationReadOnly()" (click)="finalizeEvaluation()">
         {{ finalizing() ? 'Saving...' : 'Finalize Evaluation ✓' }}
@@ -1285,3 +1517,41 @@
 
   } }
 </div>
+<dialog #aromaLockDialog class="aroma-lock-dialog" aria-labelledby="aromaLockTitle"
+  aria-describedby="aromaLockDescription" (cancel)="onAromaLockCancel($event)">
+
+  <div class="aroma-lock-heading">
+    <h2 id="aromaLockTitle">Lock aroma stage?</h2>
+
+    <button type="button" class="aroma-lock-close" aria-label="Close aroma confirmation" [disabled]="lockingAroma()"
+      (click)="closeAromaLockDialog()">
+      &times;
+    </button>
+  </div>
+
+  <p id="aromaLockDescription">
+    Your aroma entries for all samples will be locked.
+    You can review them afterward, but you won’t be able
+    to edit them.
+  </p>
+
+  @if (aromaLockError()) {
+  <p role="alert">{{ aromaLockError() }}</p>
+  }
+
+  @if (aromaLockError()) {
+  <p role="alert">{{ aromaLockError() }}</p>
+  }
+
+  <div class="aroma-lock-actions">
+    <button type="button" class="btn secondary" autofocus [disabled]="lockingAroma()" (click)="closeAromaLockDialog()">
+      Keep Editing
+    </button>
+
+    <button type="button" class="btn primary" [disabled]="lockingAroma()" (click)="lockAromaAndContinue()">
+      {{ lockingAroma()
+      ? 'Saving and locking…'
+      : 'Lock Aroma & Continue' }}
+    </button>
+  </div>
+</dialog>

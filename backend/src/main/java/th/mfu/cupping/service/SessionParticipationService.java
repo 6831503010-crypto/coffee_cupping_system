@@ -594,6 +594,20 @@ public class SessionParticipationService {
           "Evaluator membership no longer exists");
     }
 
+    Boolean hasStarted = jdbc.queryForObject("""
+        SELECT evaluation_started_at IS NOT NULL
+        FROM session_evaluators
+        WHERE session_evaluator_id = ?
+        """,
+        Boolean.class,
+        membershipId);
+
+    if (Boolean.TRUE.equals(hasStarted)) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "This evaluator has begun evaluation and cannot be removed");
+    }
+
     Boolean hasEvaluations = jdbc.queryForObject("""
         SELECT EXISTS (
           SELECT 1

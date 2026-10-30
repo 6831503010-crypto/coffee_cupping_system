@@ -7,7 +7,9 @@ import {
     finalize,
     forkJoin,
     switchMap,
-    timer
+    timer,
+    exhaustMap,
+      of,
   } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Component,DestroyRef, ElementRef, ViewChild, inject, signal } from '@angular/core';
@@ -23,6 +25,7 @@ import {
   LibrarySample,
   SampleChoice,
   SessionView,
+  SessionTimingView,
   EvaluatorView,
   EvaluatorCandidate
 } from '../../services/individual-session.service';
@@ -43,6 +46,12 @@ export class IndividualSession {
   private readonly api = inject(IndividualSessionService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  readonly sessionTiming = signal<SessionTimingView | null>(null);
+  readonly sessionTimeDisplay = signal('00:00:00');
+  readonly sessionTimingError = signal('');
+
+  private sessionTimingStarted = false;
+  private sessionTimingReceivedAt = 0;
 
   readonly savedSamples = signal<LibrarySample[]>([]);
   readonly chosen = signal<SampleChoice[]>([]);
@@ -65,6 +74,10 @@ export class IndividualSession {
   readonly copyingLink = signal(false);
   readonly linkError = signal('');
   readonly linkMessage = signal('');
+
+  readonly evaluatorTimingDisplays = signal<
+    Record<number, { status: string; duration: string }>
+  >({});
 
   evaluatorEmail = '';
 
@@ -174,6 +187,11 @@ export class IndividualSession {
 
           if (data.isCreator) {
             this.refreshEvaluators();
+            this.startSessionTiming(data.sessionId);
+
+            if (!data.closed) {
+              this.generateParticipationLink();
+            }
           }
         },
         error: () => this.error.set(
@@ -614,10 +632,11 @@ export class IndividualSession {
           );
           break;
         case 409:
-          this.evaluatorRemovalError.set(
-            'Removal is unavailable because the evaluator has saved evaluations or the session is closed.'
-          );
-          break;
+            this.evaluatorRemovalError.set(
+              'Removal is unavailable because the evaluator has begun evaluation, ' +
+              'has saved evaluations, or the session is closed.'
+            );
+            break;
         default:
           this.evaluatorRemovalError.set(
             'Could not confirm removal. Check the refreshed list before trying again.'
@@ -867,5 +886,244 @@ async copyParticipationLink(): Promise<void> {
         }
       }, 2000);
     }, 0);
+  }
+
+  private startSessionTiming(sessionId: number): void {
+  if (this.sessionTimingStarted || this.destroyRef.destroyed) return;
+
+  this.sessionTimingStarted = true;
+
+  timer(0, 5000).pipe(
+    exhaustMap(() =>
+      this.api.getSessionTiming(sessionId).pipe(
+        catchError(() => {
+          this.sessionTimingError.set(
+            'Unable to refresh session time. Reconnecting…'
+          );
+          return of(null);
+        })
+      )
+    ),
+    takeUntilDestroyed(this.destroyRef)
+  ).subscribe(timing => {
+    if (!timing) return;
+
+    this.sessionTimingReceivedAt = performance.now();
+    this.sessionTiming.set(timing);
+    this.sessionTimingError.set('');
+    this.updateSessionTimeDisplay();
+  });
+
+  timer(0, 1000).pipe(
+    takeUntilDestroyed(this.destroyRef)
+  ).subscribe(() => this.updateSessionTimeDisplay());
+}
+
+private updateSessionTimeDisplay(): void {
+  this.updateEvaluatorTimingDisplays();
+  const timing = this.sessionTiming();
+  if (!timing) return;
+
+  const clock = timing.sessionTimer;
+
+  if (clock.startedAt === null) {
+    this.sessionTimeDisplay.set(
+      timing.sessionClosed ? 'Not started' : '00:00:00'
+    );
+    return;
+  }
+
+  if (clock.elapsedSeconds !== null) {
+    this.sessionTimeDisplay.set(
+      this.formatSessionDuration(clock.elapsedSeconds)
+    );
+    return;
+  }
+
+  if (timing.sessionClosed || clock.endedAt !== null) {
+    this.sessionTimeDisplay.set('—');
+    return;
+  }
+
+  const elapsedMilliseconds =
+    Date.parse(timing.serverNow)
+    - Date.parse(clock.startedAt)
+    + (performance.now() - this.sessionTimingReceivedAt);
+
+    this.sessionTimeDisplay.set(
+      this.formatSessionDuration(
+        Math.floor(elapsedMilliseconds / 1000)
+      )
+    );
+  }
+
+  private formatSessionDuration(seconds: number): string {
+    const total = Math.max(0, Math.floor(seconds));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const remainingSeconds = total % 60;
+
+    return [hours, minutes, remainingSeconds]
+      .map(value => String(value).padStart(2, '0'))
+      .join(':');
+  }
+
+  private updateEvaluatorTimingDisplays(): void {
+    const timing = this.sessionTiming();
+    if (!timing) return;
+
+    const displays: Record<
+      number,
+      { status: string; duration: string }
+    > = {};
+
+    const estimatedServerNow =
+      Date.parse(timing.serverNow)
+      + (performance.now() - this.sessionTimingReceivedAt);
+
+    for (const evaluator of timing.evaluators) {
+      const personal = evaluator.evaluatorTimer;
+      const outcome = evaluator.completionOutcome;
+
+      let status: string;
+
+      switch (outcome) {
+        case 'FINALIZED':
+          status = 'Finalized';
+          break;
+        case 'INCOMPLETE_SESSION_CLOSED':
+          status = 'Incomplete — Session Closed';
+          break;
+        case 'IN_PROGRESS':
+          status = timing.sessionClosed
+            ? 'Session closed'
+            : 'Evaluating';
+          break;
+        default:
+          status = timing.sessionClosed
+            ? 'Session closed — outcome unavailable'
+            : 'Not started';
+      }
+
+      let duration: string;
+
+      if (personal.elapsedSeconds !== null) {
+        duration = this.formatSessionDuration(personal.elapsedSeconds);
+      } else if (
+        personal.startedAt === null &&
+        outcome === 'INCOMPLETE_SESSION_CLOSED'
+      ) {
+        duration = 'Not started';
+      } else if (
+        personal.startedAt === null &&
+        !timing.sessionClosed &&
+        outcome === null
+      ) {
+        duration = '00:00:00';
+      } else if (
+        personal.startedAt !== null &&
+        personal.endedAt === null &&
+        outcome === 'IN_PROGRESS' &&
+        !timing.sessionClosed
+      ) {
+        duration = this.formatSessionDuration(
+          Math.floor(
+            (estimatedServerNow - Date.parse(personal.startedAt)) / 1000
+          )
+        );
+      } else {
+        duration = '—';
+      }
+
+      displays[evaluator.sessionEvaluatorId] = {
+        status,
+        duration
+      };
+    }
+
+    this.evaluatorTimingDisplays.set(displays);
+  }
+
+  @ViewChild('finalizeSessionDialog')
+  private finalizeSessionDialog?: ElementRef<HTMLDialogElement>;
+
+  readonly finalizingSession = signal(false);
+  readonly sessionFinalizationError = signal('');
+  readonly sessionFinalizationSuccess = signal('');
+
+  openFinalizeSessionModal(): void {
+    const info = this.session();
+
+    if (!info?.isCreator || info.closed || this.finalizingSession()) {
+      return;
+    }
+
+    this.sessionFinalizationError.set('');
+    this.sessionFinalizationSuccess.set('');
+    this.finalizeSessionDialog?.nativeElement.showModal();
+  }
+
+  closeFinalizeSessionModal(): void {
+    if (this.finalizingSession()) return;
+    this.finalizeSessionDialog?.nativeElement.close();
+  }
+
+  onFinalizeSessionCancel(event: Event): void {
+    event.preventDefault();
+    this.closeFinalizeSessionModal();
+  }
+
+  confirmSessionFinalization(): void {
+    const info = this.session();
+
+    if (!info?.isCreator || info.closed || this.finalizingSession()) {
+      return;
+    }
+
+    this.finalizingSession.set(true);
+    this.sessionFinalizationError.set('');
+
+    this.api.finalizeSession(info.sessionId, true).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: () => this.finishSessionFinalization(),
+      error: (error: HttpErrorResponse) => {
+        // The response may have been lost after successful closure.
+        // Read backend state before allowing another attempt.
+        this.api.get(info.sessionId).pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe({
+          next: current => {
+            this.session.set(current);
+
+            if (current.closed) {
+              this.finishSessionFinalization();
+              return;
+            }
+
+            this.finalizingSession.set(false);
+            this.sessionFinalizationError.set(
+              error.error?.message ||
+              'Session finalization failed. The session remains open.'
+            );
+          },
+          error: () => {
+            this.finalizingSession.set(false);
+            this.sessionFinalizationError.set(
+              'Could not confirm the session status. Refresh the page before trying again.'
+            );
+          }
+        });
+      }
+    });
+  }
+
+  private finishSessionFinalization(): void {
+    this.finalizingSession.set(false);
+    this.finalizeSessionDialog?.nativeElement.close();
+    this.sessionFinalizationSuccess.set(
+      'Session closed successfully. Refreshing session details…'
+    );
+    this.refreshEvaluators();
   }
 }

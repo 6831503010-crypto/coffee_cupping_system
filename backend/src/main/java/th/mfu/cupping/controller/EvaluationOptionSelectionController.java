@@ -11,6 +11,7 @@ import th.mfu.cupping.dto.EvaluationOptionSelectionRequest;
 import th.mfu.cupping.model.*;
 import th.mfu.cupping.repository.*;
 import th.mfu.cupping.service.CuppingAccessService;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api/evaluation-option-selections")
@@ -18,15 +19,33 @@ public class EvaluationOptionSelectionController {
   private final EvaluationOptionSelectionRepository repo;
   private final EvaluationOptionRepository options;
   private final CuppingAccessService access;
+
+  private void protectAromaSelection(
+      Integer evaluationId,
+      Integer optionId,
+      User user) {
+
+    EvaluationOption option = options.findById(optionId)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND, "Option not found"));
+
+    if (!"FLAVOR_QUALITY".equals(option.getOptionType())) {
+      access.requireAromaEditable(evaluationId, user);
+    }
+  }
+
   public EvaluationOptionSelectionController(EvaluationOptionSelectionRepository repo,
       EvaluationOptionRepository options, CuppingAccessService access) {
-    this.repo = repo; this.options = options; this.access = access;
+    this.repo = repo;
+    this.options = options;
+    this.access = access;
   }
 
   @GetMapping
   public List<EvaluationOptionSelection> list(Authentication auth) {
     User user = access.current(auth);
-    return repo.findAll().stream().filter(s -> access.canReadEvaluation(access.evaluation(s.getEvaluationId()), user)).toList();
+    return repo.findAll().stream().filter(s -> access.canReadEvaluation(access.evaluation(s.getEvaluationId()), user))
+        .toList();
   }
 
   @GetMapping("/{evaluationId}/{optionId}")
@@ -42,11 +61,19 @@ public class EvaluationOptionSelectionController {
   }
 
   @PostMapping
+  @Transactional
   public ResponseEntity<EvaluationOptionSelection> create(
       @Valid @RequestBody EvaluationOptionSelectionRequest request, Authentication auth) {
-    access.requireEvaluationWrite(request.evaluationId(), access.current(auth));
-    if (!options.existsById(request.optionId()))
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Option not found");
+
+    User user = access.current(auth);
+
+    access.requireEvaluationWrite(request.evaluationId(), user);
+
+    protectAromaSelection(
+        request.evaluationId(),
+        request.optionId(),
+        user);
+
     EvaluationOptionSelectionId id = new EvaluationOptionSelectionId(request.evaluationId(), request.optionId());
     if (repo.existsById(id))
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Option already selected");
@@ -57,12 +84,18 @@ public class EvaluationOptionSelectionController {
   }
 
   @DeleteMapping("/{evaluationId}/{optionId}")
+  @Transactional
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable Integer evaluationId, @PathVariable Integer optionId,
       Authentication auth) {
-    access.requireEvaluationWrite(evaluationId, access.current(auth));
+    User user = access.current(auth);
+
+    access.requireEvaluationWrite(evaluationId, user);
+
+    protectAromaSelection(evaluationId, optionId, user);
     repo.delete(find(evaluationId, optionId));
     repo.flush();
   }
-  // A join row has only PK columns. Change selection using DELETE followed by POST.
+  // A join row has only PK columns. Change selection using DELETE followed by
+  // POST.
 }

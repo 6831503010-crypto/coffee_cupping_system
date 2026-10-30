@@ -19,12 +19,13 @@ import {
 import { CoffeeSample } from '../../models/coffee-sample';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { firstValueFrom } from 'rxjs';
-import { EvaluationSubmissionService, EvaluationSamplePayload, SavedEvaluation } from '../../services/evaluation-submission.service';
+import { firstValueFrom,forkJoin } from 'rxjs';
+import { EvaluationSubmissionService, EvaluationSamplePayload, SavedEvaluation,EvaluationTiming } from '../../services/evaluation-submission.service';
 import {
   IndividualSessionService,
   SessionView
 } from '../../services/individual-session.service';
+
 
 @Component({
   selector: 'app-cupping',
@@ -52,6 +53,9 @@ export class Cupping implements OnInit {
 
   readonly isSavedSession = this.sessionIdParam !== null;
 
+  readonly lockingAroma = signal(false);
+  readonly aromaLockError = signal('');
+
   loadingSession = signal(false);
   sessionLoadError = signal('');
   savedSession = signal<SessionView | null>(null);
@@ -63,6 +67,222 @@ export class Cupping implements OnInit {
 
   officialScore(position: number): number | null {
     return this.officialScores()[position] ?? null;
+  }
+
+  readonly evaluationTiming = signal<EvaluationTiming | null>(null);
+readonly beginningEvaluation = signal(false);
+readonly beginError = signal('');
+
+  private applyEvaluationTiming(timing: EvaluationTiming): void {
+
+    if (this.destroyRef.destroyed) return;
+
+const previous = this.evaluationTiming();
+
+// Ignore an older response arriving after a newer one.
+if (
+  previous &&
+  Date.parse(timing.serverNow) < Date.parse(previous.serverNow)
+) {
+  return;
+}
+
+this.timingReceivedAt = performance.now();
+  this.evaluationTiming.set(timing);
+
+  const terminal =
+    timing.sessionClosed ||
+    timing.evaluatorTimer.endedAt !== null ||
+    timing.completionOutcome === 'FINALIZED' ||
+    timing.completionOutcome === 'INCOMPLETE_SESSION_CLOSED';
+
+  // Keep legacy finalized evaluations read-only too.
+  if (terminal || this.evaluationReadOnly()) {
+    this.evaluationReadOnly.set(true);
+    this.aromaForm.disable({ emitEvent: false });
+    this.flavorForm.disable({ emitEvent: false });
+  }
+
+  this.sessionStarted.set(
+    timing.evaluatorTimer.startedAt !== null ||
+    terminal ||
+    this.evaluationReadOnly()
+    );
+  this.updateEvaluationTimeDisplay();
+}
+
+async beginEvaluation(): Promise<void> {
+  const session = this.savedSession();
+
+  if (
+    !session ||
+    this.beginningEvaluation() ||
+    this.loadingEvaluations() ||
+    this.evaluationReadOnly() ||
+    this.sessionStarted()
+  ) {
+    return;
+  }
+
+  this.beginningEvaluation.set(true);
+  this.beginError.set('');
+
+  try {
+    const timing = await firstValueFrom(
+      this.evaluations.begin(session.sessionId)
+    );
+    this.applyEvaluationTiming(timing);
+  } catch {
+    // The request may have succeeded even if its response was lost.
+    try {
+      const timing = await firstValueFrom(
+        this.evaluations.timing(session.sessionId)
+      );
+      this.applyEvaluationTiming(timing);
+
+      if (!this.sessionStarted()) {
+        this.beginError.set(
+          'Evaluation could not be started. Please try again.'
+        );
+      }
+    } catch {
+      this.beginError.set(
+        'Unable to confirm evaluation status. Please try again.'
+      );
+    }
+  } finally {
+    this.beginningEvaluation.set(false);
+  }
+  }
+
+  readonly evaluationTimeDisplay = signal('00:00:00');
+readonly timingSyncError = signal('');
+
+private timingReceivedAt = 0;
+private timingRefreshBusy = false;
+
+private updateEvaluationTimeDisplay(): void {
+  const timing = this.evaluationTiming();
+  if (!timing) return;
+
+  const personal = timing.evaluatorTimer;
+
+  if (personal.startedAt === null) {
+    this.evaluationTimeDisplay.set(
+      timing.sessionClosed ? 'Not started' : '00:00:00'
+    );
+    return;
+  }
+
+  if (personal.elapsedSeconds !== null) {
+    this.evaluationTimeDisplay.set(
+      this.formatElapsedSeconds(personal.elapsedSeconds)
+    );
+    return;
+  }
+
+  // Older finalized records may not have a recorded duration.
+  if (
+    personal.endedAt !== null ||
+    timing.sessionClosed ||
+    timing.completionOutcome === 'FINALIZED' ||
+    timing.completionOutcome === 'INCOMPLETE_SESSION_CLOSED'
+  ) {
+    this.evaluationTimeDisplay.set('—');
+    return;
+  }
+
+  const serverElapsed =
+    Date.parse(timing.serverNow) - Date.parse(personal.startedAt);
+
+  const elapsedSinceResponse =
+    performance.now() - this.timingReceivedAt;
+
+  this.evaluationTimeDisplay.set(
+    this.formatElapsedSeconds(
+      Math.floor((serverElapsed + elapsedSinceResponse) / 1000)
+    )
+  );
+}
+
+private formatElapsedSeconds(value: number): string {
+  const total = Math.max(0, Math.floor(value));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+
+  return [hours, minutes, seconds]
+    .map(part => String(part).padStart(2, '0'))
+    .join(':');
+}
+
+private async refreshEvaluationTiming(): Promise<void> {
+  const session = this.savedSession();
+
+  if (
+    !session ||
+    !this.evaluationTiming() ||
+    this.timingRefreshBusy ||
+    this.beginningEvaluation() ||
+    this.finalizing() ||
+    this.destroyRef.destroyed
+  ) {
+    return;
+  }
+
+  this.timingRefreshBusy = true;
+
+  try {
+    const timing = await firstValueFrom(
+      this.evaluations.timing(session.sessionId)
+    );
+
+    if (this.destroyRef.destroyed) return;
+
+    this.applyEvaluationTiming(timing);
+    this.timingSyncError.set('');
+  } catch {
+    if (!this.destroyRef.destroyed) {
+      this.timingSyncError.set(
+        'Unable to refresh evaluation status. Reconnecting…'
+      );
+    }
+  } finally {
+    this.timingRefreshBusy = false;
+  }
+}
+
+private startTimingUpdates(): void {
+  const displayInterval = window.setInterval(
+    () => this.updateEvaluationTimeDisplay(),
+    1000
+  );
+
+  const syncInterval = window.setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      void this.refreshEvaluationTiming();
+    }
+  }, 5000);
+
+  const onVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      void this.refreshEvaluationTiming();
+    }
+  };
+
+  const onOnline = () => {
+    void this.refreshEvaluationTiming();
+  };
+
+  document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('online', onOnline);
+
+    this.destroyRef.onDestroy(() => {
+      window.clearInterval(displayInterval);
+      window.clearInterval(syncInterval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('online', onOnline);
+    });
   }
 
 
@@ -77,6 +297,8 @@ export class Cupping implements OnInit {
       this.sessionLoadError.set('Invalid session ID.');
       return;
     }
+
+    this.startTimingUpdates();
 
     this.loadingSession.set(true);
 
@@ -123,16 +345,39 @@ export class Cupping implements OnInit {
 
           this.aromaForm.enable({ emitEvent: false });
           this.loadAromaForm(1);
-          this.sessionStarted.set(true);
+
+          this.sessionStarted.set(false);
           this.loadingEvaluations.set(true);
-          this.evaluations.load(sessionId)
+
+          forkJoin({
+            saved: this.evaluations.load(sessionId),
+            timing: this.evaluations.timing(sessionId),
+            progress: this.evaluations.progress(sessionId)
+          })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-              next: saved => { this.restoreEvaluations(saved); this.loadingEvaluations.set(false); },
+              next: ({ saved, timing, progress }) => {
+                this.restoreEvaluations(saved);
+                this.applyEvaluationTiming(timing);
+
+                if (progress.aromaLocked) {
+                  this.aromaLocked.set(true);
+                  this.aromaForm.disable({ emitEvent: false });
+
+                  // Preserve Review/read-only state for terminal evaluations.
+                  if (!this.evaluationReadOnly()) {
+                    this.goToFlavor();
+                  }
+                }
+
+                this.loadingEvaluations.set(false);
+              },
               error: () => {
                 this.loadingEvaluations.set(false);
                 this.evaluationReadOnly.set(true);
-                this.sessionLoadError.set('Unable to reload saved evaluations. Refresh before editing.');
+                this.sessionLoadError.set(
+                  'Unable to load evaluation, timing or stage progress. Refresh before editing.'
+                );
               }
             });
         },
@@ -400,8 +645,15 @@ export class Cupping implements OnInit {
     });
   }
 
-  confirmAroma() {
+  confirmAroma(lockConfirmed = false) {
 
+    if (
+      this.evaluationReadOnly() ||
+      this.aromaLocked() ||
+      this.lockingAroma() ||
+      this.savingDraft() ||
+      this.finalizing()
+    ) return;
     this.saveAromaForm();
 
     const incompleteSamples =
@@ -439,14 +691,20 @@ export class Cupping implements OnInit {
 
 
     this.aromaValidationActive.set(false);
-
     this.aromaErrorSamples.set([]);
 
-    this.aromaLocked.set(true);
+    if (!lockConfirmed) {
+      this.aromaLockError.set('');
+      this.aromaLockDialog?.nativeElement.showModal();
+      return;
+    }
+
+    void this.persistAromaLock();
 
     this.aromaForm.disable({
       emitEvent: false
     });
+    this.goToFlavor();
   }
 
   private scrollToFirstError() {
@@ -797,6 +1055,8 @@ goToReview() {
 
     this.currentStage.set('review');
     this.activeSample.set(1);
+
+    this.reviewSampleId.set(this.samples()[0]?.id ?? 1);
 
     this.scrollToFormTop();
   }
@@ -1792,4 +2052,242 @@ goToReview() {
     }
   }
 
+  readonly returningToSession = signal(false);
+  readonly returnToSessionError = signal('');
+
+  async backToSession(): Promise<void> {
+    const session = this.savedSession();
+
+    if (
+      !session ||
+      session.sessionEvaluatorId === null ||
+      this.returningToSession() ||
+      this.loadingEvaluations() ||
+      this.savingDraft() ||
+      this.finalizing()
+    ) {
+      return;
+    }
+
+    this.returningToSession.set(true);
+    this.returnToSessionError.set('');
+
+    try {
+      // Before Begin or after completion, no draft write is needed.
+      if (this.sessionStarted() && !this.evaluationReadOnly()) {
+        this.syncCurrentForm();
+
+        await firstValueFrom(
+          this.evaluations.save(
+            session.sessionId,
+            this.submissionSamples(),
+            false
+          )
+        );
+      }
+
+      await this.router.navigate(['/individual', session.sessionId]);
+    } catch {
+      this.returnToSessionError.set(
+        'Could not save and return. Your form remains here. Retry, or refresh the session status before leaving.'
+      );
+    } finally {
+      this.returningToSession.set(false);
+    }
+  }
+
+  @ViewChild('aromaLockDialog')
+  private aromaLockDialog?: ElementRef<HTMLDialogElement>;
+
+  closeAromaLockDialog(): void {
+    if (this.lockingAroma()) return;
+    this.aromaLockDialog?.nativeElement.close();
+  }
+
+  onAromaLockCancel(event: Event): void {
+    event.preventDefault();
+    this.closeAromaLockDialog();
+  }
+
+  lockAromaAndContinue(): void {
+    if (
+      this.lockingAroma() ||
+      this.savingDraft() ||
+      this.finalizing() ||
+      this.evaluationReadOnly() ||
+      this.aromaLocked()
+    ) {
+      return;
+    }
+
+    this.confirmAroma(true);
+  }
+
+  private async persistAromaLock(): Promise<void> {
+    this.lockingAroma.set(true);
+    this.aromaLockError.set('');
+
+    try {
+      const session = this.savedSession();
+
+      if (session) {
+        const progress = await firstValueFrom(
+          this.evaluations.lockAroma(
+            session.sessionId,
+            this.submissionSamples()
+          )
+        );
+
+        if (!progress.aromaLocked) {
+          throw new Error('Backend did not confirm the aroma lock');
+        }
+      }
+
+      // Practice keeps its existing local-only behavior.
+      this.aromaLocked.set(true);
+      this.aromaForm.disable({ emitEvent: false });
+      this.aromaLockDialog?.nativeElement.close();
+      this.goToFlavor();
+    } catch {
+      this.aromaLockError.set(
+        'Aroma locking was not confirmed. Your entries remain here. ' +
+        'If the connection was interrupted, refresh to retrieve the saved lock before retrying.'
+      );
+    } finally {
+      this.lockingAroma.set(false);
+    }
+  }
+
+  readonly reviewSampleId = signal(1);
+
+readonly reviewSample = computed(() => {
+  const samples = this.samples();
+
+  return samples.find(sample => sample.id === this.reviewSampleId())
+    ?? samples[0]
+    ?? null;
+});
+
+selectReviewSample(sampleId: number): void {
+  this.reviewSampleId.set(sampleId);
+}
+
+reviewPassedCups(values: boolean[] | undefined): number {
+  return Array.isArray(values)
+    ? values.filter(value => value === true).length
+    : 0;
+}
+
+reviewCupSummary(values: boolean[] | undefined): string {
+  if (!Array.isArray(values) || values.length !== 5) {
+    return 'Cup checks incomplete';
+  }
+
+  const passed = this.reviewPassedCups(values);
+  const unchecked = values
+    .map((value, index) => value ? null : index + 1)
+    .filter(value => value !== null);
+
+  return unchecked.length
+    ? `${passed}/5 cups · Unchecked: ${unchecked.join(', ')}`
+    : '5/5 cups passed';
+}
+
+reviewScoreTiles(sample: CoffeeSample) {
+  return [
+    { label: 'Aroma quality', value: sample.aroma.qualityScore },
+    { label: 'Flavor', value: sample.flavor.flavor },
+    { label: 'Aftertaste', value: sample.flavor.aftertaste },
+    { label: 'Acidity', value: sample.flavor.acidity },
+    { label: 'Body', value: sample.flavor.body },
+    { label: 'Balance', value: sample.flavor.balance },
+    { label: 'Overall', value: sample.flavor.overall },
+    {
+      label: 'Uniformity',
+      value: this.calculateCupScore(sample.flavor.uniformity),
+      detail: this.reviewCupSummary(sample.flavor.uniformity)
+    },
+    {
+      label: 'Clean Cup',
+      value: this.calculateCupScore(sample.flavor.cleanCup),
+      detail: this.reviewCupSummary(sample.flavor.cleanCup)
+    },
+    {
+      label: 'Sweetness',
+      value: this.calculateCupScore(sample.flavor.sweetness),
+      detail: this.reviewCupSummary(sample.flavor.sweetness)
+    }
+  ];
+}
+
+reviewDefectName(sample: CoffeeSample): string {
+  switch (sample.flavor.defectType) {
+    case 'taint': return 'Taint';
+    case 'fault': return 'Fault';
+    default: return 'None';
+  }
+}
+
+estimatedReviewTotal(sample: CoffeeSample): number | null {
+  const rawScores = [
+    sample.aroma.qualityScore,
+    sample.flavor.flavor,
+    sample.flavor.aftertaste,
+    sample.flavor.acidity,
+    sample.flavor.body,
+    sample.flavor.balance,
+    sample.flavor.overall
+  ];
+
+  if (rawScores.some(value =>
+    value === null || value === undefined
+  )) {
+    return null;
+  }
+
+  const scores = rawScores.map(Number);
+
+  if (scores.some(value => !Number.isFinite(value))) {
+    return null;
+  }
+
+  const cupGroups = [
+    sample.flavor.uniformity,
+    sample.flavor.cleanCup,
+    sample.flavor.sweetness
+  ];
+
+  if (cupGroups.some(values =>
+    !Array.isArray(values) || values.length !== 5
+  )) {
+    return null;
+  }
+
+  const failedUniformity = 5
+    - this.reviewPassedCups(sample.flavor.uniformity);
+
+  if (
+    failedUniformity > 0 &&
+    !['taint', 'fault'].includes(sample.flavor.defectType ?? '')
+  ) {
+    return null;
+  }
+
+  const cupPoints = cupGroups.reduce(
+    (total, values) => total + this.calculateCupScore(values),
+    0
+  );
+
+  const deduction = failedUniformity * (
+    sample.flavor.defectType === 'taint' ? 2
+      : sample.flavor.defectType === 'fault' ? 4
+      : 0
+  );
+
+  return Math.round((
+    scores.reduce((total, score) => total + score, 0)
+    + cupPoints
+    - deduction
+  ) * 100) / 100;
+}
 }

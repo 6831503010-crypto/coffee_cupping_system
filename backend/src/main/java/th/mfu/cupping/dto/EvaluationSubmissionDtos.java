@@ -5,13 +5,19 @@ import java.util.List;
 import jakarta.validation.Valid;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
+import th.mfu.cupping.dto.EvaluationTimingDtos.TimerView;
 
-/** The entire form is saved atomically. Database IDs are never positional sample numbers. */
+/**
+ * The entire form is saved atomically. Database IDs are never positional sample
+ * numbers.
+ */
 public final class EvaluationSubmissionDtos {
-  private EvaluationSubmissionDtos() {}
+  private EvaluationSubmissionDtos() {
+  }
 
   public record Cup(@Min(1) @Max(5) int cupNumber,
-                    boolean uniformity, boolean cleanCup, boolean sweetness) {}
+      boolean uniformity, boolean cleanCup, boolean sweetness) {
+  }
 
   public record Sample(
       @NotNull Integer sessionSampleId,
@@ -22,15 +28,36 @@ public final class EvaluationSubmissionDtos {
       Integer acidityIntensity, Integer bodyLevel, String defectType,
       List<String> aromaQualities, List<String> flavorQualities,
       List<@Valid Cup> cups,
-      String aromaNotes, String flavorNotes) {}
+      String aromaNotes, String flavorNotes) {
+  }
 
   public record Submission(@JsonProperty("finalize") @NotNull Boolean finalizeEvaluation,
-                           @NotEmpty List<@Valid Sample> samples) {}
+      @NotEmpty List<@Valid Sample> samples) {
+  }
+
+  public record AromaLockRequest(
+      @NotEmpty List<@Valid Sample> samples) {
+  }
+
+  public record EvaluationProgress(
+      boolean aromaLocked,
+      String aromaLockedAt) {
+  }
 
   public record SavedSample(Integer evaluationId, Integer sessionSampleId,
-                            String status, String finalizedAt, BigDecimal totalScore,
-                            Sample data) {}
+      String status, String finalizedAt, BigDecimal totalScore,
+      Sample data) {
+  }
 
-  public record HistoryEntry(Integer sessionId, String sessionName,
-                             String completedAt, List<SavedSample> samples) {}
+  public record HistoryEntry(
+      Integer sessionId,
+      String sessionName,
+      String completedAt,
+      List<SavedSample> samples,
+      boolean sessionClosed,
+      String completionOutcome,
+      TimerView sessionTimer,
+      TimerView evaluatorTimer,
+      boolean creatorOnly) {
+  }
 }

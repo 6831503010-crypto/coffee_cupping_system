@@ -12,6 +12,7 @@ import th.mfu.cupping.dto.CuppingSessionRequest;
 import th.mfu.cupping.model.*;
 import th.mfu.cupping.repository.*;
 import th.mfu.cupping.service.CuppingAccessService;
+import th.mfu.cupping.service.SessionClosureService;
 
 @RestController
 @RequestMapping("/api/sessions")
@@ -19,12 +20,18 @@ public class CuppingSessionController {
   private final CuppingSessionRepository repo;
   private final CuppingAccessService access;
   private final SessionEvaluatorRepository evaluators;
+  private final SessionClosureService closure;
 
-  public CuppingSessionController(CuppingSessionRepository repo, CuppingAccessService access,
-      SessionEvaluatorRepository evaluators) {
+  public CuppingSessionController(
+      CuppingSessionRepository repo,
+      CuppingAccessService access,
+      SessionEvaluatorRepository evaluators,
+      SessionClosureService closure) {
+
     this.repo = repo;
     this.access = access;
     this.evaluators = evaluators;
+    this.closure = closure;
   }
 
   @GetMapping
@@ -108,7 +115,11 @@ public class CuppingSessionController {
   public CuppingSession update(@PathVariable Integer id, @Valid @RequestBody CuppingSessionRequest request,
       Authentication auth) {
     User user = access.current(auth);
-    CuppingSession item = find(id);
+
+    CuppingSession item = repo.findByIdForUpdate(id)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "CuppingSession not found"));
 
     if (request.evaluatorLimit() != null
         && !request.evaluatorLimit().equals(item.getEvaluatorCapacity())) {
@@ -141,9 +152,17 @@ public class CuppingSessionController {
     item.setResultVisibility(
         request.resultVisibility() == null ? item.getResultVisibility() : request.resultVisibility());
     if (request.status() != null) {
-      item.setStatus(request.status());
-      if ("FINALIZED".equals(request.status()))
-        item.setFinalizedAt(java.time.LocalDateTime.now());
+      boolean closing = "FINALIZED".equals(request.status())
+          || "CANCELLED".equals(request.status());
+
+      if (closing) {
+        closure.close(
+            item,
+            request.status(),
+            Boolean.TRUE.equals(request.acknowledgeIncomplete()));
+      } else {
+        item.setStatus(request.status());
+      }
     }
     return repo.saveAndFlush(item);
   }

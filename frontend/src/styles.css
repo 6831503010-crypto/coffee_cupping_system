@@ -944,3 +944,201 @@ TEAM RULE:
     padding:20px;
   }
 }
+
+.individual-container .session-dashboard-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:2rem;
+  margin:0 0 1rem;
+  padding:1.25rem 1.5rem;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+}
+
+.individual-container .session-header-details{min-width:0;flex:1 1 auto}
+.individual-container .session-heading{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem .75rem}
+.individual-container .session-heading h1{
+  min-width:0;
+  margin:0;
+  overflow-wrap:anywhere;
+  color:var(--espresso);
+  font-size:clamp(1.3rem,2.5vw,1.65rem);
+}
+
+.individual-container .session-mode,
+.individual-container .session-status,
+.individual-container .evaluator-status{
+  display:inline-flex;
+  align-items:center;
+  width:fit-content;
+  max-width:100%;
+  padding:.25rem .65rem;
+  border-radius:999px;
+  background:var(--foam);
+  color:var(--roast);
+  font-size:.82rem;
+  font-weight:600;
+  line-height:1.35;
+}
+
+.individual-container .session-status{background:#e8f1e9;color:#315a3b}
+.individual-container .session-status-closed,
+.individual-container .evaluator-status-incomplete{background:#f7eee2;color:#75502f}
+.individual-container .session-status-finalized,
+.individual-container .evaluator-status-finalized{background:#e9eee6;color:#526247}
+.individual-container .session-header-meta{display:flex;flex-wrap:wrap;gap:.25rem 1.5rem;margin-top:.8rem}
+.individual-container .session-header-meta p{margin:0;color:var(--roast)}
+
+.individual-container .session-timing{
+  display:flex;
+  flex:0 0 auto;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:.25rem;
+  min-width:190px;
+  text-align:right;
+}
+
+.individual-container .session-timing-label,
+.individual-container .evaluator-duration{
+  display:inline-flex;
+  align-items:center;
+  gap:.4rem;
+  color:var(--roast);
+  font-size:.88rem;
+}
+
+.individual-container .session-timing-label svg,
+.individual-container .evaluator-duration svg{
+  width:1rem;
+  height:1rem;
+  flex:0 0 auto;
+  fill:none;
+  stroke:currentColor;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke-width:1.7;
+}
+
+.individual-container .session-timing-value{
+  color:var(--espresso);
+  font-size:clamp(1.5rem,3vw,1.9rem);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.02em;
+}
+
+.individual-container .session-timing-loading,
+.individual-container .session-timing-error{color:var(--roast);font-size:.85rem}
+.individual-container .session-timing-error{color:var(--danger)}
+
+.individual-container .session-dashboard-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  align-items:start;
+  gap:1rem;
+}
+
+.individual-container .session-dashboard-grid.creator-dashboard{
+  grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);
+}
+
+.individual-container .dashboard-primary,
+.individual-container .dashboard-supporting{
+  display:grid;
+  min-width:0;
+  gap:1rem;
+}
+
+.individual-container .session-dashboard-grid .setup-section{
+  min-width:0;
+  margin:0;
+  padding:1.1rem;
+  gap:.7rem;
+}
+
+.individual-container .session-dashboard-grid .setup-section h2{
+  margin:0;
+  color:var(--espresso);
+  font-size:1.15rem;
+}
+
+.individual-container .session-dashboard-grid .setup-section>p{margin:0}
+.individual-container .evaluator-management-card>p{color:var(--roast)}
+.individual-container .evaluator-management-card form{display:grid;gap:.5rem}
+
+.individual-container .session-dashboard-grid .setup-section button{
+  width:fit-content;
+  max-width:100%;
+  padding:.65rem .85rem;
+}
+
+.individual-container .session-dashboard-grid .evaluator-management-card form>button{justify-self:start}
+.individual-container .session-dashboard-grid .sample-section-heading{margin-top:.35rem}
+.individual-container .session-dashboard-grid .sample-section-heading h3{margin:0;color:var(--espresso);font-size:1rem}
+
+.individual-container .session-dashboard-grid .evaluator-card{
+  align-items:center;
+  flex-wrap:nowrap;
+  min-width:0;
+  padding:.75rem;
+  border-color:#eee2d8;
+}
+
+.individual-container .session-dashboard-grid .evaluator-card-details{
+  display:grid;
+  flex:1 1 auto;
+  min-width:0;
+  gap:.2rem;
+  overflow-wrap:anywhere;
+}
+
+.individual-container .session-dashboard-grid .evaluator-card-details>p{margin:0}
+.individual-container .session-dashboard-grid .evaluator-card-details a{color:var(--roast);overflow-wrap:anywhere}
+.individual-container .evaluator-timing{display:flex;align-items:center;flex-wrap:wrap;gap:.45rem .75rem;margin-top:.25rem}
+.individual-container .evaluator-status{background:var(--foam);color:var(--roast)}
+.individual-container .evaluator-status-evaluating{background:#e8f1e9;color:#315a3b}
+.individual-container .evaluator-duration{font-variant-numeric:tabular-nums}
+
+.individual-container .session-dashboard-grid .setup-section .remove-evaluator-button{
+  display:grid;
+  place-items:center;
+  flex:0 0 36px;
+  width:36px;
+  height:36px;
+  margin:0;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  color:var(--roast);
+  font-size:22px;
+  line-height:1;
+}
+
+.individual-container .session-dashboard-grid .setup-section .remove-evaluator-button:hover:not(:disabled){
+  border-color:var(--danger);
+  color:var(--danger);
+}
+
+.individual-container .session-dashboard-grid .participation-card input{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.individual-container .session-dashboard-grid .coffee-samples-card .sample-row{padding:.65rem}
+
+@media (max-width:900px){
+  .individual-container .session-dashboard-grid.creator-dashboard{grid-template-columns:minmax(0,1fr)}
+}
+
+@media (max-width:600px){
+  .individual-container .session-dashboard-header{align-items:stretch;flex-direction:column;gap:1rem;padding:1rem}
+  .individual-container .session-timing{align-items:flex-start;min-width:0;text-align:left}
+  .individual-container .session-header-meta{gap:.45rem 1rem}
+  .individual-container .session-dashboard-grid .setup-section{padding:1rem}
+  .individual-container .session-dashboard-grid .evaluator-card{align-items:flex-start}
+}

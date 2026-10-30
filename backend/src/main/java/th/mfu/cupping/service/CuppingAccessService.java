@@ -7,6 +7,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import th.mfu.cupping.model.*;
 import th.mfu.cupping.repository.*;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CuppingAccessService {
@@ -16,16 +19,18 @@ public class CuppingAccessService {
   private final SessionSampleRepository sessionSamples;
   private final SessionEvaluatorRepository evaluators;
   private final EvaluationRepository evaluations;
+  private final JdbcTemplate jdbc;
 
   public CuppingAccessService(UserRepository users, CuppingSessionRepository sessions,
       CoffeeSampleRepository samples, SessionSampleRepository sessionSamples,
-      SessionEvaluatorRepository evaluators, EvaluationRepository evaluations) {
+      SessionEvaluatorRepository evaluators, EvaluationRepository evaluations, JdbcTemplate jdbc) {
     this.users = users;
     this.sessions = sessions;
     this.samples = samples;
     this.sessionSamples = sessionSamples;
     this.evaluators = evaluators;
     this.evaluations = evaluations;
+    this.jdbc = jdbc;
   }
 
   public User current(Authentication authentication) {
@@ -135,24 +140,96 @@ public class CuppingAccessService {
       deny();
   }
 
+  @Transactional(propagation = Propagation.MANDATORY)
   public void requireEvaluationWrite(Integer id, User user) {
-    Evaluation evaluation = evaluation(id);
-    SessionEvaluator evaluator = evaluator(evaluation.getSessionEvaluatorId());
-    if (!evaluator.getUserId().equals(user.getUserId()))
-      deny();
-    requireSessionOpen(evaluator.getSessionId());
-    if ("FINALIZED".equals(evaluation.getStatus()))
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Evaluation is finalized");
+    Evaluation item = evaluation(id);
+
+    requireActiveEvaluatorWrite(
+        item.getSessionEvaluatorId(), user);
+
+    var statuses = jdbc.query("""
+        SELECT status
+        FROM evaluations
+        WHERE evaluation_id = ?
+        FOR UPDATE
+        """,
+        (rs, row) -> rs.getString("status"),
+        id);
+
+    if (statuses.isEmpty()) {
+      throw new ResponseStatusException(
+          HttpStatus.NOT_FOUND, "Evaluation not found");
+    }
+
+    if ("FINALIZED".equals(statuses.get(0))) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Evaluation is finalized");
+    }
   }
 
-  public void validateEvaluationPair(Integer evaluatorId, Integer sessionSampleId, User user) {
-    SessionEvaluator evaluator = evaluator(evaluatorId);
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void validateEvaluationPair(
+      Integer evaluatorId,
+      Integer sessionSampleId,
+      User user) {
+
+    requireActiveEvaluatorWrite(evaluatorId, user);
+
+    SessionEvaluator membership = evaluator(evaluatorId);
     SessionSample sample = sessionSample(sessionSampleId);
-    if (!evaluator.getSessionId().equals(sample.getSessionId()))
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Evaluator and sample must belong to same session");
-    if (!evaluator.getUserId().equals(user.getUserId()))
-      deny();
-    requireSessionOpen(evaluator.getSessionId());
+
+    if (!membership.getSessionId().equals(sample.getSessionId())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST,
+          "Evaluator and sample must belong to same session");
+    }
+  }
+
+  @Transactional(propagation = Propagation.MANDATORY)
+  public boolean isAromaLockedForMember(
+      Integer evaluatorId,
+      User user) {
+
+    // Acquires the existing session/member locks and verifies
+    // ownership, Begin status and that evaluation is still open.
+    requireActiveEvaluatorWrite(evaluatorId, user);
+
+    Boolean locked = jdbc.queryForObject("""
+        SELECT aroma_locked_at IS NOT NULL
+        FROM session_evaluators
+        WHERE session_evaluator_id = ?
+        FOR UPDATE
+        """,
+        Boolean.class,
+        evaluatorId);
+
+    return Boolean.TRUE.equals(locked);
+  }
+
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void requireAromaEditable(
+      Integer evaluationId,
+      User user) {
+
+    requireEvaluationWrite(evaluationId, user);
+
+    Integer memberId = evaluation(evaluationId)
+        .getSessionEvaluatorId();
+
+    Boolean locked = jdbc.queryForObject("""
+        SELECT aroma_locked_at IS NOT NULL
+        FROM session_evaluators
+        WHERE session_evaluator_id = ?
+        FOR UPDATE
+        """,
+        Boolean.class,
+        memberId);
+
+    if (Boolean.TRUE.equals(locked)) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Aroma stage is locked");
+    }
   }
 
   public void requireSelf(Integer userId, User user) {
@@ -162,5 +239,76 @@ public class CuppingAccessService {
 
   public void deny() {
     throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+  }
+
+  private void requireActiveEvaluatorWrite(Integer evaluatorId, User user) {
+    // Discover the session without acquiring a membership lock first.
+    SessionEvaluator membership = evaluator(evaluatorId);
+
+    if (!membership.getUserId().equals(user.getUserId())) {
+      deny();
+    }
+
+    Integer sessionId = membership.getSessionId();
+
+    // Same lock order as Begin, whole-form submission and closure:
+    // session first, membership second.
+    var sessions = jdbc.query("""
+        SELECT status, finalized_at, session_ended_at
+        FROM cupping_sessions
+        WHERE session_id = ?
+        FOR UPDATE
+        """,
+        (rs, row) -> rs.getTimestamp("finalized_at") != null
+            || rs.getTimestamp("session_ended_at") != null
+            || "FINALIZED".equals(rs.getString("status"))
+            || "CANCELLED".equals(rs.getString("status")),
+        sessionId);
+
+    if (sessions.isEmpty()) {
+      throw new ResponseStatusException(
+          HttpStatus.NOT_FOUND, "Session not found");
+    }
+
+    if (sessions.get(0)) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Session is closed");
+    }
+
+    // Read current database values after acquiring the session lock.
+    // Avoid relying on a previously loaded JPA membership.
+    var active = jdbc.query("""
+        SELECT user_id,
+               evaluation_started_at,
+               evaluation_ended_at,
+               completion_outcome
+        FROM session_evaluators
+        WHERE session_evaluator_id = ?
+          AND session_id = ?
+        FOR UPDATE
+        """,
+        (rs, row) -> {
+          if (rs.getInt("user_id") != user.getUserId()) {
+            deny();
+          }
+
+          return rs.getTimestamp("evaluation_started_at") != null
+              && rs.getTimestamp("evaluation_ended_at") == null
+              && "IN_PROGRESS".equals(
+                  rs.getString("completion_outcome"));
+        },
+        evaluatorId,
+        sessionId);
+
+    if (active.isEmpty()) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Evaluator was removed");
+    }
+
+    if (!active.get(0)) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Evaluation must be started and still in progress");
+    }
   }
 }

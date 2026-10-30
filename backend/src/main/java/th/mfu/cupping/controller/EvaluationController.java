@@ -21,15 +21,29 @@ public class EvaluationController {
   private final DefectTypeRepository defectTypes;
   private final th.mfu.cupping.service.EvaluationScoreService scores;
 
-  public EvaluationController(EvaluationRepository repo, CuppingAccessService access, DefectTypeRepository defectTypes, th.mfu.cupping.service.EvaluationScoreService scores) {
-    this.repo = repo; this.access = access; this.defectTypes = defectTypes; this.scores = scores;
+  @jakarta.persistence.PersistenceContext
+  private jakarta.persistence.EntityManager entityManager;
+
+  public EvaluationController(EvaluationRepository repo, CuppingAccessService access, DefectTypeRepository defectTypes,
+      th.mfu.cupping.service.EvaluationScoreService scores) {
+    this.repo = repo;
+    this.access = access;
+    this.defectTypes = defectTypes;
+    this.scores = scores;
   }
 
   @GetMapping
   public List<Evaluation> list(Authentication auth) {
     User user = access.current(auth);
     return repo.findAll().stream()
-        .filter(item -> { try { access.requireEvaluationRead(item.getEvaluationId(), user); return true; } catch (org.springframework.web.server.ResponseStatusException ex) { return false; } })
+        .filter(item -> {
+          try {
+            access.requireEvaluationRead(item.getEvaluationId(), user);
+            return true;
+          } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return false;
+          }
+        })
         .toList();
   }
 
@@ -42,7 +56,8 @@ public class EvaluationController {
   }
 
   private Evaluation find(Integer id) {
-    return repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evaluation not found"));
+    return repo.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evaluation not found"));
   }
 
   @PostMapping
@@ -50,13 +65,22 @@ public class EvaluationController {
   public ResponseEntity<Evaluation> create(@Valid @RequestBody EvaluationRequest request, Authentication auth) {
     User user = access.current(auth);
     validateRequest(request);
-if (request.sessionEvaluatorId() == null || request.sessionSampleId() == null)
+    if (request.sessionEvaluatorId() == null || request.sessionSampleId() == null)
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sessionEvaluatorId and sessionSampleId are required");
     access.validateEvaluationPair(request.sessionEvaluatorId(), request.sessionSampleId(), user);
+
+    if (access.isAromaLockedForMember(
+        request.sessionEvaluatorId(), user)) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Cannot create another sample evaluation after aroma is locked");
+    }
+
     if (request.defectTypeId() != null && !defectTypes.existsById(request.defectTypeId()))
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Defect type not found");
     if ("FINALIZED".equals(request.status()))
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Finalize through /api/individual-sessions/{id}/my-evaluations to save all child data atomically");
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Finalize through /api/individual-sessions/{id}/my-evaluations to save all child data atomically");
     if (request.status() != null && !"DRAFT".equals(request.status()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid evaluation status");
     Evaluation item = new Evaluation();
@@ -81,27 +105,59 @@ if (request.sessionEvaluatorId() == null || request.sessionSampleId() == null)
     item.setDefectTypeId(request.defectTypeId());
     // Client-submitted totals are never trusted.
     item.setStatus(request.status() == null ? "DRAFT" : request.status());
-    if ("FINALIZED".equals(item.getStatus())) item.setFinalizedAt(java.time.LocalDateTime.now());
+    if ("FINALIZED".equals(item.getStatus()))
+      item.setFinalizedAt(java.time.LocalDateTime.now());
     item = repo.saveAndFlush(item);
     item.setTotalScore(scores.calculate(item));
     return ResponseEntity.status(HttpStatus.CREATED).body(repo.saveAndFlush(item));
   }
 
+  private boolean sameDecimal(
+      java.math.BigDecimal first,
+      java.math.BigDecimal second) {
+
+    return first == null
+        ? second == null
+        : second != null && first.compareTo(second) == 0;
+  }
+
   @PutMapping("/{id}")
   @Transactional
-  public Evaluation update(@PathVariable Integer id, @Valid @RequestBody EvaluationRequest request, Authentication auth) {
+  public Evaluation update(@PathVariable Integer id, @Valid @RequestBody EvaluationRequest request,
+      Authentication auth) {
     User user = access.current(auth);
     Evaluation item = find(id);
     access.requireEvaluationWrite(id, user);
+
+    entityManager.refresh(item);
+
+    boolean aromaLocked = access.isAromaLockedForMember(
+        item.getSessionEvaluatorId(), user);
+
+    if (aromaLocked && (!java.util.Objects.equals(
+        item.getDryAroma(), request.dryAroma())
+        || !java.util.Objects.equals(
+            item.getBreakAroma(), request.breakAroma())
+        || !java.util.Objects.equals(
+            item.getColorIntensity(), request.colorIntensity())
+        || !sameDecimal(
+            item.getAromaQualityScore(), request.aromaQualityScore()))) {
+
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Aroma stage is locked. Aroma values cannot be changed");
+    }
+
     validateRequest(request);
-if (request.sessionEvaluatorId() != null && !item.getSessionEvaluatorId().equals(request.sessionEvaluatorId()))
+    if (request.sessionEvaluatorId() != null && !item.getSessionEvaluatorId().equals(request.sessionEvaluatorId()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change evaluator");
     if (request.sessionSampleId() != null && !item.getSessionSampleId().equals(request.sessionSampleId()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change session sample");
     if (request.defectTypeId() != null && !defectTypes.existsById(request.defectTypeId()))
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Defect type not found");
     if ("FINALIZED".equals(request.status()))
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Finalize through /api/individual-sessions/{id}/my-evaluations to save all child data atomically");
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Finalize through /api/individual-sessions/{id}/my-evaluations to save all child data atomically");
     if (request.status() != null && !"DRAFT".equals(request.status()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid evaluation status");
     item.setDryAroma(request.dryAroma());
@@ -123,7 +179,8 @@ if (request.sessionEvaluatorId() != null && !item.getSessionEvaluatorId().equals
     // Client-submitted totals are never trusted.
     if (request.status() != null) {
       item.setStatus(request.status());
-      if ("FINALIZED".equals(request.status())) item.setFinalizedAt(java.time.LocalDateTime.now());
+      if ("FINALIZED".equals(request.status()))
+        item.setFinalizedAt(java.time.LocalDateTime.now());
     }
     item.setTotalScore(scores.calculate(item));
     return repo.saveAndFlush(item);
@@ -146,6 +203,7 @@ if (request.sessionEvaluatorId() != null && !item.getSessionEvaluatorId().equals
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Scored categories must be 6–10 in 0.25 increments");
     }
   }
+
   private void checkIntensity(Integer value, String field) {
     if (value != null && (value < 1 || value > 5))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid " + field);
@@ -157,7 +215,7 @@ if (request.sessionEvaluatorId() != null && !item.getSessionEvaluatorId().equals
   public void delete(@PathVariable Integer id, Authentication auth) {
     User user = access.current(auth);
     Evaluation item = find(id);
-    access.requireEvaluationWrite(id, user);
+    access.requireAromaEditable(id, user);
     repo.delete(item);
     repo.flush();
   }

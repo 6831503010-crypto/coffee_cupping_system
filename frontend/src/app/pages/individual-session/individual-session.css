@@ -509,3 +509,69 @@
 #existingCode {
   scroll-margin-block: 100px;
 }
+
+.session-finalization-actions {
+  width: 100%;
+}
+
+.session-finalization-actions .finalize-session-button {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.session-finalization-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 0;
+}
+
+.session-finalization-actions p {
+  margin: 0;
+}
+
+.finalize-session-button {
+  padding: 12px 20px;
+  border: 1px solid #604238;
+  border-radius: 10px;
+  background: #604238;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.finalize-session-button:hover:not(:disabled) {
+  background: #432b22;
+}
+
+.finalize-session-button:focus-visible {
+  outline: 3px solid #a87956;
+  outline-offset: 3px;
+}
+
+.finalize-session-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.session-evaluation-action {
+  margin-top: 14px;
+}
+
+.session-evaluation-action .action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .session-evaluation-action .action-link {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

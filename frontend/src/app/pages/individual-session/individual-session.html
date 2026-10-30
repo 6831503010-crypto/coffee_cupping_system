@@ -195,32 +195,68 @@
 
   } @else {
 
-  <h1>Individual Session</h1>
-
   @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
   }
 
   @if (session(); as info) {
 
-  <section class="setup-section">
-    <h2>{{ info.sessionName }}</h2>
+  <section class="session-dashboard-header" aria-label="Session information">
+    <div class="session-header-details">
+      <div class="session-heading">
+        <h1>{{ info.sessionName }}</h1>
+        <span class="session-mode">Individual Session</span>
+        <span class="session-status" [class.session-status-closed]="info.closed"
+          [class.session-status-finalized]="info.finalized">
+          {{ info.finalized ? 'Finalized' : info.closed ? 'Closed' : 'Active' }}
+        </span>
+      </div>
 
-    <p>
-      Evaluators: {{ info.joinedEvaluators }}
-      / {{ info.evaluatorLimit }}
-    </p>
+      <div class="session-header-meta">
+        <p>Evaluators: <strong>{{ info.joinedEvaluators }} / {{ info.evaluatorLimit }}</strong></p>
+        <p>
+          Your role:
+          <strong>{{ info.isCreator
+            ? (info.sessionEvaluatorId !== null ? 'Creator and evaluator' : 'Creator only')
+            : 'Evaluator' }}</strong>
+        </p>
+      </div>
+      @if (!info.closed && info.canEvaluate) {
+      <div class="session-evaluation-action">
+        <a class="action-link" routerLink="/cupping" [queryParams]="{ sessionId: info.sessionId }">
+          Open Evaluation →
+        </a>
+      </div>
+      }
+    </div>
 
-    <p>
-      Your role:
-      {{ info.isCreator
-      ? (info.sessionEvaluatorId !== null ? 'Creator and evaluator' : 'Creator only')
-      : 'Evaluator' }}
-    </p>
+    @if (info.isCreator) {
+    <div class="session-timing" aria-live="polite">
+      <span class="session-timing-label">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M12 7v5l3 2"></path>
+        </svg>
+        Session elapsed time
+      </span>
+
+      @if (sessionTiming()) {
+      <strong class="session-timing-value">{{ sessionTimeDisplay() }}</strong>
+      } @else {
+      <span class="session-timing-loading">Loading session time…</span>
+      }
+
+      @if (sessionTimingError()) {
+      <span class="session-timing-error" role="status">{{ sessionTimingError() }}</span>
+      }
+    </div>
+    }
   </section>
 
-  @if (info.isCreator) {
-  <section class="setup-section">
+  <div class="session-dashboard-grid" [class.creator-dashboard]="info.isCreator">
+    @if (info.isCreator) {
+    <div class="dashboard-primary">
+    <section class="setup-section evaluator-management-card">
     <h2>Manage Evaluators</h2>
 
     <p>
@@ -346,7 +382,29 @@
         <span> · Creator</span>
         }
 
-        <p>{{ evaluator.email }}</p>
+        <p><a [href]="'mailto:' + evaluator.email">{{ evaluator.email }}</a></p>
+        @if (evaluatorTimingDisplays()[evaluator.sessionEvaluatorId]; as progress) {
+        <div class="evaluator-timing">
+          <span class="evaluator-status" [class.evaluator-status-finalized]="progress.status === 'Finalized'"
+            [class.evaluator-status-evaluating]="progress.status === 'Evaluating'"
+            [class.evaluator-status-incomplete]="progress.status === 'Incomplete — Session Closed'">
+            {{ progress.status }}
+          </span>
+          <span class="evaluator-duration">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 7v5l3 2"></path>
+            </svg>
+            @if (progress.status === 'Not started') {
+            Not started
+            } @else {
+            Evaluation: {{ progress.duration }}
+            }
+          </span>
+        </div>
+        } @else {
+        <p class="help">Timing not available yet.</p>
+        }
       </div>
 
       <button type="button" class="remove-evaluator-button" [disabled]="
@@ -368,41 +426,61 @@
     }
     }
   </section>
-
-  <section class="setup-section">
-    <h2>Participation Link</h2>
-
-    <p class="help">
-      Share this link with your evaluators. Anyone signed in who has
-      the link can join while places remain.
-    </p>
-
-    <button type="button" [disabled]="generatingLink() || info.closed" (click)="generateParticipationLink()">
-      {{ generatingLink() ? 'Getting link...' : 'Get participation link' }}
-    </button>
-
-    @if (participationLink()) {
-    <label for="participationLink">Session participation link</label>
-
-    <input #linkInput id="participationLink" type="text" readonly [value]="participationLink()"
-      (focus)="linkInput.select()" />
-
-    <button type="button" [disabled]="copyingLink()" (click)="copyParticipationLink()">
-      {{ copyingLink() ? 'Copying...' : 'Copy link' }}
-    </button>
+    </div>
     }
 
-    @if (linkMessage()) {
-    <p role="status">{{ linkMessage() }}</p>
+    <div class="dashboard-supporting">
+    @if (info.isCreator) {
+      <section class="setup-section participation-card">
+        <h2>Participation Link</h2>
+
+        @if (info.closed) {
+        <p class="help">
+          This session is closed to new participants.
+        </p>
+        } @else {
+        <p class="help">
+          Share this link with your evaluators. Anyone signed in
+          who has the link can join while places remain.
+        </p>
+
+        @if (generatingLink()) {
+        <p class="help" role="status">
+          Loading participation link…
+        </p>
+        } @else if (participationLink()) {
+        <label for="participationLink">
+          Session participation link
+        </label>
+
+        <input #linkInput id="participationLink" type="text" readonly [value]="participationLink()"
+          (focus)="linkInput.select()" />
+
+        <button type="button" [disabled]="copyingLink()" (click)="copyParticipationLink()">
+          {{ copyingLink() ? 'Copying…' : 'Copy link' }}
+        </button>
+        }
+
+        @if (linkMessage()) {
+        <p role="status">{{ linkMessage() }}</p>
+        }
+
+        @if (linkError()) {
+        <p class="field-error" role="alert">
+          {{ linkError() }}
+        </p>
+
+        @if (!participationLink() && !generatingLink()) {
+        <button type="button" (click)="generateParticipationLink()">
+          Retry
+        </button>
+        }
+        }
+        }
+      </section>
     }
 
-    @if (linkError()) {
-    <p class="field-error" role="alert">{{ linkError() }}</p>
-    }
-  </section>
-  }
-
-  <section class="setup-section">
+  <section class="setup-section coffee-samples-card">
     <h2>Session Coffee Samples</h2>
 
     @for (sample of info.samples; track sample.sessionSampleId) {
@@ -430,6 +508,26 @@
     </article>
     }
   </section>
+  @if (info.isCreator) {
+  <div class="session-finalization-actions">
+    @if (sessionFinalizationSuccess()) {
+    <p role="status">{{ sessionFinalizationSuccess() }}</p>
+    }
+
+    @if (!info.closed) {
+    <button class="finalize-session-button" type="button" [disabled]="
+              finalizingSession() ||
+              loadingEvaluators() ||
+              assigningEvaluator() ||
+              removingEvaluatorId() !== null
+            " (click)="openFinalizeSessionModal()">
+      Finalize Session
+    </button>
+    }
+  </div>
+  }
+    </div>
+  </div>
 
   @if (info.finalized) {
   <p class="help">
@@ -439,17 +537,99 @@
   <p class="help">
     This session is closed. Evaluation is unavailable.
   </p>
-  } @else if (info.canEvaluate) {
-  <a class="action-link" routerLink="/cupping" [queryParams]="{ sessionId: info.sessionId }">
-    Start Evaluation →
-  </a>
-  } @else {
+  } @else if (!info.canEvaluate) {
   <p class="help">
     You are managing this session without participating as an evaluator.
   </p>
   }
   }
   }
+
+  <dialog #finalizeSessionDialog class="sample-modal" aria-labelledby="finalizeSessionTitle"
+    aria-describedby="finalizeSessionDescription" [attr.aria-busy]="finalizingSession()"
+    (cancel)="onFinalizeSessionCancel($event)">
+
+    <div class="sample-modal-heading">
+      <h2 id="finalizeSessionTitle">Finalize session?</h2>
+
+      <button type="button" class="sample-modal-close" aria-label="Close session finalization confirmation"
+        [disabled]="finalizingSession()" (click)="closeFinalizeSessionModal()">
+        &times;
+      </button>
+    </div>
+
+    <div class="remove-evaluator-content">
+      <p id="finalizeSessionDescription">
+        This will close the entire session and stop its timer.
+        This action cannot be undone.
+      </p>
+
+      <p>
+        Any unfinished evaluators will be marked
+        <strong>Incomplete — Session Closed</strong>.
+        Their work will be locked and their scores excluded
+        from final averages.
+      </p>
+
+      <p>
+        Previously finalized evaluations and their durations
+        will remain unchanged.
+        At least one evaluator must have finalized every sample.
+      </p>
+
+      @if (sessionFinalizationError()) {
+      <p class="field-error" role="alert">
+        {{ sessionFinalizationError() }}
+      </p>
+      }
+
+      <div class="remove-evaluator-actions">
+        <button type="button" class="modal-cancel-button" autofocus [disabled]="finalizingSession()"
+          (click)="closeFinalizeSessionModal()">
+          Cancel
+        </button>
+
+        <button class="finalize-session-button" type="button" [disabled]="finalizingSession()" (click)="confirmSessionFinalization()">
+          {{ finalizingSession() ? 'Finalizing…' : 'Finalize Session' }}
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog #removeEvaluatorDialog class="sample-modal" aria-labelledby="removeEvaluatorTitle"
+    aria-describedby="removeEvaluatorDescription" (cancel)="onRemoveEvaluatorCancel($event)">
+    <div class="sample-modal-heading">
+      <h2 id="removeEvaluatorTitle">Remove evaluator?</h2>
+
+      <button type="button" class="sample-modal-close" aria-label="Close removal confirmation"
+        (click)="closeRemoveEvaluatorModal()">
+        &times;
+      </button>
+    </div>
+
+    <div class="remove-evaluator-content">
+      <p id="removeEvaluatorDescription">
+        Remove <strong>{{ evaluatorToRemove()?.name }}</strong>
+        from this session?
+      </p>
+
+      @if (evaluatorToRemove()?.creator) {
+      <p>
+        You will remain the creator and can still manage this session.
+      </p>
+      }
+
+      <div class="remove-evaluator-actions">
+        <button type="button" class="modal-cancel-button" autofocus (click)="closeRemoveEvaluatorModal()">
+          Cancel
+        </button>
+
+        <button type="button" class="modal-remove-button" (click)="confirmEvaluatorRemoval()">
+          Remove evaluator
+        </button>
+      </div>
+    </div>
+  </dialog>
 
   <app-sample-form-modal [showSampleCode]="true" submitLabel="Add Sample"
     description="Add a coffee to this session. New samples are saved when you create the session." [contextMessage]="

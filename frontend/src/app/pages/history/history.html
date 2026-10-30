@@ -7,7 +7,9 @@
 
       <h1>Session History</h1>
 
-      <p class="history-subtitle">Review completed coffee cupping sessions and sample scores.</p>
+      <p class="history-subtitle">
+        Review finalized evaluations and evaluations ended by session closure.
+      </p>
     </div>
 
     <div class="history-actions">
@@ -44,9 +46,12 @@
     @if (records().length === 0) {
 
     <section class="history-empty">
-      <h2>No completed sessions yet.</h2>
+      <h2>No evaluation history yet.</h2>
 
-      <p>Finish an evaluation in the Cupping Form and it will appear here.</p>
+      <p>
+        Finalized evaluations and evaluations ended by session closure
+        will appear here.
+      </p>
 
       <button class="btn primary btn-link" type="button" (click)="modeModal.openModeDialog()">
         Start Cupping →
@@ -66,12 +71,53 @@
           <small>{{ record.source === 'database' ? 'Saved in database' : 'Browser-only practice (not database verified)' }}</small>
 
           <div class="history-date">
-            {{ formatDate(record.completedAt) }} • {{ record.samples?.length || 0 }} {{
-            (record.samples?.length || 0) === 1 ? 'sample' : 'samples' }}
+            @if (record.creatorOnly || isIncomplete(record)) {
+            @if (record.completedAt) {
+            Session closed: {{ formatDate(record.completedAt) }}
+            } @else {
+            Session closed • Closure date unavailable
+            }
+            } @else {
+            {{ formatDate(record.completedAt) }}
+            • {{ record.samples?.length || 0 }}
+            {{ (record.samples?.length || 0) === 1 ? 'sample' : 'samples' }}
+            }
           </div>
         </div>
       </div>
 
+      @if (record.source === 'database') {
+      <div class="history-timing">
+        @if (record.creatorOnly) {
+        <p>
+          <strong>Your role:</strong>
+          Creator only
+        </p>
+        } @else {
+        <p>
+          <strong>Evaluation outcome:</strong>
+          {{ completionLabel(record) }}
+        </p>
+
+        <p>
+          <strong>Your evaluation time:</strong>
+          {{ evaluationDurationLabel(record) }}
+        </p>
+        }
+
+        <p>
+          <strong>Session elapsed time:</strong>
+          {{ sessionDurationLabel(record) }}
+        </p>
+      </div>
+      }
+
+      @if (isIncomplete(record)) {
+      <p class="history-incomplete-note">
+        This evaluation was not finalized before the session closed.
+        No finalized scores are shown for this entry.
+      </p>
+      }
       <div class="sample-grid">
         @for ( sample of record.samples || []; track sample.id ) {
 
