@@ -6,10 +6,10 @@ import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { authGuard } from './guards/auth.guard';
 import { Guide } from './pages/guide/guide';
+import { FirstUserGuide } from './pages/first-user-guide/first-user-guide';
 import { IndividualSession } from './pages/individual-session/individual-session';
-import { JoinSession} from './pages/join-session/join-session';
+import { JoinSession } from './pages/join-session/join-session';
 import { Inventory } from './pages/inventory/inventory';
-
 
 export const routes: Routes = [
   {
@@ -47,7 +47,7 @@ export const routes: Routes = [
   },
   {
     path: 'guide',
-    component: Guide,
+    component: FirstUserGuide,
     canActivate: [authGuard]
   },
   {

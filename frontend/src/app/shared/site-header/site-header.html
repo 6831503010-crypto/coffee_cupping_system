@@ -12,6 +12,7 @@
     @if (showFullNavigation()) {
     <nav class="site-nav" id="sharedSiteNav" aria-label="Primary navigation" [class.open]="menuOpen()">
       <a routerLink="/" (click)="closeMenu()">HOME</a>
+      <a routerLink="/guide" (click)="closeMenu()">GUIDE</a>
       <a routerLink="/about" (click)="closeMenu()">ABOUT</a>
       <a routerLink="/history" (click)="closeMenu()">HISTORY</a>
       <a routerLink="/inventory" (click)="closeMenu()">INVENTORY</a>
