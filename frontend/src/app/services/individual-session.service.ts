@@ -53,6 +53,7 @@ export interface SessionView {
 
 export interface CreateIndividualSessionRequest {
   sessionName: string;
+  description: string | null;
   evaluatorLimit: number;
   creatorParticipates: boolean;
   samples: SampleChoice[];
@@ -147,6 +148,13 @@ export class IndividualSessionService {
   get(id: number) {
     return this.http.get<SessionView>(
       `${this.baseUrl}/individual-sessions/${id}`,
+      { withCredentials: true }
+    );
+  }
+
+  getSessionDescription(sessionId: number) {
+    return this.http.get<{ description: string | null }>(
+      `${this.baseUrl}/sessions/${sessionId}`,
       { withCredentials: true }
     );
   }

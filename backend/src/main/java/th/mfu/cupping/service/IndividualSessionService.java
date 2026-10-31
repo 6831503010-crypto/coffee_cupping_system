@@ -34,7 +34,7 @@ public class IndividualSessionService {
     insertSession = new SimpleJdbcInsert(jdbc)
         .withTableName("cupping_sessions")
         .usingColumns(
-            "created_by", "session_name",
+            "created_by", "session_name", "description",
             "mode", "evaluator_capacity",
             "creator_participates")
         .usingGeneratedKeyColumns("session_id");
@@ -151,6 +151,11 @@ public class IndividualSessionService {
     Map<String, Object> sessionValues = new HashMap<>();
     sessionValues.put("created_by", creatorId);
     sessionValues.put("session_name", name);
+    // Persist the optional description in the original transaction.
+    // Null and blank descriptions are treated the same.
+    String description = request.description();
+    sessionValues.put("description",
+        description == null || description.isBlank() ? null : description.trim());
     sessionValues.put("mode", "INDIVIDUAL");
 
     sessionValues.put(

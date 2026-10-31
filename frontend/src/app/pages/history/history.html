@@ -138,11 +138,6 @@
             </div>
 
           <div class="sample-results-section">
-            <div class="section-heading">
-              <h3>Coffee Sample Results</h3>
-              <span class="sample-count">{{ record.samples?.length || 0 }} {{ (record.samples?.length || 0) === 1 ? 'sample' : 'samples' }}</span>
-            </div>
-
             @if (isIncomplete(record)) {
               <div class="history-incomplete-note">This session closed before your evaluation was finalized. No finalized scores are available for this entry.</div>
             } @else if (activeSample(); as sample) {
@@ -150,11 +145,10 @@
                 <div class="sample-result-head">
                   <div>
                     <h4>Sample {{ sample.id }}</h4>
-                    <span>Coffee sample results</span>
                   </div>
                   <div class="sample-score">
-                    <strong>{{ formatScore(sample.finalScore) }}{{ sample.finalScore != null ? ' / 100' : '' }}</strong>
                     <span>Final score</span>
+                    <strong>{{ formatScore(sample.finalScore) }}{{ sample.finalScore != null ? ' / 100' : '' }}</strong>
                   </div>
                 </div>
 

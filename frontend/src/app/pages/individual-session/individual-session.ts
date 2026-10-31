@@ -63,6 +63,7 @@ export class IndividualSession {
   readonly samplesError = signal('');
   readonly chosen = signal<SampleChoice[]>([]);
   readonly session = signal<SessionView | null>(null);
+  readonly sessionDetailsDescription = signal<string | null>(null);
   readonly saving = signal(false);
   readonly error = signal('');
 
@@ -206,6 +207,7 @@ export class IndividualSession {
     this.route.snapshot.paramMap.get('id');
 
   sessionName = '';
+  sessionDescription = '';
   evaluatorLimit = 1;
   sampleCount: number | null = 1;
 
@@ -258,6 +260,31 @@ export class IndividualSession {
 
   creatorParticipates = false;
 
+  selectedExistingId: number | null = null;
+  existingCode = '';
+  sampleSearch = '';
+
+  get filteredSavedSamples(): LibrarySample[] {
+    const query = this.sampleSearch.trim().toLowerCase();
+    if (!query) return this.savedSamples();
+    return this.savedSamples().filter(sample =>
+      [sample.sampleName, sample.process, sample.growingLocation, sample.ownerProducer,
+        sample.harvestYear?.toString()]
+        .some(value => (value ?? '').toLowerCase().includes(query))
+    );
+  }
+
+  isChosenSample(sampleId: number): boolean {
+    return this.chosen().some(sample => sample.sampleId === sampleId);
+  }
+
+  selectExistingSample(sampleId: number): void {
+    if (!this.canAddSample() || this.isChosenSample(sampleId)) return;
+    this.selectedExistingId = sampleId;
+    this.existingSampleError.set('');
+  }
+
+
   constructor() {
     this.setupEvaluatorSearch();
     if (this.sessionIdParam !== null) {
@@ -271,6 +298,12 @@ export class IndividualSession {
       this.api.get(id).subscribe({
         next: data => {
           this.session.set(data);
+          this.api.getSessionDescription(data.sessionId).pipe(
+            takeUntilDestroyed(this.destroyRef)
+          ).subscribe({
+            next: details => this.sessionDetailsDescription.set(details.description?.trim() || null),
+            error: () => this.sessionDetailsDescription.set(null)
+          });
 
           if (data.isCreator) {
             this.refreshEvaluators();
@@ -378,15 +411,14 @@ export class IndividualSession {
 
     this.api.create({
       sessionName: name,
+      description: this.sessionDescription.trim() || null,
       evaluatorLimit: this.evaluatorLimit,
       creatorParticipates: this.creatorParticipates,
       samples: this.chosen()
     }).subscribe({
       next: result => {
         this.saving.set(false);
-        this.router.navigate([
-          '/individual', result.sessionId
-        ]);
+        this.router.navigate(['/individual', result.sessionId]);
       },
       error: () => {
         this.saving.set(false);

@@ -4,109 +4,229 @@
 
 
   @if (sessionIdParam === null) {
+  <div class="creation-page">
+    <header class="creation-page-heading">
+      <h1>Create Individual Session</h1>
+    </header>
 
-  <header class="create-heading">
-    <h1>Create Individual Session</h1>
-    <p>Configure evaluators and choose coffee samples for your individual cupping session.</p>
-  </header>
-
-  <div class="create-layout">
-    <div class="create-form-column">
-      <section class="setup-card" aria-labelledby="sessionInfoTitle">
-        <div class="card-heading"><span class="card-number">1</span><div><h2 id="sessionInfoTitle">Session Information</h2><p>Set the basic details for your session.</p></div></div>
-        <div class="field-grid">
-          <div class="field field-full">
-            <label for="sessionName">Session Name <span aria-hidden="true">*</span></label>
-            <input id="sessionName" [(ngModel)]="sessionName" maxlength="255" required [disabled]="saving()" placeholder="e.g. Morning Coffee Evaluation" [class.input-error]="!!sessionNameError()" [attr.aria-invalid]="!!sessionNameError()" [attr.aria-describedby]="sessionNameError() ? 'sessionNameError' : null" />
-            @if (sessionNameError()) { <p id="sessionNameError" class="field-error" role="alert">{{ sessionNameError() }}</p> }
-          </div>
-        </div>
-      </section>
-
-      <section class="setup-card" aria-labelledby="settingsTitle">
-        <div class="card-heading"><span class="card-number">2</span><div><h2 id="settingsTitle">Session Settings</h2><p>Set the number of evaluators and coffee samples.</p></div></div>
-        <div class="settings-grid">
-          <div class="field">
-            <label for="evaluatorLimit">Maximum Number of Evaluators <span aria-hidden="true">*</span></label>
-            <div class="number-stepper" [class.input-error]="!isEvaluatorCountValid()">
-              <button type="button" aria-label="Decrease evaluator capacity" [disabled]="saving() || evaluatorLimit <= 1" (click)="adjustEvaluatorCount(-1)">−</button>
-              <input id="evaluatorLimit" type="number" min="1" max="10" step="1" required [(ngModel)]="evaluatorLimit" [disabled]="saving()" [attr.aria-invalid]="!isEvaluatorCountValid()" />
-              <button type="button" aria-label="Increase evaluator capacity" [disabled]="saving() || evaluatorLimit >= 10" (click)="adjustEvaluatorCount(1)">+</button>
+    <div class="creation-grid">
+      <div class="creation-main">
+        <section class="setup-section creation-step-card" aria-labelledby="creationInformationTitle">
+          <div class="creation-step-heading">
+            <span class="creation-step-number" aria-hidden="true">1</span>
+            <div>
+              <h2 id="creationInformationTitle">Session Information</h2>
             </div>
-            <p class="help">Choose 1–10 evaluators.</p>
-            @if (!isEvaluatorCountValid()) { <p id="evaluatorCountError" class="field-error" role="alert">Enter a whole number from 1 to 10.</p> }
           </div>
-          <div class="field">
-            <label for="sampleCount">Number of Coffee Samples <span aria-hidden="true">*</span></label>
-            <div class="number-stepper" [class.input-error]="!isSampleCountValid()">
-              <button type="button" aria-label="Decrease sample count" [disabled]="saving() || (sampleCount ?? 1) <= 1" (click)="adjustSampleCount(-1)">−</button>
-              <input id="sampleCount" type="number" min="1" max="10" step="1" required [(ngModel)]="sampleCount" [disabled]="saving()" [class.input-error]="!isSampleCountValid()" [attr.aria-invalid]="!isSampleCountValid()" />
-              <button type="button" aria-label="Increase sample count" [disabled]="saving() || (sampleCount ?? 0) >= 10" (click)="adjustSampleCount(1)">+</button>
-            </div>
-            <p class="help">Choose 1–10 coffee samples.</p>
-            @if (!isSampleCountValid()) { <p id="sampleCountError" class="field-error" role="alert">Enter a whole number from 1 to 10.</p> }
-          </div>
-        </div>
-        <label class="checkbox-label"><input type="checkbox" [(ngModel)]="creatorParticipates" [disabled]="saving()" /> I want to participate as an evaluator</label>
-        <p class="help">@if (creatorParticipates) { You will occupy 1 of the {{ evaluatorLimit }} evaluator slots. } @else { You will manage the session without occupying an evaluator slot. }</p>
-      </section>
 
-      <section id="sampleSelection" class="setup-card sample-selection-card" aria-labelledby="sampleSelectionTitle" [class.selection-error]="!!selectedSamplesError()">
-        <div class="sample-card-heading">
-          <div class="card-heading"><span class="card-number">3</span><div><h2 id="sampleSelectionTitle">Select Coffee Samples</h2><p>Choose from existing samples or create a new sample.</p></div></div>
-          <button type="button" class="create-sample-trigger" [disabled]="!canAddSample()" (click)="openNewSampleModal()" aria-haspopup="dialog">+ Create New Sample</button>
-        </div>
-        <p class="selection-progress" aria-live="polite">{{ chosen().length }} of {{ isSampleCountValid() ? sampleCount : '—' }} samples selected</p>
-        @if (selectedSamplesError()) { <p id="selectedSamplesError" class="field-error" role="alert">{{ selectedSamplesError() }}</p> }
-        <label class="search-box" for="sampleSearch"><span aria-hidden="true">⌕</span><input id="sampleSearch" type="search" [ngModel]="sampleSearch()" (ngModelChange)="setSampleSearch($event)" placeholder="Search samples by name, location, or process" /></label>
-        @if (samplesLoading()) {
-          <p class="table-status" role="status">Loading saved coffee samples…</p>
-        } @else if (samplesError()) {
-          <p class="table-status table-error" role="alert">{{ samplesError() }} <button type="button" class="text-button" (click)="retryLibrary()">Retry</button></p>
-        } @else {
-          @if (selectedLibrarySamples().length) { <p class="sample-group-label">Selected samples</p> }
-          <div class="sample-table-wrap">
-            <table class="sample-table">
-              <caption class="sr-only">Available coffee samples</caption>
-              <thead><tr><th scope="col">Select</th><th scope="col">Coffee</th><th scope="col">Growing location</th><th scope="col">Process</th></tr></thead>
+          <div class="creation-field">
+            <label for="sessionName">Session Name <span class="required-mark">*</span></label>
+            <input id="sessionName" [(ngModel)]="sessionName" maxlength="255" required [disabled]="saving()"
+              placeholder="e.g. Morning Coffee Evaluation" [class.input-error]="!!sessionNameError()"
+              [attr.aria-invalid]="!!sessionNameError()"
+              [attr.aria-describedby]="sessionNameError() ? 'sessionNameError' : null" />
+            @if (sessionNameError()) {
+              <p id="sessionNameError" class="field-error" role="alert">{{ sessionNameError() }}</p>
+            }
+          </div>
+
+          <div class="creation-field">
+            <label for="sessionDescription">Session Description</label>
+            <textarea id="sessionDescription" [(ngModel)]="sessionDescription" maxlength="500" rows="3"
+              [disabled]="saving()" placeholder="Add a description (optional)"></textarea>
+          </div>
+        </section>
+
+        <section class="setup-section creation-step-card" aria-labelledby="creationSettingsTitle">
+          <div class="creation-step-heading">
+            <span class="creation-step-number" aria-hidden="true">2</span>
+            <div>
+              <h2 id="creationSettingsTitle">Session Settings</h2>
+              <p class="creation-section-note">Set the number of evaluators and coffee samples.</p>
+            </div>
+          </div>
+
+          <div class="creation-settings-grid">
+            <div class="creation-field">
+              <label for="evaluatorLimit">Number of Evaluators <span class="required-mark">*</span></label>
+              <div class="number-stepper" [class.input-error]="!isEvaluatorCountValid()">
+                <button type="button" aria-label="Decrease evaluator capacity"
+                  [disabled]="saving() || evaluatorLimit <= 1" (click)="adjustEvaluatorCount(-1)">−</button>
+                <input id="evaluatorLimit" type="number" min="1" max="10" step="1" required
+                  [(ngModel)]="evaluatorLimit" [disabled]="saving()"
+                  [attr.aria-invalid]="!isEvaluatorCountValid()"
+                  [attr.aria-describedby]="!isEvaluatorCountValid() ? 'evaluatorCountError' : null"
+                  [class.input-error]="!isEvaluatorCountValid()" />
+                <button type="button" aria-label="Increase evaluator capacity"
+                  [disabled]="saving() || evaluatorLimit >= 10" (click)="adjustEvaluatorCount(1)">+</button>
+              </div>
+              @if (!isEvaluatorCountValid()) {
+                <p id="evaluatorCountError" class="field-error" role="alert">Enter a whole number from 1 to 10.</p>
+              }
+            </div>
+
+            <div class="creation-field">
+              <label for="sampleCount">Number of Coffee Samples <span class="required-mark">*</span></label>
+              <div class="number-stepper" [class.input-error]="!isSampleCountValid()">
+                <button type="button" aria-label="Decrease sample count"
+                  [disabled]="saving() || (sampleCount ?? 1) <= 1" (click)="adjustSampleCount(-1)">−</button>
+                <input id="sampleCount" type="number" min="1" max="10" step="1" required
+                  [(ngModel)]="sampleCount" [disabled]="saving()"
+                  [class.input-error]="!isSampleCountValid()"
+                  [attr.aria-invalid]="!isSampleCountValid()"
+                  [attr.aria-describedby]="!isSampleCountValid() ? 'sampleCountError' : null" />
+                <button type="button" aria-label="Increase sample count"
+                  [disabled]="saving() || (sampleCount ?? 0) >= 10" (click)="adjustSampleCount(1)">+</button>
+              </div>
+              @if (!isSampleCountValid()) {
+                <p id="sampleCountError" class="field-error" role="alert">Enter a whole number from 1 to 10.</p>
+              }
+            </div>
+          </div>
+
+          <label class="checkbox-label creation-participation">
+            <input type="checkbox" [(ngModel)]="creatorParticipates" [disabled]="saving()" />
+            <span>I want to participate as an evaluator</span>
+          </label>
+          <p class="creation-helper creation-participation-note">
+            @if (creatorParticipates) {
+              You will occupy 1 of the {{ evaluatorLimit }} evaluator slots.
+            } @else {
+              You will manage the session without occupying an evaluator slot.
+            }
+          </p>
+        </section>
+
+        <section class="setup-section creation-step-card" aria-labelledby="creationSamplesTitle">
+          <div class="creation-step-heading creation-samples-heading">
+            <span class="creation-step-number" aria-hidden="true">3</span>
+            <div class="creation-heading-grow">
+              <h2 id="creationSamplesTitle">Select Coffee Samples</h2>
+              <p class="creation-section-note">Choose from inventory or create a new sample.</p>
+            </div>
+            <button type="button" class="create-sample-trigger creation-secondary-action"
+              [disabled]="!canAddSample()" (click)="openNewSampleModal()" aria-haspopup="dialog">
+              + Create New Sample
+            </button>
+          </div>
+
+          <div class="creation-sample-search">
+            <label for="existingSampleSearch">Search Saved Samples</label>
+            <div class="creation-search-input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input id="existingSampleSearch" [(ngModel)]="sampleSearch" type="search"
+                placeholder="Search name, process, or origin..." autocomplete="off" />
+            </div>
+          </div>
+
+          <div id="existingSample" class="creation-sample-table-wrap"
+            tabindex="-1" [class.input-error]="!!existingSampleError()"
+            role="group" aria-label="Choose a saved coffee sample"
+            [attr.aria-describedby]="existingSampleError() ? 'existingSampleError' : null">
+            <table class="creation-sample-table">
+              <thead><tr><th scope="col">Select</th><th scope="col">Coffee Sample</th>
+                <th scope="col">Origin</th><th scope="col">Process</th><th scope="col">Harvest</th></tr></thead>
               <tbody>
-                @for (sample of selectedLibrarySamples(); track sample.sampleId) {
-                  <tr class="selected-sample-row">
-                    <td><input type="checkbox" [id]="'sample-' + sample.sampleId" checked [disabled]="saving()" (change)="toggleLibrarySample(sample)" [attr.aria-label]="'Remove ' + sample.sampleName + ' from session'" /></td>
-                    <td><label [for]="'sample-' + sample.sampleId">{{ sample.sampleName }}</label><div class="code-field"><label [for]="'code-' + sample.sampleId">Session Sample Code <span aria-hidden="true">*</span></label><input [id]="'code-' + sample.sampleId" type="text" maxlength="100" [value]="sampleCode(sample.sampleId)" (input)="onSampleCodeInput(sample.sampleId, $event)" [class.input-error]="!!sampleCodeError(sample.sampleId)" [attr.aria-invalid]="!!sampleCodeError(sample.sampleId)" [attr.aria-describedby]="sampleCodeError(sample.sampleId) ? 'code-error-' + sample.sampleId : null" placeholder="Enter a unique code" />@if (sampleCodeError(sample.sampleId)) { <p [id]="'code-error-' + sample.sampleId" class="field-error" role="alert">{{ sampleCodeError(sample.sampleId) }}</p> }</div></td>
-                    <td>{{ sample.growingLocation || '—' }}</td><td>{{ sample.process || '—' }}</td>
+                @for (sample of filteredSavedSamples; track sample.sampleId) {
+                  <tr [class.creation-sample-selected]="selectedExistingId === sample.sampleId"
+                    [class.creation-sample-added]="isChosenSample(sample.sampleId)">
+                    <td>
+                      <input type="radio" name="existingSavedSample" [value]="sample.sampleId"
+                        [checked]="selectedExistingId === sample.sampleId"
+                        [disabled]="saving() || isChosenSample(sample.sampleId) || !canAddSample()"
+                        (change)="selectExistingSample(sample.sampleId)"
+                        [attr.aria-label]="'Select ' + sample.sampleName" />
+                    </td>
+                    <td><span class="creation-sample-name">{{ sample.sampleName }}</span>
+                      @if (isChosenSample(sample.sampleId)) { <span class="creation-added-label">Added</span> }
+                    </td>
+                    <td>{{ sample.growingLocation || '—' }}</td>
+                    <td>{{ sample.process || '—' }}</td>
+                    <td>{{ sample.harvestYear ?? '—' }}</td>
                   </tr>
-                }
-                @for (sample of visibleUnselectedSamples(); track sample.sampleId) {
-                  <tr>
-                    <td><input type="checkbox" [id]="'sample-' + sample.sampleId" [checked]="isSelected(sample.sampleId)" [disabled]="saving() || !canAddSample()" (change)="toggleLibrarySample(sample)" [attr.aria-label]="'Select ' + sample.sampleName" /></td>
-                    <td><label [for]="'sample-' + sample.sampleId">{{ sample.sampleName }}</label></td><td>{{ sample.growingLocation || '—' }}</td><td>{{ sample.process || '—' }}</td>
-                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="creation-no-samples">
+                    {{ savedSamples().length ? 'No samples match your search.' : 'No saved samples yet. Create a new sample to get started.' }}
+                  </td></tr>
                 }
               </tbody>
             </table>
-            @if (!selectedLibrarySamples().length && !visibleUnselectedSamples().length) { <p class="table-status">No matching coffee samples found.</p> }
           </div>
-        }
-        <p class="help">Selected coffees remain selected while you search. Each session sample needs a unique code.</p>
-      </section>
-    </div>
+          @if (existingSampleError()) {
+            <p id="existingSampleError" class="field-error" role="alert">{{ existingSampleError() }}</p>
+          }
 
-    <aside class="create-sidebar" aria-label="Session summary and actions">
-      <section class="summary-card">
-        <div class="sidebar-heading"><span class="sidebar-icon" aria-hidden="true">☕</span><div><h2>Session Summary</h2><p>Review your session settings.</p></div></div>
-        <dl class="summary-list">
-          <div><dt>Session Name</dt><dd>{{ sessionName.trim() || '—' }}</dd></div>
-          <div><dt>Evaluators</dt><dd>{{ evaluatorLimit }}</dd></div>
-          <div><dt>Coffee Samples</dt><dd>{{ chosen().length }} / {{ isSampleCountValid() ? sampleCount : '—' }} selected</dd></div>
-          <div><dt>You as Evaluator</dt><dd>{{ creatorParticipates ? 'Yes' : 'No' }}</dd></div>
-        </dl>
-      </section>
-      <section class="next-steps-card"><h2>Next Steps</h2><p>After creating the session, you can:</p><ol><li>Invite or assign evaluators.</li><li>Manage evaluators and monitor their progress.</li><li>Evaluators use <strong>Begin Evaluation</strong> to start.</li></ol></section>
-      @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-      <button type="button" class="primary-action create-action" [disabled]="saving()" (click)="createSession()">{{ saving() ? 'Creating…' : 'Create Session' }}</button>
-      <a routerLink="/" class="cancel-action">Cancel</a>
-    </aside>
+          <div class="creation-add-sample-row">
+            <div class="creation-field">
+              <label for="existingCode">Session Sample Code <span class="required-mark">*</span></label>
+              <input id="existingCode" [(ngModel)]="existingCode" (ngModelChange)="existingCodeError.set('')"
+                maxlength="100" placeholder="e.g. 101" [disabled]="!canAddSample()"
+                [class.input-error]="!!existingCodeError()" [attr.aria-invalid]="!!existingCodeError()"
+                [attr.aria-describedby]="existingCodeError() ? 'existingCodeError' : null" />
+              @if (existingCodeError()) {
+                <p id="existingCodeError" class="field-error" role="alert">{{ existingCodeError() }}</p>
+              }
+            </div>
+            <button type="button" class="creation-add-action"
+              [disabled]="!canAddSample()" (click)="addExisting()">Add Selected Sample</button>
+          </div>
+
+          <div id="selectedSamplesReview" class="creation-selected-section" tabindex="-1"
+            aria-labelledby="selectedSamplesTitle" [class.selection-error]="!!selectedSamplesError()"
+            [attr.aria-describedby]="selectedSamplesError() ? 'selectedSamplesError' : null">
+            <div class="creation-selected-header">
+              <h3 id="selectedSamplesTitle">Selected Samples</h3>
+              <span class="creation-count-label">{{ chosen().length }} / {{ isSampleCountValid() ? sampleCount : '—' }}</span>
+            </div>
+            @if (selectedSamplesError()) {
+              <p id="selectedSamplesError" class="field-error" role="alert">{{ selectedSamplesError() }}</p>
+            }
+            @for (sample of chosen(); track $index; let i = $index) {
+              <div class="sample-row creation-chosen-row" [id]="'selected-sample-' + i"
+                tabindex="-1" [class.newly-added]="highlightedSampleIndex() === i">
+                <span class="creation-chosen-index">{{ i + 1 }}</span>
+                <span class="creation-chosen-name">{{ displayName(sample) }}
+                  <small>Code: {{ sample.sampleCode }}</small>
+                </span>
+                <button type="button" class="creation-remove-action" [disabled]="saving()"
+                  (click)="removeSample(i)">Remove</button>
+              </div>
+            } @empty {
+              <p class="creation-empty-selected">No samples selected yet.</p>
+            }
+            <p class="creation-helper" aria-live="polite">{{ sampleCountMessage() }}</p>
+          </div>
+        </section>
+        @if (error()) {
+          <p class="error creation-form-error" role="alert">{{ error() }}</p>
+        }
+      </div>
+
+      <aside class="creation-aside" aria-label="Session summary and creation actions">
+        <section class="creation-summary-card">
+          <div class="creation-summary-heading">
+            <span class="creation-summary-icon" aria-hidden="true">☕</span>
+            <div><h2>Session Summary</h2><p>Review your current settings.</p></div>
+          </div>
+          <dl class="creation-summary-list">
+            <div><dt>Session Name</dt><dd>{{ sessionName.trim() || '—' }}</dd></div>
+            @if (sessionDescription.trim()) {
+              <div><dt>Description</dt><dd>{{ sessionDescription.trim() }}</dd></div>
+            }
+            <div><dt>Maximum Evaluators</dt><dd>{{ isEvaluatorCountValid() ? evaluatorLimit : '—' }}</dd></div>
+            <div><dt>Coffee Samples</dt><dd>{{ chosen().length }} / {{ isSampleCountValid() ? sampleCount : '—' }}</dd></div>
+            <div><dt>Your Participation</dt><dd>{{ creatorParticipates ? 'Evaluator & creator' : 'Creator only' }}</dd></div>
+          </dl>
+          <div class="creation-summary-actions">
+            <button type="button" class="creation-submit" [disabled]="saving()" (click)="createSession()">
+              {{ saving() ? 'Creating...' : 'Create Session' }}
+            </button>
+            <a routerLink="/" class="creation-cancel">Cancel</a>
+          </div>
+        </section>
+      </aside>
+    </div>
   </div>
 
   } @else {
@@ -117,35 +237,34 @@
 
   @if (session(); as info) {
 
-  <section class="session-dashboard-header" aria-label="Session information">
-    <div class="session-header-details">
-      <div class="session-heading">
-        <h1>{{ info.sessionName }}</h1>
-        <span class="session-mode">Individual Session</span>
-        <span class="session-status" [class.session-status-closed]="info.closed"
-          [class.session-status-finalized]="info.finalized">
-          {{ info.finalized ? 'Finalized' : info.closed ? 'Closed' : 'Active' }}
-        </span>
-      </div>
-
-      <div class="session-header-meta">
-        <p>Evaluators: <strong>{{ info.joinedEvaluators }} / {{ info.evaluatorLimit }}</strong></p>
-        <p>
-          Your role:
-          <strong>{{ info.isCreator
+  <div class="session-details-view">
+    <section class="session-dashboard-header" aria-label="Session information">
+      <div class="session-header-details">
+        <div class="session-heading">
+          <h1>{{ info.sessionName }}</h1>
+          <span class="session-mode">Individual Session</span>
+          <span class="session-status" [class.session-status-closed]="info.closed"
+            [class.session-status-finalized]="info.finalized">
+            {{ info.finalized ? 'Finalized' : info.closed ? 'Closed' : 'Active' }}
+          </span>
+        </div>
+        @if (sessionDetailsDescription(); as description) {
+          <p class="session-description">{{ description }}</p>
+        }
+        <div class="session-header-meta">
+          <p><span>Evaluators</span><strong>{{ info.joinedEvaluators }} / {{ info.evaluatorLimit }}</strong></p>
+          <p><span>Your role</span><strong>{{ info.isCreator
             ? (info.sessionEvaluatorId !== null ? 'Creator and evaluator' : 'Creator only')
-            : 'Evaluator' }}</strong>
-        </p>
+            : 'Evaluator' }}</strong></p>
+        </div>
+        @if (!info.closed && info.canEvaluate) {
+          <div class="session-evaluation-action">
+            <a class="action-link" routerLink="/cupping" [queryParams]="{ sessionId: info.sessionId }">
+              Open Evaluation →
+            </a>
+          </div>
+        }
       </div>
-      @if (!info.closed && info.canEvaluate) {
-      <div class="session-evaluation-action">
-        <a class="action-link" routerLink="/cupping" [queryParams]="{ sessionId: info.sessionId }">
-          Open Evaluation →
-        </a>
-      </div>
-      }
-    </div>
-
     @if (info.isCreator) {
     <div class="session-timing" aria-live="polite">
       <span class="session-timing-label">
@@ -167,281 +286,213 @@
       }
     </div>
     }
-  </section>
+    </section>
 
-  <div class="session-dashboard-grid" [class.creator-dashboard]="info.isCreator">
-    @if (info.isCreator) {
-    <div class="dashboard-primary">
-    <section class="setup-section evaluator-management-card">
-    <h2>Manage Evaluators</h2>
-
-    <p>
-      Evaluators: {{ info.joinedEvaluators }} / {{ info.evaluatorLimit }}
-    </p>
-
-    <form (ngSubmit)="assignEvaluator()">
-      <label for="evaluatorSearch">Search by name or email</label>
-
-      <div class="evaluator-autocomplete">
-        <input id="evaluatorSearch" name="evaluatorSearch" type="text" autocomplete="off" spellcheck="false" role="combobox"
-          aria-autocomplete="list" aria-haspopup="listbox" [ngModel]="evaluatorSearchText"
-          (ngModelChange)="onEvaluatorSearchChange($event)" (focus)="onEvaluatorSearchFocus()"
-          (blur)="closeEvaluatorDropdown()" (keydown)="onEvaluatorSearchKeydown($event)" [disabled]="!canSearchEvaluators()"
-          [class.input-error]="!!evaluatorEmailError() || !!evaluatorSearchError()" [attr.aria-invalid]="
-            evaluatorEmailError() || evaluatorSearchError() ? 'true' : null
-          " [attr.aria-expanded]="evaluatorDropdownOpen()" [attr.aria-controls]="
-            evaluatorDropdownOpen() ? 'evaluatorSuggestions' : null
-          " [attr.aria-activedescendant]="
-            evaluatorDropdownOpen() && activeCandidateIndex() >= 0
-              ? 'evaluator-option-' + activeCandidateIndex()
-              : null
-          " [attr.aria-describedby]="
-            evaluatorEmailError() || evaluatorSearchError()
-              ? 'assignmentHelp evaluatorSearchError'
-              : 'assignmentHelp'
-          " placeholder="Type at least 2 characters" />
-
-        @if (evaluatorDropdownOpen()) {
-        <div class="evaluator-dropdown">
-          <ul id="evaluatorSuggestions" class="evaluator-suggestions" role="listbox" aria-label="Matching accounts"
-            [attr.aria-busy]="searchingEvaluators()">
-            @for (
-            candidate of evaluatorCandidates();
-            track candidate.userId;
-            let i = $index
-            ) {
-            <li [id]="'evaluator-option-' + i" class="evaluator-option" role="option"
-              [attr.aria-selected]="activeCandidateIndex() === i" [class.active]="activeCandidateIndex() === i"
-              (mouseenter)="activeCandidateIndex.set(i)" (mousedown)="$event.preventDefault()"
-              (click)="selectEvaluator(candidate)">
-              <strong>{{ candidate.name }}</strong>
-              <span>{{ candidate.email }}</span>
-            </li>
+    <div class="session-dashboard-grid" [class.creator-dashboard]="info.isCreator">
+      @if (info.isCreator) {
+        <section class="setup-section evaluator-management-card">
+          <div class="session-invite-section">
+            <h2>Invite Evaluators</h2>
+            @if (info.closed) {
+              <p class="details-muted">This session is closed to new participants.</p>
+            } @else {
+              @if (generatingLink()) {
+                <p class="details-muted" role="status">Loading invitation link…</p>
+              } @else if (participationLink()) {
+                <div class="participation-link-group">
+                  <input #linkInput id="participationLink" type="text" readonly
+                    aria-label="Session invitation link" [value]="participationLink()"
+                    (focus)="linkInput.select()" />
+                  <button type="button" class="participation-copy-button"
+                    [disabled]="copyingLink()" (click)="copyParticipationLink()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="8" y="8" width="12" height="12" rx="2" />
+                      <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+                    </svg>
+                    {{ copyingLink() ? 'Copying…' : 'Copy' }}
+                  </button>
+                </div>
+              }
+              @if (linkMessage() && linkMessage() !== 'Your participation link is ready to copy.') { <p role="status" class="link-feedback">{{ linkMessage() }}</p> }
+              @if (linkError()) { <p class="field-error" role="alert">{{ linkError() }}</p> }
+              @if (!participationLink() && !generatingLink()) {
+                <button type="button" class="link-retry" (click)="generateParticipationLink()">Retry</button>
+              }
+              @if (info.joinedEvaluators >= info.evaluatorLimit) {
+                <p class="evaluator-capacity-note">All evaluator places are filled. New evaluators cannot join.</p>
+              }
             }
-          </ul>
+          </div>
 
-          @if (searchingEvaluators()) {
-          <p class="evaluator-search-status" role="status">
-            Searching accounts…
-          </p>
-          } @else if (
-          evaluatorSearchCompleted() &&
-          !evaluatorSearchError() &&
-          evaluatorCandidates().length === 0
-          ) {
-          <p class="evaluator-search-status" role="status">
-            No matching accounts found.
-          </p>
+          <div class="details-card-heading">
+            <div>
+              <h2>Current Evaluators</h2>
+              <p class="details-muted">{{ info.joinedEvaluators }} / {{ info.evaluatorLimit }} places filled</p>
+            </div>
+            <button type="button" class="refresh-evaluators-action"
+              [disabled]="loadingEvaluators() || assigningEvaluator() || removingEvaluatorId() !== null"
+              (click)="refreshEvaluators()">
+              {{ loadingEvaluators() ? 'Refreshing...' : 'Refresh' }}
+            </button>
+          </div>
+
+          @if (evaluatorListError()) {
+            <p class="field-error" role="alert">{{ evaluatorListError() }}</p>
+          }
+          @if (evaluatorRemovalError()) {
+            <p class="field-error" role="alert">{{ evaluatorRemovalError() }}</p>
+          }
+
+          <div class="current-evaluators-list">
+            @for (evaluator of evaluators(); track evaluator.sessionEvaluatorId) {
+              <article class="sample-row evaluator-card">
+                <span class="evaluator-avatar" aria-hidden="true">{{ evaluator.name.slice(0, 1).toUpperCase() }}</span>
+                <div class="evaluator-card-details">
+                  <div class="evaluator-name-line">
+                    <strong>{{ evaluator.name }}</strong>
+                    @if (evaluator.creator) { <span class="evaluator-creator-badge">Creator</span> }
+                  </div>
+                  <p><a [href]="'mailto:' + evaluator.email">{{ evaluator.email }}</a></p>
+                  @if (evaluatorTimingDisplays()[evaluator.sessionEvaluatorId]; as progress) {
+                    <div class="evaluator-timing">
+                      <span class="evaluator-status" [class.evaluator-status-finalized]="progress.status === 'Finalized'"
+                        [class.evaluator-status-evaluating]="progress.status === 'Evaluating'"
+                        [class.evaluator-status-incomplete]="progress.status === 'Incomplete — Session Closed'">
+                        {{ progress.status }}
+                      </span>
+                      <span class="evaluator-duration">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="12" cy="12" r="9"></circle>
+                          <path d="M12 7v5l3 2"></path>
+                        </svg>
+                        @if (progress.status === 'Not started') {
+                          Not started
+                        } @else {
+                          Evaluation: {{ progress.duration }}
+                        }
+                      </span>
+                    </div>
+                  } @else {
+                    <p class="help">Timing not available yet.</p>
+                  }
+                </div>
+                <button type="button" class="remove-evaluator-button" [disabled]="
+                    info.closed || loadingEvaluators() || assigningEvaluator() || removingEvaluatorId() !== null
+                  " [attr.aria-label]="'Remove ' + evaluator.name + ' as an evaluator'"
+                  [title]="info.closed ? 'Evaluators cannot be removed from a closed session' : 'Remove evaluator'"
+                  (click)="removeEvaluator(evaluator)">
+                  {{ removingEvaluatorId() === evaluator.sessionEvaluatorId ? '…' : '×' }}
+                </button>
+              </article>
+            } @empty {
+              @if (!loadingEvaluators() && !evaluatorListError()) {
+                <p class="details-muted empty-evaluators">No evaluators have joined yet.</p>
+              }
+            }
+          </div>
+
+          @if (!info.closed && info.joinedEvaluators < info.evaluatorLimit) {
+            <div class="add-evaluator-section">
+              <h3>Add Evaluator</h3>
+              <form (ngSubmit)="assignEvaluator()">
+                <label for="evaluatorSearch">Search by name or email</label>
+                <div class="evaluator-add-row">
+                  <div class="evaluator-autocomplete">
+                    <input id="evaluatorSearch" name="evaluatorSearch" type="text" autocomplete="off"
+                      spellcheck="false" role="combobox" aria-autocomplete="list" aria-haspopup="listbox"
+                      [ngModel]="evaluatorSearchText" (ngModelChange)="onEvaluatorSearchChange($event)"
+                      (focus)="onEvaluatorSearchFocus()" (blur)="closeEvaluatorDropdown()"
+                      (keydown)="onEvaluatorSearchKeydown($event)" [disabled]="!canSearchEvaluators()"
+                      [class.input-error]="!!evaluatorEmailError() || !!evaluatorSearchError()"
+                      [attr.aria-invalid]="evaluatorEmailError() || evaluatorSearchError() ? 'true' : null"
+                      [attr.aria-expanded]="evaluatorDropdownOpen()"
+                      [attr.aria-controls]="evaluatorDropdownOpen() ? 'evaluatorSuggestions' : null"
+                      [attr.aria-activedescendant]="evaluatorDropdownOpen() && activeCandidateIndex() >= 0
+                        ? 'evaluator-option-' + activeCandidateIndex() : null"
+                      [attr.aria-describedby]="evaluatorEmailError() || evaluatorSearchError()
+                        ? 'assignmentHelp evaluatorSearchError' : 'assignmentHelp'"
+                      placeholder="Type at least 2 characters" />
+                    @if (evaluatorDropdownOpen()) {
+                      <div class="evaluator-dropdown">
+                        <ul id="evaluatorSuggestions" class="evaluator-suggestions" role="listbox"
+                          aria-label="Matching accounts" [attr.aria-busy]="searchingEvaluators()">
+                          @for (candidate of evaluatorCandidates(); track candidate.userId; let i = $index) {
+                            <li [id]="'evaluator-option-' + i" class="evaluator-option" role="option"
+                              [attr.aria-selected]="activeCandidateIndex() === i"
+                              [class.active]="activeCandidateIndex() === i"
+                              (mouseenter)="activeCandidateIndex.set(i)"
+                              (mousedown)="$event.preventDefault()" (click)="selectEvaluator(candidate)">
+                              <strong>{{ candidate.name }}</strong><span>{{ candidate.email }}</span>
+                            </li>
+                          }
+                        </ul>
+                        @if (searchingEvaluators()) {
+                          <p class="evaluator-search-status" role="status">Searching accounts…</p>
+                        } @else if (evaluatorSearchCompleted() && !evaluatorSearchError() && evaluatorCandidates().length === 0) {
+                          <p class="evaluator-search-status" role="status">No matching accounts found.</p>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <button type="submit" class="add-evaluator-submit"
+                    [disabled]="!canSearchEvaluators() || !selectedEvaluator()">
+                    {{ assigningEvaluator() ? 'Adding...' : '+ Add' }}
+                  </button>
+                </div>
+                <p id="assignmentHelp" class="help">Select an account from the suggestions to add them.</p>
+                @if (evaluatorEmailError() || evaluatorSearchError()) {
+                  <p id="evaluatorSearchError" class="field-error" role="alert">
+                    {{ evaluatorEmailError() || evaluatorSearchError() }}
+                  </p>
+                }
+                @if (selectedEvaluator(); as selected) {
+                  <p class="help" role="status">Selected: <strong>{{ selected.name }}</strong> — {{ selected.email }}</p>
+                }
+              </form>
+            </div>
+          }
+          @if (participationSuccess()) {
+            <p role="status" class="evaluator-success">{{ participationSuccess() }}</p>
+          }
+        </section>
+      }
+
+      <section class="setup-section coffee-samples-card">
+        <h2>Session Coffee Samples</h2>
+        <div class="session-samples-list">
+          @for (sample of info.samples; track sample.sessionSampleId) {
+            <article class="session-sample-entry">
+              <span class="session-sample-code">{{ sample.sampleCode }}</span>
+              @if (info.sampleDetailsVisible) {
+                <div class="session-sample-info">
+                  <strong>{{ sample.sampleName }}</strong>
+                  <p>{{ sample.process || '—' }} · {{ sample.harvestYear ?? '—' }}</p>
+                  <p>{{ sample.growingLocation || '—' }} · {{ sample.ownerProducer || '—' }}</p>
+                </div>
+              } @else {
+                <p class="details-muted session-sample-hidden">Sample details will appear when the session is completed.</p>
+              }
+            </article>
+          } @empty {
+            <p class="details-muted session-samples-empty">No samples added.</p>
           }
         </div>
-        }
-      </div>
 
-      <p id="assignmentHelp" class="help">
-        @if (info.closed) {
-        This session is closed. Evaluators cannot be added.
-        } @else if (info.joinedEvaluators >= info.evaluatorLimit) {
-        All evaluator places are filled.
-        } @else {
-        Search for an account, select it, then click Add evaluator.
-        Use ↑ and ↓ to browse suggestions and Enter to select.
-        }
-      </p>
-
-      @if (evaluatorEmailError() || evaluatorSearchError()) {
-      <p id="evaluatorSearchError" class="field-error" role="alert">
-        {{ evaluatorEmailError() || evaluatorSearchError() }}
-      </p>
-      }
-
-      @if (selectedEvaluator(); as selected) {
-      <p class="help" role="status">
-        Selected: <strong>{{ selected.name }}</strong>
-        — {{ selected.email }}
-      </p>
-      }
-
-      <button type="submit" [disabled]="!canSearchEvaluators() || !selectedEvaluator()">
-        {{ assigningEvaluator() ? 'Adding...' : 'Add evaluator' }}
-      </button>
-    </form>
-
-    @if (participationSuccess()) {
-    <p role="status">{{ participationSuccess() }}</p>
-    }
-
-    <div class="sample-section-heading">
-      <h3>Current Evaluators</h3>
-
-      <button type="button" [disabled]="loadingEvaluators() || assigningEvaluator()|| removingEvaluatorId() !== null" (click)="refreshEvaluators()"> {{ loadingEvaluators() ? 'Refreshing...' : 'Refresh list' }}
-      </button>
-    </div>
-
-    @if (evaluatorListError()) {
-    <p class="field-error" role="alert">
-      {{ evaluatorListError() }}
-    </p>
-    }
-
-    @if (evaluatorRemovalError()) {
-    <p class="field-error" role="alert">
-      {{ evaluatorRemovalError() }}
-    </p>
-    }
-
-    @for (evaluator of evaluators(); track evaluator.sessionEvaluatorId) {
-    <article class="sample-row evaluator-card">
-      <div class="evaluator-card-details">
-        <strong>{{ evaluator.name }}</strong>
-
-        @if (evaluator.creator) {
-        <span> · Creator</span>
-        }
-
-        <p><a [href]="'mailto:' + evaluator.email">{{ evaluator.email }}</a></p>
-        @if (evaluatorTimingDisplays()[evaluator.sessionEvaluatorId]; as progress) {
-        <div class="evaluator-timing">
-          <span class="evaluator-status" [class.evaluator-status-finalized]="progress.status === 'Finalized'"
-            [class.evaluator-status-evaluating]="progress.status === 'Evaluating'"
-            [class.evaluator-status-incomplete]="progress.status === 'Incomplete — Session Closed'">
-            {{ progress.status }}
-          </span>
-          <span class="evaluator-duration">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="9"></circle>
-              <path d="M12 7v5l3 2"></path>
-            </svg>
-            @if (progress.status === 'Not started') {
-            Not started
-            } @else {
-            Evaluation: {{ progress.duration }}
-            }
-          </span>
-        </div>
-        } @else {
-        <p class="help">Timing not available yet.</p>
-        }
-      </div>
-
-      <button type="button" class="remove-evaluator-button" [disabled]="
-          info.closed ||
-          loadingEvaluators() ||
-          assigningEvaluator() ||
-          removingEvaluatorId() !== null
-        " [attr.aria-label]="'Remove ' + evaluator.name + ' as an evaluator'" [title]="
-          info.closed
-            ? 'Evaluators cannot be removed from a closed session'
-            : 'Remove evaluator'
-        " (click)="removeEvaluator(evaluator)">
-        {{ removingEvaluatorId() === evaluator.sessionEvaluatorId ? '…' : '×' }}
-      </button>
-    </article>
-    } @empty {
-    @if (!loadingEvaluators() && !evaluatorListError()) {
-    <p class="help">No evaluators have joined yet.</p>
-    }
-    }
-  </section>
-    </div>
-    }
-
-    <div class="dashboard-supporting">
-    @if (info.isCreator) {
-      <section class="setup-section participation-card">
-        <h2>Participation Link</h2>
-
-        @if (info.closed) {
-        <p class="help">
-          This session is closed to new participants.
-        </p>
-        } @else {
-        <p class="help">
-          Share this link with your evaluators. Anyone signed in
-          who has the link can join while places remain.
-        </p>
-
-        @if (generatingLink()) {
-        <p class="help" role="status">
-          Loading participation link…
-        </p>
-        } @else if (participationLink()) {
-        <label for="participationLink">
-          Session participation link
-        </label>
-
-        <input #linkInput id="participationLink" type="text" readonly [value]="participationLink()"
-          (focus)="linkInput.select()" />
-
-        <button type="button" [disabled]="copyingLink()" (click)="copyParticipationLink()">
-          {{ copyingLink() ? 'Copying…' : 'Copy link' }}
-        </button>
-        }
-
-        @if (linkMessage()) {
-        <p role="status">{{ linkMessage() }}</p>
-        }
-
-        @if (linkError()) {
-        <p class="field-error" role="alert">
-          {{ linkError() }}
-        </p>
-
-        @if (!participationLink() && !generatingLink()) {
-        <button type="button" (click)="generateParticipationLink()">
-          Retry
-        </button>
-        }
-        }
+        @if (info.isCreator && !info.closed) {
+          <div class="session-actions-card">
+            <div class="session-actions-copy">
+              <h3>Session Actions</h3>
+              @if (sessionFinalizationSuccess()) {
+                <p role="status">{{ sessionFinalizationSuccess() }}</p>
+              }
+            </div>
+            <button class="finalize-session-button" type="button"
+              [disabled]="finalizingSession() || loadingEvaluators() || assigningEvaluator() || removingEvaluatorId() !== null"
+              (click)="openFinalizeSessionModal()">Finalize Session</button>
+          </div>
         }
       </section>
-    }
-
-  <section class="setup-section coffee-samples-card">
-    <h2>Session Coffee Samples</h2>
-
-    @for (sample of info.samples; track sample.sessionSampleId) {
-    <article class="sample-row">
-      <div>
-        <strong>
-          {{ sample.sampleCode }}
-
-          @if (info.sampleDetailsVisible) {
-          — {{ sample.sampleName }}
-          }
-        </strong>
-
-        @if (info.sampleDetailsVisible) {
-        <p>Process: {{ sample.process || '—' }}</p>
-        <p>Harvest Year: {{ sample.harvestYear ?? '—' }}</p>
-        <p>Location: {{ sample.growingLocation || '—' }}</p>
-        <p>Producer: {{ sample.ownerProducer || '—' }}</p>
-        } @else {
-        <p class="help">
-          Sample details will become visible after the session is completed.
-        </p>
-        }
-      </div>
-    </article>
-    }
-  </section>
-  @if (info.isCreator) {
-  <div class="session-finalization-actions">
-    @if (sessionFinalizationSuccess()) {
-    <p role="status">{{ sessionFinalizationSuccess() }}</p>
-    }
-
-    @if (!info.closed) {
-    <button class="finalize-session-button" type="button" [disabled]="
-              finalizingSession() ||
-              loadingEvaluators() ||
-              assigningEvaluator() ||
-              removingEvaluatorId() !== null
-            " (click)="openFinalizeSessionModal()">
-      Finalize Session
-    </button>
-    }
-  </div>
-  }
     </div>
   </div>
 
