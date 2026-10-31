@@ -482,3 +482,386 @@ button.back-link.session-return-button:focus-visible {
   display: flex;
   justify-content: flex-end;
 }
+
+/* Compact evaluation UI — scoped to this page, leaving timer and scoring logic intact. */
+:host .shell {
+  padding-top: 18px;
+}
+
+:host .hero {
+  padding: 15px 21px;
+  border-radius: 14px;
+  min-height: 0;
+}
+
+:host .hero h1 {
+  font-size: clamp(21px, 2.5vw, 28px);
+  line-height: 1.25;
+}
+
+:host .cupping-progress {
+  margin: 14px 0;
+  padding: 10px 15px;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+:host .cupping-progress .steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+:host .cupping-progress .step {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 7px 5px 12px;
+  text-align: left;
+}
+
+:host .cupping-progress .step:not(:last-child)::after,
+:host .cupping-progress .step:last-child::after {
+  content: '';
+  position: absolute;
+  top: auto;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  border-radius: 3px;
+  background: #e5d8cc;
+}
+
+:host .cupping-progress .step.active::after,
+:host .cupping-progress .step.done::after {
+  background: var(--espresso);
+}
+
+:host .cupping-progress .step-icon {
+  width: 32px;
+  height: 32px;
+}
+
+:host .cupping-progress .step-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+:host .cupping-progress .step-label {
+  gap: 0;
+  font-size: 13px;
+}
+
+:host .cupping-progress .step-caption {
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+
+:host .panel {
+  border-radius: 16px;
+}
+
+:host .panel-head {
+  align-items: center;
+  padding: 16px 20px;
+}
+
+:host .panel-head h2 {
+  font-size: 22px;
+}
+
+:host .tabs {
+  padding: 10px 20px;
+}
+
+:host .tab {
+  padding: 7px 11px;
+  font-size: 13px;
+}
+
+:host .content {
+  padding: 18px 20px;
+}
+
+:host .sample-title {
+  margin-bottom: 12px;
+}
+
+:host .sample-title h3 {
+  font-size: 18px;
+}
+
+:host .grid {
+  gap: 12px;
+}
+
+:host .section {
+  padding: 14px;
+  border-radius: 12px;
+}
+
+:host .section h4 {
+  margin-bottom: 10px;
+}
+
+:host .score-grid {
+  gap: 12px;
+}
+
+:host .field-card {
+  min-width: 0;
+  padding: 13px;
+  border-radius: 10px;
+}
+
+:host .aroma-confirm-hint {
+  font-size: 12px;
+  color: var(--mocha);
+}
+
+@media (max-width: 760px) {
+  :host .cupping-progress .steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  :host .cupping-progress .step {
+    flex-direction: column;
+    text-align: center;
+    gap: 4px;
+  }
+
+  :host .cupping-progress .step-label {
+    font-size: 11px;
+  }
+
+  :host .cupping-progress .step-caption {
+    display: none;
+  }
+
+  :host .panel-head {
+    padding: 14px 16px;
+  }
+
+  :host .content {
+    padding: 15px;
+  }
+
+  :host .tabs {
+    padding: 9px 15px;
+  }
+}
+
+/* Single card, vertically stacked: title/timer row above full-width progress. */
+:host .cupping-session-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+:host .cupping-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+:host .cupping-header-top h1 {
+  flex: 1 1 240px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+:host .cupping-progress-inline {
+  width: 100%;
+  box-sizing: border-box;
+  flex: none;
+}
+
+:host .cupping-header-timer {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  color: inherit;
+  font-size: 13px;
+  text-align: right;
+}
+
+:host .cupping-header-timer strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+:host .cupping-header-timer small {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+
+:host .cupping-status-message {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 10px 0;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--mocha);
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  :host .cupping-header-top {
+    align-items: flex-start;
+  }
+
+  :host .cupping-header-timer {
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
+
+
+/* Cleanup nested borders and merge header/progress into one card */
+:host .cupping-session-header { padding-bottom: 14px; }
+:host .cupping-progress-inline { margin: 8px 0 0; padding: 8px 0 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+:host .cupping-progress-inline .steps { gap: 8px; }
+:host .cupping-progress-inline .step { padding-bottom: 10px; }
+:host .cupping-progress-inline .step:not(:last-child)::after,
+:host .cupping-progress-inline .step:last-child::after { bottom: 0; }
+:host .section { padding: 12px; }
+:host .section > label { margin-bottom: 8px; }
+:host .field-card,
+:host .field-card.field-card-minimal { border: 0; padding: 0; background: transparent; box-shadow: none; }
+:host .field-card.field-card-minimal { margin-top: 2px; }
+:host .tasting-notes-field { margin-top: 10px; padding: 0 !important; border: 0 !important; background: transparent !important; }
+:host .tasting-notes-field textarea { min-height: 88px; }
+
+:host .aroma-quality-children { margin-top: 6px; }
+:host .aroma-quality-option { border-radius: 10px; }
+:host .sample-title { margin-bottom: 8px; }
+@media (max-width: 760px) {
+  :host .cupping-session-header { padding-bottom: 10px; }
+  :host .cupping-progress-inline { margin-top: 10px; }
+}
+
+
+/* Evaluation UI refinements: spacing and concise required field headings. */
+:host .cupping-session-header {
+  margin-bottom: 20px;
+}
+
+:host .grid > .section h4 .required-mark {
+  color: var(--danger, #c0392b);
+  margin-left: 3px;
+}
+
+:host .aroma-quality-score-section .field-card-minimal {
+  margin-top: 0;
+}
+
+
+/* Group descriptor checkboxes into bordered cards in their original row/column order. */
+:host .aroma-quality-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+:host .aroma-quality-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* The group has one outer border; no nested borders around parents or children. */
+:host .aroma-quality-group .aroma-quality-option {
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  padding: 7px 4px;
+  min-height: 30px;
+  line-height: 1.35;
+}
+
+:host .aroma-quality-group .aroma-quality-parent {
+  font-weight: 800;
+}
+
+:host .aroma-quality-group .aroma-quality-children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0 0 0 16px;
+  border: 0;
+}
+
+:host .aroma-quality-group .aroma-quality-option:hover {
+  background: #faf8f5;
+}
+
+:host .aroma-quality-group .aroma-quality-option:has(input:checked) {
+  border: 0;
+  background: #f7f1e7;
+  color: var(--espresso);
+}
+
+:host .aroma-quality-group .aroma-quality-option:focus-within {
+  outline: 2px solid var(--mocha);
+  outline-offset: 1px;
+}
+
+@media (max-width: 900px) {
+  :host .aroma-quality-groups {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  :host .aroma-quality-group { padding: 8px; }
+}
+
+@media (max-width: 680px) {
+  :host .aroma-quality-groups { grid-template-columns: 1fr; }
+}
+
+
+/* Flavor stage: individual bordered score fields and single-row heading/value. */
+:host .score-grid .score-evaluation-card {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+}
+:host .score-grid .score-evaluation-card.validation-error {
+  border-color: var(--danger, #c0392b);
+}
+:host .score-grid .score-evaluation-card app-score-picker {
+  display: block;
+  min-width: 0;
+}
+:host .grid > .section > h4 > .required-mark {
+  margin-left: 3px;
+  color: var(--danger, #c0392b);
+}
+@media (max-width: 760px) {
+  :host .score-grid .score-evaluation-card { padding: 12px; }
+}

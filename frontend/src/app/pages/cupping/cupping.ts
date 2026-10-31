@@ -17,6 +17,7 @@ import {
 } from '@angular/forms';
 
 import { CoffeeSample } from '../../models/coffee-sample';
+import { ScorePicker } from './score-picker';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom,forkJoin } from 'rxjs';
@@ -31,7 +32,8 @@ import {
   selector: 'app-cupping',
   imports: [
     RouterLink,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    ScorePicker
   ],
   templateUrl: './cupping.html',
   styleUrl: './cupping.css'

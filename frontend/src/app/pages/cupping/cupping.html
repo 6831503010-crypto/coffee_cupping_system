@@ -23,19 +23,63 @@
   </div>
   }
 
-  <header class="hero">
-    <div>
-      <div class="eyebrow" style="color: #e9c69a">Coffee Cupping System Prototype</div>
-
-      <h1>From aroma to final cup.</h1>
-
-      <p style="color: var(--crema)">
-        {{ savedSession()?.sessionName || 'Individual Cupping' }}
-        • Evaluate your selected coffee samples
-      </p>
+  <header class="hero cupping-session-header">
+    <div class="cupping-header-top">
+      <h1>{{ savedSession()?.sessionName || 'Coffee Cupping' }}</h1>
+      @if (isSavedSession && savedSession() && !sessionLoadError()) {
+        <div class="cupping-header-timer">
+          <span>Your evaluation time</span>
+          <strong>{{ sessionStarted() && evaluationTiming() ? evaluationTimeDisplay() : '00:00:00' }}</strong>
+          @if (timingSyncError()) {
+            <small role="status">{{ timingSyncError() }}</small>
+          }
+        </div>
+      }
     </div>
+    @if (sessionStarted()) {
+      <div class="progress cupping-progress cupping-progress-inline">
+        <div class="steps">
+          <div class="step" [class.active]="currentStage() === 'aroma'" [class.done]="currentStage() !== 'aroma'">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 17c-4-4 4-5 0-10M12 17c-4-4 4-5 0-10M17 17c-4-4 4-5 0-10" />
+                <path d="M5 21h14" />
+              </svg>
+            </div>
+            <div class="step-label">
+              <span class="step-caption"> Step 1 </span>
+              <span> Aroma Test </span>
+            </div>
+          </div>
 
-    <div class="bean" aria-hidden="true"></div>
+          <div class="step" [class.active]="currentStage() === 'flavor'" [class.done]="currentStage() === 'review'">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Z" />
+                <path d="M17 9h2a3 3 0 0 1 0 6h-2M7 3v2M11 3v2M15 3v2" />
+              </svg>
+            </div>
+            <div class="step-label">
+              <span class="step-caption"> Step 2 </span>
+              <span> Flavor Test </span>
+            </div>
+          </div>
+
+          <div class="step" [class.active]="currentStage() === 'review'">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="5" y="4" width="14" height="17" rx="2" />
+                <path d="M9 4V2h6v2M8 13l3 3 5-6" />
+              </svg>
+            </div>
+            <div class="step-label">
+              <span class="step-caption"> Step 3 </span>
+              <span> Review &amp; Finalize </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   </header>
 
   @if (loadingSession()) {
@@ -55,8 +99,6 @@
       } @else {
       <h2>Ready to begin?</h2>
 
-      <p>Your evaluation time: <strong>00:00:00</strong></p>
-
       <p>
         Timing starts when you select Begin Evaluation and continues
         if you leave or refresh this page.
@@ -75,24 +117,19 @@
   </section>
   }
 
-  @if (isSavedSession && sessionStarted()) {
-    <div class="actions" style="padding: 12px 24px; align-items: center; gap: 14px;">
-      <button class="btn secondary" type="button"
-        [disabled]="savingDraft() || finalizing() || loadingEvaluations() || evaluationReadOnly()"
-        (click)="saveDraft()">
-        {{ savingDraft() ? 'Saving draft...' : 'Save Draft' }}
-      </button>
-      @if (saveFeedback()) { <span role="status">{{ saveFeedback() }}</span> }
+  @if (isSavedSession && sessionStarted() && (saveFeedback() || evaluationReadOnly())) {
+    <div class="cupping-status-message" role="status">
+      @if (saveFeedback()) { <span>{{ saveFeedback() }}</span> }
       @if (evaluationReadOnly()) {
-      <span>
-        @if (evaluationTiming()?.completionOutcome === 'INCOMPLETE_SESSION_CLOSED') {
-        Incomplete — Session Closed
-        } @else if (evaluationTiming()?.completionOutcome === 'FINALIZED') {
-        Finalized — read only
-        } @else {
-        Evaluation is read only
-        }
-      </span>
+        <span>
+          @if (evaluationTiming()?.completionOutcome === 'INCOMPLETE_SESSION_CLOSED') {
+            Incomplete — Session Closed
+          } @else if (evaluationTiming()?.completionOutcome === 'FINALIZED') {
+            Finalized — read only
+          } @else {
+            Evaluation is read only
+          }
+        </span>
       }
     </div>
   }
@@ -105,91 +142,12 @@
   </section>
   }
 
-  @if (isSavedSession && evaluationTiming() && sessionStarted()) {
-  <div class="actions" style="padding: 12px 24px; align-items: center; gap: 14px;">
-    <span>
-      Your evaluation time:
-      <strong style="font-variant-numeric: tabular-nums;">
-        {{ evaluationTimeDisplay() }}
-      </strong>
-    </span>
-
-    @if (timingSyncError()) {
-    <span role="status">{{ timingSyncError() }}</span>
-    }
-  </div>
-  }
-
   @if (sessionStarted()) {
-
-  <div class="progress cupping-progress">
-    <div class="steps">
-      <div class="step" [class.active]="currentStage() === 'aroma'" [class.done]="currentStage() !== 'aroma'">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 17c-4-4 4-5 0-10M12 17c-4-4 4-5 0-10M17 17c-4-4 4-5 0-10" />
-
-            <path d="M5 21h14" />
-          </svg>
-        </div>
-
-        <div class="step-label">
-          <span class="step-caption"> Step 1 </span>
-
-          <span> Aroma Test </span>
-        </div>
-      </div>
-
-      <div class="step" [class.active]="currentStage() === 'flavor'" [class.done]="currentStage() === 'review'">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Z" />
-
-            <path d="M17 9h2a3 3 0 0 1 0 6h-2M7 3v2M11 3v2M15 3v2" />
-          </svg>
-        </div>
-
-        <div class="step-label">
-          <span class="step-caption"> Step 2 </span>
-
-          <span> Flavor Test </span>
-        </div>
-      </div>
-
-      <div class="step" [class.active]="currentStage() === 'review'">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="5" y="4" width="14" height="17" rx="2" />
-
-            <path d="M9 4V2h6v2M8 13l3 3 5-6" />
-          </svg>
-        </div>
-
-        <div class="step-label">
-          <span class="step-caption"> Step 3 </span>
-
-          <span> Review &amp; Finalize </span>
-        </div>
-      </div>
-    </div>
-  </div>
 
   @if (currentStage() === 'aroma') {
 
   <main class="panel" [class.locked]="aromaLocked()" #cuppingPanel>
-    <div class="panel-head">
-      <div>
-        <div class="eyebrow">Step 1 of 3</div>
-
-        <h2>Aroma Test</h2>
-      </div>
-
-      <div class="rule">
-        @if (aromaLocked()) { Aroma is locked. The Aroma evaluation can no longer be edited. } @else { Complete
-        Aroma for every sample. Once you confirm this stage, all Aroma data is locked. }
-      </div>
-    </div>
-
+    @if (samples().length > 1) {
     <div class="tabs">
       @for ( sample of samples(); track sample.id ) {
 
@@ -249,27 +207,20 @@
 
       }
     </div>
+    }
 
     <div class="locked-banner">🔒 Aroma data has been confirmed and locked.</div>
 
     <div class="content">
-      <div class="sample-title">
-        <h3>Sample {{ sampleLabel(activeSample()) }}</h3>
-
-        <span class="pill"> Aroma • 5 cups evaluated as one sample </span>
-      </div>
+      @if (samples().length === 1) {
+        <div class="sample-title"><h3>Sample {{ sampleLabel(activeSample()) }}</h3></div>
+      }
 
       <div class="grid" [formGroup]="aromaForm" (change)="onAromaFormChange()">
         <!-- Dry Aroma -->
 
         <section class="section" [class.validation-error]="hasAromaError('dry')">
-          <h4>Dry Aroma</h4>
-
-          <label>
-            Dry score (1–5)
-
-            <span class="required-mark" aria-hidden="true"> * </span>
-          </label>
+          <h4>Dry Aroma <span class="required-mark" aria-hidden="true">*</span></h4>
 
           <div class="scale5">
             @for ( score of fivePointScale; track score ) {
@@ -291,13 +242,7 @@
         <!-- Break Aroma -->
 
         <section class="section" [class.validation-error]="hasAromaError('break')">
-          <h4>Break Aroma</h4>
-
-          <label>
-            Break score (1–5)
-
-            <span class="required-mark" aria-hidden="true"> * </span>
-          </label>
+          <h4>Break Aroma <span class="required-mark" aria-hidden="true">*</span></h4>
 
           <div class="scale5">
             @for ( score of fivePointScale; track score ) {
@@ -319,13 +264,7 @@
         <!-- Colour -->
 
         <section class="section" [class.validation-error]="hasAromaError('color')">
-          <h4>Colour Intensity</h4>
-
-          <label>
-            Select the observed intensity
-
-            <span class="required-mark" aria-hidden="true"> * </span>
-          </label>
+          <h4>Colour Intensity <span class="required-mark" aria-hidden="true">*</span></h4>
 
           <div class="choice3">
             @for ( option of colorOptions; track option ) {
@@ -346,27 +285,12 @@
 
         <!-- Quality Score -->
 
-        <section class="section">
-          <h4>Fragrance / Aroma Quality</h4>
-
-          <div class="field-card" [class.validation-error]="hasAromaError('qualityScore')">
-            <label for="qualityScore">
-              Quality score
-
-              <span class="required-mark" aria-hidden="true"> * </span>
-            </label>
-
-            <select id="qualityScore" class="score-select" formControlName="qualityScore">
-              <option [ngValue]="null">Select score</option>
-
-              @for ( score of scoreOptions; track score ) {
-
-              <option [ngValue]="score">{{ score.toFixed(2) }}</option>
-
-              }
-            </select>
-
-            <div class="help">SCA quality scale: 6.00–10.00 in 0.25 increments</div>
+        <section class="section aroma-quality-score-section">
+          <div class="field-card field-card-minimal" [class.validation-error]="hasAromaError('qualityScore')">
+            <app-score-picker [control]="aromaForm.controls.qualityScore" [options]="scoreOptions"
+                ariaLabel="Aroma quality score" fieldId="qualityScoreScoreOption"
+                heading="Fragrance / Aroma Quality" [required]="true"
+                (scoreSelected)="onAromaFormChange()"></app-score-picker>
 
             @if ( hasAromaError('qualityScore') ) {
 
@@ -379,16 +303,10 @@
         <!-- Aroma Qualities -->
 
         <section class="section full" [class.validation-error]="hasAromaError('aromaQualities')">
-          <h4>Aroma Qualities</h4>
-
-          <label>
-            Select all qualities that apply
-
-            <span class="required-mark" aria-hidden="true"> * </span>
-          </label>
+          <h4>Aroma Qualities <span class="required-mark" aria-hidden="true">*</span></h4>
 
           <div class="aroma-quality-groups">
-            @for ( group of aromaQualityGroups; track group.parent ) {
+            @for (group of aromaQualityGroups; track group.parent) {
 
             <div class="aroma-quality-group">
               <!-- Parent -->
@@ -571,7 +489,6 @@
             <textarea id="aromaOtherTastingNotes" formControlName="otherTastingNotes"
               placeholder="Add descriptors not listed above..."></textarea>
 
-            <div class="help">Optional — use this for descriptors that are not available above.</div>
           </div>
 
           @if (hasAromaError('aromaQualities')) {
@@ -632,14 +549,15 @@
   <main class="panel" #cuppingPanel>
     <div class="panel-head">
       <div>
-        <div class="eyebrow">Step 2 of 3</div>
+
 
         <h2>Flavor Test</h2>
       </div>
 
-      <div class="rule">Complete the Flavor evaluation for every sample before review.</div>
+
     </div>
 
+    @if (samples().length > 1) {
     <div class="tabs">
       @for ( sample of samples(); track sample.id ) {
 
@@ -653,36 +571,23 @@
 
       }
     </div>
+    }
 
     <div class="content">
 
-      <div class="sample-title">
-        <h3>Sample {{ sampleLabel(activeSample()) }}</h3>
-
-        <span class="pill"> Flavor stage • flexible/editable </span>
-      </div>
+      @if (samples().length === 1) {
+        <div class="sample-title"><h3>Sample {{ sampleLabel(activeSample()) }}</h3></div>
+      }
 
       <div class="grid" [formGroup]="flavorForm" (change)="onFlavorFormChange()">
         <section class="section full">
           <h4>Taste Evaluation</h4>
 
           <div class="score-grid">
-            <div class="field-card" [class.validation-error]="hasFlavorError('flavor')">
-              <label for="flavorScore">
-                Flavor
-
-                <span class="required-mark" aria-hidden="true">*</span>
-              </label>
-
-              <select id="flavorScore" class="score-select" formControlName="flavor">
-                <option [ngValue]="null">Select score</option>
-
-                @for (score of scoreOptions; track score) {
-
-                <option [ngValue]="score">{{ score.toFixed(2) }}</option>
-
-                }
-              </select>
+            <div class="field-card score-evaluation-card" [class.validation-error]="hasFlavorError('flavor')">
+              <app-score-picker [control]="flavorForm.controls.flavor" [options]="scoreOptions"
+                ariaLabel="Flavor score" fieldId="flavorScoreOption" heading="Flavor" [required]="true"
+                (scoreSelected)="onFlavorFormChange()"></app-score-picker>
 
               @if (hasFlavorError('flavor')) {
 
@@ -691,22 +596,10 @@
               }
             </div>
 
-            <div class="field-card" [class.validation-error]="hasFlavorError('aftertaste')">
-              <label for="aftertasteScore">
-                Aftertaste
-
-                <span class="required-mark" aria-hidden="true">*</span>
-              </label>
-
-              <select id="aftertasteScore" class="score-select" formControlName="aftertaste">
-                <option [ngValue]="null">Select score</option>
-
-                @for (score of scoreOptions; track score) {
-
-                <option [ngValue]="score">{{ score.toFixed(2) }}</option>
-
-                }
-              </select>
+            <div class="field-card score-evaluation-card" [class.validation-error]="hasFlavorError('aftertaste')">
+              <app-score-picker [control]="flavorForm.controls.aftertaste" [options]="scoreOptions"
+                ariaLabel="Aftertaste score" fieldId="aftertasteScoreOption" heading="Aftertaste" [required]="true"
+                (scoreSelected)="onFlavorFormChange()"></app-score-picker>
 
               @if (hasFlavorError('aftertaste')) {
 
@@ -715,22 +608,10 @@
               }
             </div>
 
-            <div class="field-card" [class.validation-error]="hasFlavorError('acidity')">
-              <label for="acidityScore">
-                Acidity
-
-                <span class="required-mark" aria-hidden="true">*</span>
-              </label>
-
-              <select id="acidityScore" class="score-select" formControlName="acidity">
-                <option [ngValue]="null">Select score</option>
-
-                @for (score of scoreOptions; track score) {
-
-                <option [ngValue]="score">{{ score.toFixed(2) }}</option>
-
-                }
-              </select>
+            <div class="field-card score-evaluation-card" [class.validation-error]="hasFlavorError('acidity')">
+              <app-score-picker [control]="flavorForm.controls.acidity" [options]="scoreOptions"
+                ariaLabel="Acidity score" fieldId="acidityScoreOption" heading="Acidity" [required]="true"
+                (scoreSelected)="onFlavorFormChange()"></app-score-picker>
 
               @if (hasFlavorError('acidity')) {
 
@@ -739,22 +620,10 @@
               }
             </div>
 
-            <div class="field-card" [class.validation-error]="hasFlavorError('body')">
-              <label for="bodyScore">
-                Body
-
-                <span class="required-mark" aria-hidden="true">*</span>
-              </label>
-
-              <select id="bodyScore" class="score-select" formControlName="body">
-                <option [ngValue]="null">Select score</option>
-
-                @for (score of scoreOptions; track score) {
-
-                <option [ngValue]="score">{{ score.toFixed(2) }}</option>
-
-                }
-              </select>
+            <div class="field-card score-evaluation-card" [class.validation-error]="hasFlavorError('body')">
+              <app-score-picker [control]="flavorForm.controls.body" [options]="scoreOptions"
+                ariaLabel="Body score" fieldId="bodyScoreOption" heading="Body" [required]="true"
+                (scoreSelected)="onFlavorFormChange()"></app-score-picker>
 
               @if (hasFlavorError('body')) {
 
@@ -763,22 +632,10 @@
               }
             </div>
 
-            <div class="field-card" [class.validation-error]="hasFlavorError('balance')">
-              <label for="balanceScore">
-                Balance
-
-                <span class="required-mark" aria-hidden="true">*</span>
-              </label>
-
-              <select id="balanceScore" class="score-select" formControlName="balance">
-                <option [ngValue]="null">Select score</option>
-
-                @for (score of scoreOptions; track score) {
-
-                <option [ngValue]="score">{{ score.toFixed(2) }}</option>
-
-                }
-              </select>
+            <div class="field-card score-evaluation-card" [class.validation-error]="hasFlavorError('balance')">
+              <app-score-picker [control]="flavorForm.controls.balance" [options]="scoreOptions"
+                ariaLabel="Balance score" fieldId="balanceScoreOption" heading="Balance" [required]="true"
+                (scoreSelected)="onFlavorFormChange()"></app-score-picker>
 
               @if (hasFlavorError('balance')) {
 
@@ -787,22 +644,10 @@
               }
             </div>
 
-            <div class="field-card" [class.validation-error]="hasFlavorError('overall')">
-              <label for="overallScore">
-                Overall
-
-                <span class="required-mark" aria-hidden="true">*</span>
-              </label>
-
-              <select id="overallScore" class="score-select" formControlName="overall">
-                <option [ngValue]="null">Select score</option>
-
-                @for (score of scoreOptions; track score) {
-
-                <option [ngValue]="score">{{ score.toFixed(2) }}</option>
-
-                }
-              </select>
+            <div class="field-card score-evaluation-card" [class.validation-error]="hasFlavorError('overall')">
+              <app-score-picker [control]="flavorForm.controls.overall" [options]="scoreOptions"
+                ariaLabel="Overall score" fieldId="overallScoreOption" heading="Overall" [required]="true"
+                (scoreSelected)="onFlavorFormChange()"></app-score-picker>
 
               @if (hasFlavorError('overall')) {
 
@@ -814,13 +659,7 @@
         </section>
 
         <section class="section" [class.validation-error]="hasFlavorError('acidityIntensity')">
-          <h4>Acidity Intensity</h4>
-
-          <label>
-            Select intensity (1–5)
-
-            <span class="required-mark" aria-hidden="true">*</span>
-          </label>
+          <h4>Acidity Intensity <span class="required-mark" aria-hidden="true">*</span></h4>
 
           <div class="scale5">
             @for (score of fivePointScale; track score) {
@@ -842,13 +681,7 @@
         </section>
 
         <section class="section" [class.validation-error]="hasFlavorError('bodyLevel')">
-          <h4>Body Level</h4>
-
-          <label>
-            Select body level (1–5)
-
-            <span class="required-mark" aria-hidden="true">*</span>
-          </label>
+          <h4>Body Level <span class="required-mark" aria-hidden="true">*</span></h4>
 
           <div class="scale5">
             @for (score of fivePointScale; track score) {
@@ -1155,7 +988,7 @@
           </label>
 
           <div class="aroma-quality-groups">
-            @for ( group of aromaQualityGroups; track group.parent ) {
+            @for (group of aromaQualityGroups; track group.parent) {
 
             <div class="aroma-quality-group">
               <label class="aroma-quality-option aroma-quality-parent">
@@ -1192,7 +1025,6 @@
             <textarea id="flavorOtherTastingNotes" formControlName="otherTastingNotes"
               placeholder="Add descriptors not listed above..."></textarea>
 
-            <div class="help">Optional — use this for descriptors that are not available above.</div>
           </div>
 
           @if (hasFlavorError('flavorQualities')) {
@@ -1240,14 +1072,12 @@
   <main class="panel" #cuppingPanel>
     <div class="panel-head">
       <div>
-        <div class="eyebrow">Step 3 of 3</div>
+
 
         <h2>Review &amp; Finalize</h2>
       </div>
 
-      <div class="rule">
-        Review all samples. Aroma is view-only; Flavor can still be edited before final confirmation.
-      </div>
+
     </div>
 
     <div class="content">
@@ -1264,7 +1094,6 @@
       <article class="review-summary-card">
         <header class="review-summary-heading">
           <div class="review-summary-title">
-            <h3>Sample {{ sampleLabel(sample.id) }}</h3>
             <span class="review-lock-badge">Aroma locked</span>
           </div>
 
