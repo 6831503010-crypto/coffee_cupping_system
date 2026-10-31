@@ -56,6 +56,7 @@ export class IndividualSession {
   readonly savedSamples = signal<LibrarySample[]>([]);
   readonly chosen = signal<SampleChoice[]>([]);
   readonly session = signal<SessionView | null>(null);
+  readonly sessionDetailsDescription = signal<string | null>(null);
   readonly saving = signal(false);
   readonly error = signal('');
   readonly existingSampleError = signal('');
@@ -206,6 +207,12 @@ export class IndividualSession {
       this.api.get(id).subscribe({
         next: data => {
           this.session.set(data);
+          this.api.getSessionDescription(data.sessionId).pipe(
+            takeUntilDestroyed(this.destroyRef)
+          ).subscribe({
+            next: details => this.sessionDetailsDescription.set(details.description?.trim() || null),
+            error: () => this.sessionDetailsDescription.set(null)
+          });
 
           if (data.isCreator) {
             this.refreshEvaluators();

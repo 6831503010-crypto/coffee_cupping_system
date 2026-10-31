@@ -152,6 +152,13 @@ export class IndividualSessionService {
     );
   }
 
+  getSessionDescription(sessionId: number) {
+    return this.http.get<{ description: string | null }>(
+      `${this.baseUrl}/sessions/${sessionId}`,
+      { withCredentials: true }
+    );
+  }
+
   getSessionTiming(sessionId: number) {
     return this.http.get<SessionTimingView>(
       `http://localhost:8080/api/sessions/${sessionId}/timing`,
