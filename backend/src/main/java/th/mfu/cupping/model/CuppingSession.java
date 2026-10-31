@@ -44,6 +44,15 @@ public class CuppingSession {
   @Column(name = "creator_participates", nullable = false, updatable = false)
   private Boolean creatorParticipates = false;
 
+  @Column(name = "session_started_at")
+  private LocalDateTime sessionStartedAt;
+
+  @Column(name = "session_ended_at")
+  private LocalDateTime sessionEndedAt;
+
+  @Column(name = "session_elapsed_seconds")
+  private Long sessionElapsedSeconds;
+
   @PrePersist
   public void beforeInsert() {
     if (createdAt == null)
@@ -148,5 +157,29 @@ public class CuppingSession {
 
   public void setCreatorParticipates(Boolean creatorParticipates) {
     this.creatorParticipates = creatorParticipates;
+  }
+
+  public LocalDateTime getSessionStartedAt() {
+    return sessionStartedAt;
+  }
+
+  public void setSessionStartedAt(LocalDateTime sessionStartedAt) {
+    this.sessionStartedAt = sessionStartedAt;
+  }
+
+  public LocalDateTime getSessionEndedAt() {
+    return sessionEndedAt;
+  }
+
+  public void setSessionEndedAt(LocalDateTime sessionEndedAt) {
+    this.sessionEndedAt = sessionEndedAt;
+  }
+
+  public Long getSessionElapsedSeconds() {
+    return sessionElapsedSeconds;
+  }
+
+  public void setSessionElapsedSeconds(Long sessionElapsedSeconds) {
+    this.sessionElapsedSeconds = sessionElapsedSeconds;
   }
 }

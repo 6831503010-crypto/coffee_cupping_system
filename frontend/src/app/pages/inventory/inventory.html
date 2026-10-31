@@ -1,77 +1,197 @@
 <main class="inventory-page">
   <a routerLink="/" class="inventory-back">← Back to Home</a>
-  <div class="inventory-heading">
-    <div>
-      <p class="inventory-eyebrow">YOUR PRIVATE COFFEE LIBRARY</p>
+
+  <header class="inventory-heading">
+    <div class="inventory-title">
       <h1>My Coffee Inventory</h1>
       <p>Save coffee details once and reuse them in future cupping sessions.</p>
     </div>
     <button type="button" class="primary-action" [disabled]="busy()" (click)="openNew()">+ New Sample</button>
-  </div>
+  </header>
 
   <div class="inventory-stats" aria-label="Inventory summary">
-    <div><strong>{{ samples().length }}</strong><span>Total samples</span></div>
-    <div><strong>{{ inSessions() }}</strong><span>Used in sessions</span></div>
+    <div class="inventory-stat">
+      <span class="stat-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 8h13v7a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6V8Z"/><path d="M17 10h2a3 3 0 0 1 0 6h-2"/><path d="M3 5h15"/>
+        </svg>
+      </span>
+      <div><strong>{{ samples().length }}</strong><span>Total samples</span></div>
+    </div>
+    <div class="inventory-stat">
+      <span class="stat-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="13" width="4" height="8" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/>
+        </svg>
+      </span>
+      <div><strong>{{ inSessions() }}</strong><span>Used in sessions</span></div>
+    </div>
   </div>
 
-  @if (message()) { <p class="inventory-message" role="status">{{ message() }}</p> }
   @if (error()) { <p class="inventory-error" role="alert">{{ error() }} <button type="button" (click)="load()">Retry</button></p> }
 
-  <app-sample-form-modal [showSampleCode]="false" [title]="editingId() === null ? 'Create a new sample' : 'Edit sample'"
-    [submitLabel]="editingId() === null ? 'Save Sample' : 'Save Changes'" [description]="
-      editingId() === null
-        ? 'Save coffee details to your inventory for use in future cupping sessions.'
-        : 'Update the details of your coffee sample.'
-    " [submitDisabled]="busy()" (sampleSubmitted)="saveSample($event)"></app-sample-form-modal>
+  <app-sample-form-modal
+    [showSampleCode]="false"
+    [title]="editingId() === null ? 'Create a new sample' : 'Edit sample'"
+    [submitLabel]="editingId() === null ? 'Save Sample' : 'Save Changes'"
+    description=""
+    [submitDisabled]="busy()"
+    (sampleSubmitted)="saveSample($event)">
+  </app-sample-form-modal>
 
-  <section class="inventory-list" aria-labelledby="mySamplesTitle">
-    <div class="inventory-list-top">
-      <h2 id="mySamplesTitle">Saved Samples</h2>
-      <label class="search-box">Search <input type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Name, process, origin…" /></label>
-    </div>
-    @if (loading()) {
-      <p class="muted">Loading coffee samples…</p>
-    } @else if (error()) {
-      <p class="muted">Inventory data is unavailable. Retry loading to see your saved samples.</p>
-    } @else if (!filtered().length) {
-      <div class="inventory-empty">
-        @if (samples().length) { <p>No samples match your search.</p> }
-        @else { <p>Your inventory is empty. Create your first coffee sample.</p>
-          <button class="primary-action" type="button" (click)="openNew()">Create First Sample</button> }
-      </div>
-    } @else {
-      <div class="sample-grid">
-        @for (sample of filtered(); track sample.sampleId) {
-          <article class="inventory-card">
-            <div class="sample-card-top"><span class="sample-icon" aria-hidden="true">☕</span>
-              @if (sample.sessionCount > 0) { <span class="usage-badge">In {{ sample.sessionCount }} session{{ sample.sessionCount === 1 ? '' : 's' }}</span> }
-              @else { <span class="usage-badge available">Not yet used</span> }
-            </div>
-            <h3>{{ sample.sampleName }}</h3>
-            <p class="sample-subtitle">{{ sample.growingLocation || 'Origin not specified' }}</p>
-            <dl>
-              <div><dt>Process</dt><dd>{{ sample.process || '—' }}</dd></div>
-              <div><dt>Harvest</dt><dd>{{ sample.harvestYear ?? '—' }}</dd></div>
-              <div><dt>Producer</dt><dd>{{ sample.ownerProducer || '—' }}</dd></div>
-            </dl>
-            @if (sample.sessionCount === 0) {
-              <div class="card-actions">
-                <button type="button" class="secondary-action" [disabled]="busy()" (click)="openEdit(sample)">Edit</button>
-                <button type="button" class="delete-action" [disabled]="busy()" (click)="askDelete(sample)">Delete</button>
-              </div>
-            } @else {
-              <p class="read-only-note">Used in a session — details locked to preserve evaluation history.</p>
-            }
-          </article>
+  <div class="inventory-workspace" [class.has-selection]="!!selectedSample()">
+    <section class="inventory-list" aria-labelledby="mySamplesTitle">
+      <div class="inventory-list-top">
+        <h2 id="mySamplesTitle">Saved Samples <span class="list-count">({{ samples().length }})</span></h2>
+        @if (!loading() && !error() && samples().length > 0) {
+          <label class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.7" cy="10.7" r="6.3"/><path d="m16 16 5 5"/></svg>
+            <input type="search" [ngModel]="search()" (ngModelChange)="setSearch($event)" placeholder="Search name, process, origin…" aria-label="Search coffee samples" />
+          </label>
         }
       </div>
+
+      @if (loading()) {
+        <p class="muted inventory-loading" role="status">Loading coffee samples…</p>
+      } @else if (error()) {
+        <p class="muted inventory-loading">Inventory data is unavailable. Retry loading to see your saved samples.</p>
+      } @else if (samples().length === 0) {
+        <div class="inventory-empty">
+          <span class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13v7a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6V8Z"/><path d="M17 10h2a3 3 0 0 1 0 6h-2"/><path d="M3 5h15"/></svg>
+          </span>
+          <h3>No coffee samples yet</h3>
+          <p>Add your first coffee sample to start building your inventory.</p>
+          <button type="button" class="primary-action" [disabled]="busy()" (click)="openNew()">+ Add First Sample</button>
+        </div>
+      } @else {
+        <div class="inventory-toolbar">
+          <div class="usage-tabs" role="group" aria-label="Filter by session usage">
+            <button type="button" class="usage-tab" [class.active]="usageFilter() === 'all'" [attr.aria-pressed]="usageFilter() === 'all'" (click)="setUsageFilter('all')">All ({{ samples().length }})</button>
+            <button type="button" class="usage-tab" [class.active]="usageFilter() === 'used'" [attr.aria-pressed]="usageFilter() === 'used'" (click)="setUsageFilter('used')">Used ({{ inSessions() }})</button>
+            <button type="button" class="usage-tab" [class.active]="usageFilter() === 'unused'" [attr.aria-pressed]="usageFilter() === 'unused'" (click)="setUsageFilter('unused')">Unused ({{ unusedCount() }})</button>
+          </div>
+          <label class="sort-box">Sort by
+            <select [ngModel]="sortOrder()" (ngModelChange)="setSortOrder($event)">
+              <option value="newest">Newest first</option>
+              <option value="name">Name (A–Z)</option>
+              <option value="harvest">Harvest year</option>
+            </select>
+          </label>
+        </div>
+
+        @if (filtered().length === 0) {
+          <div class="inventory-no-results">
+            <strong>No matching samples</strong>
+            <p>Try another search or change your filters.</p>
+            <button type="button" class="secondary-action" (click)="clearFilters()">Clear Filters</button>
+          </div>
+        } @else {
+          <div class="sample-table-head" aria-hidden="true">
+            <span>Sample</span><span>Location</span><span>Process</span><span>Harvest</span><span>Usage</span><span></span>
+          </div>
+          <div class="sample-list">
+            @for (sample of paginatedSamples(); track sample.sampleId) {
+              <button type="button" class="sample-row" [class.selected]="selectedSampleId() === sample.sampleId"
+                [attr.aria-pressed]="selectedSampleId() === sample.sampleId"
+                [attr.aria-label]="'View details for ' + sample.sampleName" (click)="selectSample(sample)">
+                <span class="sample-primary">
+                  <span class="sample-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M19.5 4.7c-4.3-4.2-10.1-2.4-13.4 1s-5.3 9.5-1 13.7c4.3 4.2 10.1 2.4 13.4-1s5.3-9.5 1-13.7Z"/>
+                      <path d="M16.5 5.6c-1 3.9-5.6 4.6-6.5 8.7-.5 2.1-1.2 3.1-2.9 4.2"/>
+                    </svg>
+                  </span>
+                  <span class="sample-identity">
+                    <strong>{{ sample.sampleName }}</strong>
+                    <span class="sample-compact-meta">{{ sample.growingLocation || 'Origin not specified' }} · {{ sample.process || 'No process' }} · {{ sample.harvestYear ?? 'Year not set' }}</span>
+                  </span>
+                </span>
+                <span class="sample-cell">{{ sample.growingLocation || '—' }}</span>
+                <span class="sample-cell">{{ sample.process || '—' }}</span>
+                <span class="sample-cell">{{ sample.harvestYear ?? '—' }}</span>
+                <span class="sample-usage">
+                  @if (sample.sessionCount > 0) {
+                    <span class="usage-badge">In {{ sample.sessionCount }} session{{ sample.sessionCount === 1 ? '' : 's' }}</span>
+                  } @else {
+                    <span class="usage-badge available">Not yet used</span>
+                  }
+                </span>
+                <span class="row-chevron" aria-hidden="true">›</span>
+              </button>
+            }
+          </div>
+          @if (filtered().length > pageSize) {
+            <nav class="inventory-pagination" aria-label="Coffee inventory pages">
+              <span class="pagination-summary">
+                Showing {{ (currentPage() - 1) * pageSize + 1 }}–{{ currentPage() * pageSize < filtered().length ? currentPage() * pageSize : filtered().length }} of {{ filtered().length }} samples
+              </span>
+              <div class="pagination-buttons">
+                <button type="button" class="pagination-control" [disabled]="currentPage() === 1" (click)="setPage(currentPage() - 1)">Previous</button>
+                @for (pageNumber of visiblePages(); track pageNumber) {
+                  <button type="button" class="pagination-number" [class.active]="currentPage() === pageNumber"
+                    [attr.aria-current]="currentPage() === pageNumber ? 'page' : null"
+                    [attr.aria-label]="'Go to page ' + pageNumber" (click)="setPage(pageNumber)">{{ pageNumber }}</button>
+                }
+                <button type="button" class="pagination-control" [disabled]="currentPage() === totalPages()" (click)="setPage(currentPage() + 1)">Next</button>
+              </div>
+            </nav>
+          }
+        }
+      }
+    </section>
+
+    @if (selectedSample(); as sample) {
+      <aside class="sample-details" aria-labelledby="detailsTitle">
+        <div class="details-heading">
+          <div>
+            <button type="button" class="mobile-back" (click)="closeDetails()">← Back to Samples</button>
+            <h2 id="detailsTitle">Sample Details</h2>
+          </div>
+          <button type="button" class="details-close" aria-label="Close sample details" title="Close details" (click)="closeDetails()">×</button>
+        </div>
+
+        <div class="details-sample-heading">
+          <span class="detail-sample-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 4.7c-4.3-4.2-10.1-2.4-13.4 1s-5.3 9.5-1 13.7c4.3 4.2 10.1 2.4 13.4-1s5.3-9.5 1-13.7Z"/><path d="M16.5 5.6c-1 3.9-5.6 4.6-6.5 8.7-.5 2.1-1.2 3.1-2.9 4.2"/></svg>
+          </span>
+          <div class="details-sample-name">
+            <h3>{{ sample.sampleName }}</h3>
+          </div>
+        </div>
+
+        <dl class="detail-fields">
+          <div><dt>Location</dt><dd>{{ sample.growingLocation || '—' }}</dd></div>
+          <div><dt>Process</dt><dd>{{ sample.process || '—' }}</dd></div>
+          <div><dt>Harvest year</dt><dd>{{ sample.harvestYear ?? '—' }}</dd></div>
+          <div><dt>Producer</dt><dd>{{ sample.ownerProducer || '—' }}</dd></div>
+          <div><dt>Used in sessions</dt><dd>{{ sample.sessionCount }} session{{ sample.sessionCount === 1 ? '' : 's' }}</dd></div>
+        </dl>
+
+        @if (sample.sessionCount > 0) {
+          <div class="read-only-message">
+            <span class="read-only-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></svg> Sample information is saved</span>
+            <p>This sample has been used in a cupping session, so its details can't be changed. This keeps past results accurate.</p>
+          </div>
+        } @else {
+          <div class="editable-message">This sample has not been used in a session. You can edit or delete it.</div>
+          <div class="details-actions">
+            <button type="button" class="secondary-action" [disabled]="busy()" (click)="openEdit(sample)">Edit Sample</button>
+            <button type="button" class="delete-action" [disabled]="busy()" (click)="askDelete(sample)">Delete</button>
+          </div>
+        }
+      </aside>
     }
-  </section>
+  </div>
+
   <p class="inventory-help">Creating a sample here does not start a session. <a routerLink="/individual/new">Create a cupping session</a> to evaluate it.</p>
 </main>
+
 <dialog #deleteDialog class="delete-dialog" aria-labelledby="deleteTitle" (cancel)="cancelDelete()">
   <h2 id="deleteTitle">Delete coffee sample?</h2>
   <p>Delete <strong>{{ deleteTarget()?.sampleName }}</strong> from your inventory? This cannot be undone.</p>
-  <div class="form-actions"><button type="button" class="delete-action" [disabled]="busy()" (click)="confirmDelete()">{{ busy() ? 'Deleting…' : 'Delete Sample' }}</button>
-    <button type="button" class="secondary-action" [disabled]="busy()" (click)="cancelDelete()">Cancel</button></div>
+  <div class="form-actions">
+    <button type="button" class="delete-action" [disabled]="busy()" (click)="confirmDelete()">{{ busy() ? 'Deleting…' : 'Delete Sample' }}</button>
+    <button type="button" class="secondary-action" [disabled]="busy()" (click)="cancelDelete()">Cancel</button>
+  </div>
 </dialog>

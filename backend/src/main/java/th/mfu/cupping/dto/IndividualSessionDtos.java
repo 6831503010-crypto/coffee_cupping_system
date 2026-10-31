@@ -26,6 +26,7 @@ public final class IndividualSessionDtos {
 
   public record CreateRequest(
       @NotBlank @Size(max = 255) String sessionName,
+      @Size(max = 500) String description,
       @NotNull @Min(1) @Max(10) Integer evaluatorLimit,
       @NotNull Boolean creatorParticipates,
       @NotEmpty List<@Valid SampleChoice> samples) {

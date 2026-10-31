@@ -1,9 +1,9 @@
 .guide-container {
   box-sizing: border-box;
   width: 100%;
-  max-width: 1180px;
+  max-width: none;
   margin: 0 auto;
-  padding: 2.5rem 20px 4rem;
+  padding: 2.5rem var(--page-gutter) 4rem;
   font-family: inherit;
   color: #3e2723;
 }

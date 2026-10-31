@@ -1,200 +1,212 @@
 <div class="history-shell">
+  <a class="back-link" routerLink="/">← Back to Home</a>
+
   <header class="history-header">
-    <div>
-      <a class="back-link" routerLink="/"> ← Back to Home </a>
-
-      <p class="eyebrow">CUPPING HISTORY</p>
-
-      <h1>Session History</h1>
-
-      <p class="history-subtitle">Review completed coffee cupping sessions and sample scores.</p>
-    </div>
-
-    <div class="history-actions">
-      <button class="btn primary btn-link" type="button" (click)="modeModal.openModeDialog()">
-        New Cupping
-      </button>
-
-      <button class="btn ghost" type="button" (click)="clearHistory()">Clear Browser History</button>
-    </div>
+    <h1>Session History</h1>
+    <button class="btn primary new-session-button" type="button" (click)="modeModal.openModeDialog()">
+      <span aria-hidden="true">＋</span> New Cupping
+    </button>
   </header>
 
-  @if (historyLoadError()) { <p role="alert">{{ historyLoadError() }}</p> }
+  @if (historyLoadError()) {
+    <p class="history-load-error" role="alert">{{ historyLoadError() }}</p>
+  }
+
   <section class="history-summary" aria-label="History summary">
     <div class="summary-card">
-      <strong> {{ sessionCount() }} </strong>
-
-      <span> {{ sessionCount() <= 1 ? 'Session' : 'Sessions' }} </span>
+      <span class="summary-icon" aria-hidden="true">☷</span>
+      <div><strong>{{ sessionCount() }}</strong><span>Sessions</span></div>
     </div>
-
     <div class="summary-card">
-      <strong> {{ sampleCount() }} </strong>
-
-      <span> {{ sampleCount() <= 1 ? 'Sample' : 'Samples' }} </span>
+      <span class="summary-icon" aria-hidden="true">☕</span>
+      <div><strong>{{ sampleCount() }}</strong><span>Samples</span></div>
     </div>
-
     <div class="summary-card">
-      <strong> {{ latestDate() }} </strong>
-
-      <span> Latest session </span>
+      <span class="summary-icon" aria-hidden="true">▦</span>
+      <div><strong class="latest-date">{{ latestDate() }}</strong><span>Latest session</span></div>
     </div>
   </section>
 
-  <main class="history-list">
-    @if (records().length === 0) {
-
+  @if (sessionCount() === 0) {
     <section class="history-empty">
-      <h2>No completed sessions yet.</h2>
-
-      <p>Finish an evaluation in the Cupping Form and it will appear here.</p>
-
-      <button class="btn primary btn-link" type="button" (click)="modeModal.openModeDialog()">
-        Start Cupping →
-      </button>
+      <h2>No evaluation history yet.</h2>
+      <p>Completed evaluations will appear here after a cupping session.</p>
+      <button class="btn primary" type="button" (click)="modeModal.openModeDialog()">Start Cupping</button>
     </section>
-
-    } @else { @for (
-    record of paginatedRecords();
-    track record.id;
-    let sessionIndex = $index
-    ) {
-
-    <article class="history-card">
-      <div class="history-card-head">
-        <div>
-          <h2>{{ record.sessionName || ('Session ' + sessionNumber(sessionIndex)) }}</h2>
-          <small>{{ record.source === 'database' ? 'Saved in database' : 'Browser-only practice (not database verified)' }}</small>
-
-          <div class="history-date">
-            {{ formatDate(record.completedAt) }} • {{ record.samples?.length || 0 }} {{
-            (record.samples?.length || 0) === 1 ? 'sample' : 'samples' }}
+  } @else {
+    <main class="history-workspace">
+      <section class="history-panel session-list-panel" aria-label="Session list">
+        <div class="list-panel-top">
+          <h2>Session List <span class="muted-count">({{ filteredRecords().length }})</span></h2>
+          <div class="history-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="7.2"/><path d="m16.3 16.3 5 5"/></svg>
+            <input type="search" aria-label="Search sessions by name" placeholder="Search sessions by name..."
+                   [value]="searchQuery()" (input)="setSearch($any($event.target).value)" />
+          </div>
+          <div class="status-tabs" aria-label="Filter sessions by outcome">
+            <button type="button" [class.is-active]="statusFilter() === 'all'"
+                    [attr.aria-pressed]="statusFilter() === 'all'" (click)="setStatusFilter('all')">
+              All <span>{{ sessionCount() }}</span>
+            </button>
+            <button type="button" [class.is-active]="statusFilter() === 'finalized'"
+                    [attr.aria-pressed]="statusFilter() === 'finalized'" (click)="setStatusFilter('finalized')">
+              Finalized <span>{{ finalizedCount() }}</span>
+            </button>
+            <button type="button" [class.is-active]="statusFilter() === 'closed'"
+                    [attr.aria-pressed]="statusFilter() === 'closed'" (click)="setStatusFilter('closed')">
+              Closed <span>{{ closedCount() }}</span>
+            </button>
           </div>
         </div>
-      </div>
 
-      <div class="sample-grid">
-        @for ( sample of record.samples || []; track sample.id ) {
+        <div class="session-items">
+          @for (record of paginatedRecords(); track record.id; let sessionIndex = $index) {
+            <button class="session-item" type="button"
+                    [class.is-selected]="activeRecord()?.id === record.id"
+                    [attr.aria-pressed]="activeRecord()?.id === record.id"
+                    (click)="selectSession(record.id)">
+              <div class="session-item-text">
+                <strong>{{ record.sessionName || ('Session ' + sessionNumber(sessionIndex)) }}</strong>
+                <span>{{ formatDate(record.completedAt) }}</span>
+                <span class="session-item-meta">{{ record.samples?.length || 0 }} {{ (record.samples?.length || 0) === 1 ? 'sample' : 'samples' }}</span>
+              </div>
+              <div class="session-item-side">
+                <span class="session-badge" [class.badge-closed]="isIncomplete(record)"
+                      [class.badge-progress]="record.completionOutcome === 'IN_PROGRESS'">{{ statusLabel(record) }}</span>
+                <span aria-hidden="true" class="item-chevron">›</span>
+              </div>
+            </button>
+          } @empty {
+            <div class="no-matches">
+              <p>No sessions match your search or filter.</p>
+              <button type="button" (click)="setSearch(''); setStatusFilter('all')">Clear filters</button>
+            </div>
+          }
+        </div>
 
-        <article class="sample-card">
-          <h3>Sample {{ sample.id }}</h3>
-
-          <div class="score-row">
-            <span>Aroma quality</span>
-            <strong>{{ formatScore(sample.aroma?.qualityScore) }}</strong>
+        @if (filteredRecords().length > 0) {
+          <div class="history-pagination">
+            <p class="pagination-summary">Showing {{ showingFrom() }}–{{ showingTo() }} of {{ filteredRecords().length }}</p>
+            @if (totalPages() > 1) {
+              <nav class="pagination-controls" aria-label="Session list pages">
+                <button type="button" [disabled]="currentPage() === 1" aria-label="Previous sessions page"
+                        (click)="goToPage(currentPage() - 1)">‹</button>
+                @for (page of pageNumbers(); track page) {
+                  <button type="button" [class.active]="currentPage() === page"
+                          [attr.aria-current]="currentPage() === page ? 'page' : null"
+                          [attr.aria-label]="'Session page ' + page" (click)="goToPage(page)">{{ page }}</button>
+                }
+                <button type="button" [disabled]="currentPage() === totalPages()" aria-label="Next sessions page"
+                        (click)="goToPage(currentPage() + 1)">›</button>
+              </nav>
+            }
           </div>
-
-          <div class="score-row">
-            <span>Flavor</span>
-            <strong>{{ formatScore(sample.flavor?.flavor) }}</strong>
-          </div>
-
-          <div class="score-row">
-            <span>Aftertaste</span>
-            <strong>{{ formatScore(sample.flavor?.aftertaste) }}</strong>
-          </div>
-
-          <div class="score-row">
-            <span>Acidity</span>
-            <strong>{{ formatScore(sample.flavor?.acidity) }}</strong>
-          </div>
-
-          <div class="score-row">
-            <span>Body</span>
-            <strong>{{ formatScore(sample.flavor?.body) }}</strong>
-          </div>
-
-          <div class="score-row">
-            <span>Uniformity</span>
-            <strong> {{ formatScore( getCupScore( sample.flavor?.uniformity ) ) }} </strong>
-          </div>
-
-          <div class="score-row">
-            <span>Clean Cup</span>
-            <strong> {{ formatScore( getCupScore( sample.flavor?.cleanCup ) ) }} </strong>
-          </div>
-
-          <div class="score-row">
-            <span>Balance</span>
-            <strong>{{ formatScore(sample.flavor?.balance) }}</strong>
-          </div>
-
-          <div class="score-row">
-            <span>Sweetness</span>
-            <strong> {{ formatScore( getCupScore( sample.flavor?.sweetness ) ) }} </strong>
-          </div>
-
-          <div class="score-row">
-            <span>Defect</span>
-
-            <strong>
-              @if ( getDefectiveCupCount( sample.flavor || {} ) > 0 ) { {{ getDefectiveCupCount(
-              sample.flavor || {} ) }} {{ getDefectiveCupCount( sample.flavor || {} ) === 1 ? 'cup' :
-              'cups' }} × {{ getDefectLabel( sample.flavor?.defectType ) }} (-{{ getDefectPoints(
-              sample.flavor?.defectType ) }}) = -{{ formatScore( getDefectDeduction( sample.flavor || {} )
-              ) }} } @else { None }
-            </strong>
-          </div>
-
-          <div class="score-row">
-            <span>Overall</span>
-            <strong>{{ formatScore(sample.flavor?.overall) }}</strong>
-          </div>
-
-          <div class="score-row">
-            <span>Final score</span>
-            <strong>{{ formatScore(sample.finalScore) }} / 100</strong>
-          </div>
-
-          <button class="details-toggle" type="button" (click)="
-              openSampleDetails(
-                sample,
-                sessionNumber(sessionIndex)
-              )
-            ">
-            View details
-          </button>
-        </article>
-
         }
-      </div>
+      </section>
 
-      <div class="history-card-footer">
-        <span class="muted"> Saved in this browser </span>
+      <section class="history-panel details-panel" aria-label="Selected session details">
+        @if (activeRecord(); as record) {
+          <header class="session-detail-head">
+            <div>
+              <h2>{{ record.sessionName || 'Session ' + activeSessionNumber() }}</h2>
+              <p class="session-detail-date">{{ formatDate(record.completedAt) }}</p>
+            </div>
+            <span class="session-badge" [class.badge-closed]="isIncomplete(record)"
+                  [class.badge-progress]="record.completionOutcome === 'IN_PROGRESS'">{{ statusLabel(record) }}</span>
+          </header>
 
-        @if (record.source !== 'database') { <button class="delete-session" type="button" (click)="deleteSession(record.id)">Delete browser record</button> }
-      </div>
-    </article>
+          <div class="session-timing">
+              @if (record.creatorOnly) {
+                <div class="timing-stat">
+                  <span class="timing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                  <div class="timing-copy"><span>Your role</span><strong>Creator only</strong></div>
+                </div>
+              } @else {
+                <div class="timing-stat">
+                  <span class="timing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                  <div class="timing-copy"><span>Your evaluation time</span><strong>{{ evaluationDurationLabel(record) }}</strong></div>
+                </div>
+              }
+              <div class="timing-stat">
+                <span class="timing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10M7 21h10M8 3c0 4 4 4 4 9s-4 5-4 9m8-18c0 4-4 4-4 9s4 5 4 9"/></svg></span>
+                <div class="timing-copy"><span>Session elapsed time</span><strong>{{ sessionDurationLabel(record) }}</strong></div>
+              </div>
+              <div class="timing-stat" title="Evaluators joined / evaluator capacity">
+                <span class="timing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2"/></svg></span>
+                <div class="timing-copy"><span>Evaluators</span><strong>{{ evaluatorCountLabel(record) }}</strong></div>
+              </div>
+            </div>
 
-    } }
-  </main>
+          <div class="sample-results-section">
+            @if (isIncomplete(record)) {
+              <div class="history-incomplete-note">This session closed before your evaluation was finalized. No finalized scores are available for this entry.</div>
+            } @else if (activeSample(); as sample) {
+              <article class="sample-result-card">
+                <div class="sample-result-head">
+                  <div>
+                    <h4>Sample {{ sample.id }}</h4>
+                  </div>
+                  <div class="sample-score">
+                    <span>Final score</span>
+                    <strong>{{ formatScore(sample.finalScore) }}{{ sample.finalScore != null ? ' / 100' : '' }}</strong>
+                  </div>
+                </div>
 
-  @if (sessionCount() > 0) {
-  <div class="history-pagination">
-    <p class="pagination-summary" aria-live="polite">
-      Showing {{ showingFrom() }}–{{ showingTo() }}
-      of {{ sessionCount() }} sessions
-    </p>
+                <div class="scores-two-columns">
+                  <div class="score-column">
+                    <div class="score-row"><span>Aroma Quality</span><strong>{{ formatScore(sample.aroma?.qualityScore) }}</strong></div>
+                    <div class="score-row"><span>Flavor</span><strong>{{ formatScore(sample.flavor?.flavor) }}</strong></div>
+                    <div class="score-row"><span>Aftertaste</span><strong>{{ formatScore(sample.flavor?.aftertaste) }}</strong></div>
+                    <div class="score-row"><span>Acidity</span><strong>{{ formatScore(sample.flavor?.acidity) }}</strong></div>
+                    <div class="score-row"><span>Body</span><strong>{{ formatScore(sample.flavor?.body) }}</strong></div>
+                  </div>
+                  <div class="score-column">
+                    <div class="score-row"><span>Uniformity</span><strong>{{ formatScore(getCupScore(sample.flavor?.uniformity)) }}</strong></div>
+                    <div class="score-row"><span>Clean Cup</span><strong>{{ formatScore(getCupScore(sample.flavor?.cleanCup)) }}</strong></div>
+                    <div class="score-row"><span>Balance</span><strong>{{ formatScore(sample.flavor?.balance) }}</strong></div>
+                    <div class="score-row"><span>Sweetness</span><strong>{{ formatScore(getCupScore(sample.flavor?.sweetness)) }}</strong></div>
+                    <div class="score-row"><span>Overall</span><strong>{{ formatScore(sample.flavor?.overall) }}</strong></div>
+                  </div>
+                </div>
 
-    @if (totalPages() > 1) {
-    <nav class="pagination-controls" aria-label="History pages">
-      <button type="button" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
-        Previous
-      </button>
+                @if (getDefectiveCupCount(sample.flavor || {}) > 0 && getDefectPoints(sample.flavor?.defectType) > 0) {
+                  <div class="defect-row">
+                    <span>Defect</span>
+                    <strong>{{ getDefectiveCupCount(sample.flavor || {}) }} {{ getDefectiveCupCount(sample.flavor || {}) === 1 ? 'cup' : 'cups' }} × {{ getDefectLabel(sample.flavor?.defectType) }} (−{{ getDefectPoints(sample.flavor?.defectType) }} each) = −{{ formatScore(getDefectDeduction(sample.flavor || {})) }}</strong>
+                  </div>
+                }
 
-      @for (page of pageNumbers(); track page) {
-      <button type="button" [class.active]="currentPage() === page"
-        [attr.aria-current]="currentPage() === page ? 'page' : null" [attr.aria-label]="'Page ' + page"
-        (click)="goToPage(page)">
-        {{ page }}
-      </button>
-      }
+                <button class="details-toggle" type="button" (click)="openSampleDetails(sample, activeSessionNumber())">
+                  View additional details <span aria-hidden="true">›</span>
+                </button>
+              </article>
 
-      <button type="button" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
-        Next
-      </button>
-    </nav>
-    }
-  </div>
+              @if ((record.samples?.length || 0) > 1) {
+                <nav class="sample-pagination" aria-label="Samples in this session">
+                  <span>Sample {{ activeSamplePage() }} of {{ record.samples?.length }}</span>
+                  <div class="pagination-controls">
+                    <button type="button" [disabled]="activeSamplePage() === 1" aria-label="Previous sample"
+                            (click)="selectSample(activeSamplePage() - 2)">‹</button>
+                    @for (page of samplePageNumbers(); track page) {
+                      <button type="button" [class.active]="activeSamplePage() === page"
+                              [attr.aria-current]="activeSamplePage() === page ? 'page' : null"
+                              [attr.aria-label]="'Sample ' + page" (click)="selectSample(page - 1)">{{ page }}</button>
+                    }
+                    <button type="button" [disabled]="activeSamplePage() === (record.samples?.length || 0)"
+                            aria-label="Next sample" (click)="selectSample(activeSamplePage())">›</button>
+                  </div>
+                </nav>
+              }
+            } @else {
+              <div class="no-sample-results">No sample results are available for this session.</div>
+            }
+          </div>
+
+        } @else {
+          <div class="select-session-empty">Choose a session from the list to see its results.</div>
+        }
+      </section>
+    </main>
   }
 
   @if (selectedDetails(); as details) {

@@ -23,24 +23,105 @@ public class SessionEvaluator {
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
 
+  @Column(name = "evaluation_started_at")
+  private LocalDateTime evaluationStartedAt;
+
+  @Column(name = "evaluation_ended_at")
+  private LocalDateTime evaluationEndedAt;
+
+  @Column(name = "elapsed_seconds")
+  private Long elapsedSeconds;
+
+  @Column(name = "completion_outcome", length = 32)
+  private String completionOutcome;
+
+  @Column(name = "aroma_locked_at")
+  private LocalDateTime aromaLockedAt;
+
   @PrePersist
   public void beforeInsert() {
-    if (createdAt == null) createdAt = LocalDateTime.now();
+    if (createdAt == null)
+      createdAt = LocalDateTime.now();
   }
 
-  public Integer getSessionEvaluatorId() { return sessionEvaluatorId; }
-  public void setSessionEvaluatorId(Integer value) { this.sessionEvaluatorId = value; }
+  public Integer getSessionEvaluatorId() {
+    return sessionEvaluatorId;
+  }
 
-  public Integer getSessionId() { return sessionId; }
-  public void setSessionId(Integer value) { this.sessionId = value; }
+  public void setSessionEvaluatorId(Integer value) {
+    this.sessionEvaluatorId = value;
+  }
 
-  public Integer getUserId() { return userId; }
-  public void setUserId(Integer value) { this.userId = value; }
+  public Integer getSessionId() {
+    return sessionId;
+  }
 
-  public LocalDateTime getJoinedAt() { return joinedAt; }
-  public void setJoinedAt(LocalDateTime value) { this.joinedAt = value; }
+  public void setSessionId(Integer value) {
+    this.sessionId = value;
+  }
 
-  public LocalDateTime getCreatedAt() { return createdAt; }
-  public void setCreatedAt(LocalDateTime value) { this.createdAt = value; }
+  public Integer getUserId() {
+    return userId;
+  }
+
+  public void setUserId(Integer value) {
+    this.userId = value;
+  }
+
+  public LocalDateTime getJoinedAt() {
+    return joinedAt;
+  }
+
+  public void setJoinedAt(LocalDateTime value) {
+    this.joinedAt = value;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(LocalDateTime value) {
+    this.createdAt = value;
+  }
+
+  public LocalDateTime getEvaluationStartedAt() {
+    return evaluationStartedAt;
+  }
+
+  public void setEvaluationStartedAt(LocalDateTime evaluationStartedAt) {
+    this.evaluationStartedAt = evaluationStartedAt;
+  }
+
+  public LocalDateTime getEvaluationEndedAt() {
+    return evaluationEndedAt;
+  }
+
+  public void setEvaluationEndedAt(LocalDateTime evaluationEndedAt) {
+    this.evaluationEndedAt = evaluationEndedAt;
+  }
+
+  public Long getElapsedSeconds() {
+    return elapsedSeconds;
+  }
+
+  public void setElapsedSeconds(Long elapsedSeconds) {
+    this.elapsedSeconds = elapsedSeconds;
+  }
+
+  public String getCompletionOutcome() {
+    return completionOutcome;
+  }
+
+  public void setCompletionOutcome(String completionOutcome) {
+    this.completionOutcome = completionOutcome;
+  }
+
+  public LocalDateTime getAromaLockedAt() {
+    return aromaLockedAt;
+  }
+
+  public void setAromaLockedAt(LocalDateTime aromaLockedAt) {
+    this.aromaLockedAt = aromaLockedAt;
+  }
 
 }

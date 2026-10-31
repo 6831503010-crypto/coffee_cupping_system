@@ -45,6 +45,40 @@ export interface EvaluationHistoryGroup {
   sessionName: string;
   completedAt: string;
   samples: SavedEvaluation[];
+  sessionClosed: boolean;
+  completionOutcome:
+    | 'IN_PROGRESS'
+    | 'FINALIZED'
+    | 'INCOMPLETE_SESSION_CLOSED'
+    | null;
+  sessionTimer: EvaluationTimer;
+  evaluatorTimer: EvaluationTimer    | null;
+  creatorOnly: boolean;
+}
+
+export interface EvaluationTimer {
+  startedAt: string | null;
+  endedAt: string | null;
+  elapsedSeconds: number | null;
+}
+
+export interface EvaluationTiming {
+  sessionId: number;
+  sessionEvaluatorId: number;
+  serverNow: string;
+  sessionClosed: boolean;
+  completionOutcome:
+    | 'IN_PROGRESS'
+    | 'FINALIZED'
+    | 'INCOMPLETE_SESSION_CLOSED'
+    | null;
+  sessionTimer: EvaluationTimer;
+  evaluatorTimer: EvaluationTimer;
+}
+
+export interface EvaluationProgress {
+  aromaLocked: boolean;
+  aromaLockedAt: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -69,9 +103,66 @@ export class EvaluationSubmissionService {
     ));
   }
 
+  timing(sessionId: number) {
+    return this.http.get<EvaluationTiming>(
+      `http://localhost:8080/api/sessions/${sessionId}/my-timing`,
+      { withCredentials: true }
+    );
+  }
+
+  begin(sessionId: number) {
+    return this.http.get<{ token: string; headerName: string }>(
+      'http://localhost:8080/api/csrf',
+      { withCredentials: true }
+    ).pipe(
+      switchMap(csrf =>
+        this.http.post<EvaluationTiming>(
+          `http://localhost:8080/api/sessions/${sessionId}/begin-evaluation`,
+          {},
+          {
+            withCredentials: true,
+            headers: {
+              [csrf.headerName]: csrf.token
+            }
+          }
+        )
+      )
+    );
+  }
+
   history() {
     return this.http.get<EvaluationHistoryGroup[]>(
       `${this.base}/my-evaluation-history`, { withCredentials: true }
+    );
+  }
+
+  progress(sessionId: number) {
+    return this.http.get<EvaluationProgress>(
+      `${this.base}/${sessionId}/my-evaluation-progress`,
+      { withCredentials: true }
+    );
+  }
+
+  lockAroma(
+    sessionId: number,
+    samples: EvaluationSamplePayload[]
+  ) {
+    return this.http.get<{ token: string; headerName: string }>(
+      'http://localhost:8080/api/csrf',
+      { withCredentials: true }
+    ).pipe(
+      switchMap(csrf =>
+        this.http.post<EvaluationProgress>(
+          `${this.base}/${sessionId}/my-evaluations/lock-aroma`,
+          { samples },
+          {
+            withCredentials: true,
+            headers: {
+              [csrf.headerName]: csrf.token
+            }
+          }
+        )
+      )
     );
   }
 }

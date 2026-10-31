@@ -7,10 +7,12 @@ import {
     finalize,
     forkJoin,
     switchMap,
-    timer
+    timer,
+    exhaustMap,
+      of,
   } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Component,DestroyRef, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { Component,DestroyRef, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ActivatedRoute,
@@ -23,9 +25,13 @@ import {
   LibrarySample,
   SampleChoice,
   SessionView,
+  SessionTimingView,
   EvaluatorView,
   EvaluatorCandidate
 } from '../../services/individual-session.service';
+import {
+  CoffeeInventoryService
+} from '../../services/coffee-inventory.service';
 
 import {
   SampleFormModal,
@@ -41,16 +47,25 @@ import {
 export class IndividualSession {
 
   private readonly api = inject(IndividualSessionService);
+  private readonly inventory = inject(CoffeeInventoryService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  readonly sessionTiming = signal<SessionTimingView | null>(null);
+  readonly sessionTimeDisplay = signal('00:00:00');
+  readonly sessionTimingError = signal('');
+
+  private sessionTimingStarted = false;
+  private sessionTimingReceivedAt = 0;
 
   readonly savedSamples = signal<LibrarySample[]>([]);
+  readonly sampleSearch = signal('');
+  readonly samplesLoading = signal(true);
+  readonly samplesError = signal('');
   readonly chosen = signal<SampleChoice[]>([]);
   readonly session = signal<SessionView | null>(null);
+  readonly sessionDetailsDescription = signal<string | null>(null);
   readonly saving = signal(false);
   readonly error = signal('');
-  readonly existingSampleError = signal('');
-  readonly existingCodeError = signal('');
 
   readonly evaluators = signal<EvaluatorView[]>([]);
   readonly loadingEvaluators = signal(false);
@@ -66,7 +81,34 @@ export class IndividualSession {
   readonly linkError = signal('');
   readonly linkMessage = signal('');
 
+  readonly evaluatorTimingDisplays = signal<
+    Record<number, { status: string; duration: string }>
+  >({});
+
   evaluatorEmail = '';
+
+  readonly selectedLibraryIds = computed(() =>
+    new Set(
+      this.chosen()
+        .map(choice => choice.sampleId)
+        .filter((id): id is number => id !== undefined)
+    )
+  );
+
+  readonly visibleUnselectedSamples = computed(() => {
+    const query = this.sampleSearch().trim().toLowerCase();
+    const selected = this.selectedLibraryIds();
+    return this.savedSamples().filter(sample =>
+      selected.has(sample.sampleId) || !query || [
+        sample.sampleName,
+        sample.growingLocation,
+        sample.process,
+        sample.ownerProducer,
+        sample.harvestYear?.toString()
+      ].some(value => (value ?? '').toLowerCase().includes(query)));
+  });
+
+  private readonly rememberedCodes = new Map<number, string>();
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly evaluatorSearchRequests = new Subject<string>();
@@ -97,11 +139,75 @@ export class IndividualSession {
     this.sampleFormModal?.open();
   }
 
+  setSampleSearch(value: string): void {
+    this.sampleSearch.set(value);
+  }
+
+  isSelected(sampleId: number): boolean {
+    return this.selectedLibraryIds().has(sampleId);
+  }
+
+  selectedLibrarySamples(): LibrarySample[] {
+    const selected = this.selectedLibraryIds();
+    return this.savedSamples().filter(sample => selected.has(sample.sampleId));
+  }
+
+  sampleCode(sampleId: number): string {
+    return this.chosen().find(choice => choice.sampleId === sampleId)?.sampleCode ?? '';
+  }
+
+  sampleCodeError(sampleId: number): string {
+    if (!this.creationAttempted()) return '';
+    const choice = this.chosen().find(item => item.sampleId === sampleId);
+    if (!choice || choice.sampleCode.trim()) return '';
+    return 'Enter a session sample code.';
+  }
+
+  toggleLibrarySample(sample: LibrarySample): void {
+    if (this.saving()) return;
+
+    if (this.isSelected(sample.sampleId)) {
+      this.rememberedCodes.set(sample.sampleId, this.sampleCode(sample.sampleId));
+      this.chosen.update(items =>
+        items.filter(choice => choice.sampleId !== sample.sampleId)
+      );
+      return;
+    }
+
+    if (!this.checkSampleSlot()) return;
+
+    this.chosen.update(items => [
+      ...items,
+      {
+        sampleId: sample.sampleId,
+        sampleCode: this.rememberedCodes.get(sample.sampleId) ?? ''
+      }
+    ]);
+  }
+
+  updateSampleCode(sampleId: number, value: string): void {
+    const code = value.slice(0, 100);
+    this.rememberedCodes.set(sampleId, code);
+    this.chosen.update(items => items.map(choice =>
+      choice.sampleId === sampleId
+        ? { ...choice, sampleCode: code }
+        : choice
+    ));
+  }
+
+  onSampleCodeInput(sampleId: number, event: Event): void {
+    const input = event.target;
+    if (input instanceof HTMLInputElement) {
+      this.updateSampleCode(sampleId, input.value);
+    }
+  }
+
 
   readonly sessionIdParam =
     this.route.snapshot.paramMap.get('id');
 
   sessionName = '';
+  sessionDescription = '';
   evaluatorLimit = 1;
   sampleCount: number | null = 1;
 
@@ -154,9 +260,6 @@ export class IndividualSession {
 
   creatorParticipates = false;
 
-  selectedExistingId: number | null = null;
-  existingCode = '';
-
 
   constructor() {
     this.setupEvaluatorSearch();
@@ -171,9 +274,20 @@ export class IndividualSession {
       this.api.get(id).subscribe({
         next: data => {
           this.session.set(data);
+          this.api.getSessionDescription(data.sessionId).pipe(
+            takeUntilDestroyed(this.destroyRef)
+          ).subscribe({
+            next: details => this.sessionDetailsDescription.set(details.description?.trim() || null),
+            error: () => this.sessionDetailsDescription.set(null)
+          });
 
           if (data.isCreator) {
             this.refreshEvaluators();
+            this.startSessionTiming(data.sessionId);
+
+            if (!data.closed) {
+              this.generateParticipationLink();
+            }
           }
         },
         error: () => this.error.set(
@@ -181,67 +295,31 @@ export class IndividualSession {
         )
       });
     } else {
-      this.api.library().subscribe({
-        next: data => this.savedSamples.set(data),
-        error: () => this.error.set(
-          'Could not load saved coffee samples.'
-        )
-      });
+      this.loadLibrary();
     }
   }
 
-  addExisting() {
-  this.existingSampleError.set('');
-  this.existingCodeError.set('');
-  this.error.set('');
-
-  if (!this.checkSampleSlot()) return;
-
-  const id = this.selectedExistingId;
-  const code = this.existingCode.trim();
-
-  if (id === null) {
-    this.existingSampleError.set('Select a coffee sample.');
-  } else if (!this.savedSamples().some(s => s.sampleId === id)) {
-    this.existingSampleError.set('Select a valid saved sample.');
-  } else if (this.chosen().some(s => s.sampleId === id)) {
-    this.existingSampleError.set('This sample is already selected.');
+  private loadLibrary(selectSampleId?: number): void {
+    this.samplesLoading.set(true);
+    this.samplesError.set('');
+    this.api.library().subscribe({
+      next: data => {
+        this.savedSamples.set(data);
+        this.samplesLoading.set(false);
+        if (selectSampleId !== undefined && data.some(sample => sample.sampleId === selectSampleId)) {
+          this.toggleLibrarySample(data.find(sample => sample.sampleId === selectSampleId)!);
+        }
+      },
+      error: () => {
+        this.samplesLoading.set(false);
+        this.samplesError.set('Could not load saved coffee samples. Try again.');
+      }
+    });
   }
 
-  if (!code) {
-    this.existingCodeError.set('Enter a sample code.');
-  } else if (code.length > 100) {
-    this.existingCodeError.set('Sample code must be 100 characters or fewer.');
-  } else if (this.chosen().some(
-    sample => sample.sampleCode.trim().toLowerCase() === code.toLowerCase()
-  )) {
-    this.existingCodeError.set(
-      'This sample code is already selected. Use a unique code.'
-    );
+  retryLibrary(): void {
+    this.loadLibrary();
   }
-
-  if (
-    id === null ||
-    this.existingSampleError() ||
-    this.existingCodeError()
-  ) {
-    this.focusCreationError(
-      id === null || this.existingSampleError()
-        ? '#existingSample'
-        : '#existingCode'
-    );
-    return;
-  }
-
-  this.chosen.update(items => [
-    ...items,
-    { sampleId: id, sampleCode: code }
-  ]);
-
-  this.selectedExistingId = null;
-  this.existingCode = '';
-  this.revealAddedSample(this.chosen().length - 1);
-}
 
   addNew(submission: SampleFormSubmission): void {
   const modal = this.sampleFormModal;
@@ -256,47 +334,29 @@ export class IndividualSession {
     return;
   }
 
-  const code = submission.sampleCode.trim();
+    this.inventory.create(submission.sample).subscribe({
+      next: created => {
+        this.rememberedCodes.set(
+          created.sampleId,
+          submission.sampleCode.trim()
+        );
 
-  if (this.chosen().some(
-    sample =>
-      sample.sampleCode.trim().toLowerCase() === code.toLowerCase()
-  )) {
-    modal.fail(
-      'This sample code is already selected. Use a unique code.',
-      'sampleCode'
-    );
-    return;
-  }
-
-  this.chosen.update(items => [
-    ...items,
-    {
-      sampleCode: code,
-      newSample: { ...submission.sample }
-    }
-  ]);
-
-    modal.complete();
-    this.revealAddedSample(this.chosen().length - 1);
+        modal.complete();
+        this.loadLibrary(created.sampleId);
+      },
+      error: (response: HttpErrorResponse) => {
+        modal.fail(
+          response.status === 400
+            ? 'Check the entered sample details.'
+            : response.status === 401
+              ? 'Please sign in again.'
+              : response.status === 403
+                ? 'You do not have permission to create this sample.'
+                : 'Could not save your sample. Your entered details are still here.'
+        );
+      }
+    });
 }
-
-  removeSample(index: number) {
-    if (this.saving()) return;
-    this.chosen.update(items =>
-      items.filter((_, i) => i !== index)
-    );
-  }
-
-  displayName(choice: SampleChoice): string {
-    if (choice.newSample) {
-      return choice.newSample.sampleName;
-    }
-
-    return this.savedSamples().find(
-      s => s.sampleId === choice.sampleId
-    )?.sampleName ?? 'Unknown sample';
-  }
 
   createSession() {
     if (this.saving()) return;
@@ -312,7 +372,7 @@ export class IndividualSession {
           : !this.isSampleCountValid()
             ? '#sampleCount'
             : this.selectedSamplesError()
-              ? '#selectedSamplesReview'
+            ? '#sampleSelection'
               : null;
 
     if (firstInvalid) {
@@ -327,15 +387,14 @@ export class IndividualSession {
 
     this.api.create({
       sessionName: name,
+      description: this.sessionDescription.trim() || null,
       evaluatorLimit: this.evaluatorLimit,
       creatorParticipates: this.creatorParticipates,
       samples: this.chosen()
     }).subscribe({
       next: result => {
         this.saving.set(false);
-        this.router.navigate([
-          '/individual', result.sessionId
-        ]);
+        this.router.navigate(['/individual', result.sessionId]);
       },
       error: () => {
         this.saving.set(false);
@@ -614,10 +673,11 @@ export class IndividualSession {
           );
           break;
         case 409:
-          this.evaluatorRemovalError.set(
-            'Removal is unavailable because the evaluator has saved evaluations or the session is closed.'
-          );
-          break;
+            this.evaluatorRemovalError.set(
+              'Removal is unavailable because the evaluator has begun evaluation, ' +
+              'has saved evaluations, or the session is closed.'
+            );
+            break;
         default:
           this.evaluatorRemovalError.set(
             'Could not confirm removal. Check the refreshed list before trying again.'
@@ -834,38 +894,242 @@ async copyParticipationLink(): Promise<void> {
     }, 0);
   }
 
-  readonly highlightedSampleIndex = signal<number | null>(null);
+  private startSessionTiming(sessionId: number): void {
+  if (this.sessionTimingStarted || this.destroyRef.destroyed) return;
 
-  private sampleHighlightTimer?: ReturnType<typeof setTimeout>;
+  this.sessionTimingStarted = true;
 
-  private revealAddedSample(index: number): void {
-    clearTimeout(this.sampleHighlightTimer);
-    this.highlightedSampleIndex.set(index);
+  timer(0, 5000).pipe(
+    exhaustMap(() =>
+      this.api.getSessionTiming(sessionId).pipe(
+        catchError(() => {
+          this.sessionTimingError.set(
+            'Unable to refresh session time. Reconnecting…'
+          );
+          return of(null);
+        })
+      )
+    ),
+    takeUntilDestroyed(this.destroyRef)
+  ).subscribe(timing => {
+    if (!timing) return;
 
-    // Wait until Angular renders the newly added row.
-    setTimeout(() => {
-      if (this.destroyRef.destroyed) return;
+    this.sessionTimingReceivedAt = performance.now();
+    this.sessionTiming.set(timing);
+    this.sessionTimingError.set('');
+    this.updateSessionTimeDisplay();
+  });
 
-      const row = this.host.nativeElement.querySelector<HTMLElement>(
-        `#selected-sample-${index}`
-      );
+  timer(0, 1000).pipe(
+    takeUntilDestroyed(this.destroyRef)
+  ).subscribe(() => this.updateSessionTimeDisplay());
+}
 
-      if (!row) return;
+private updateSessionTimeDisplay(): void {
+  this.updateEvaluatorTimingDisplays();
+  const timing = this.sessionTiming();
+  if (!timing) return;
 
-      row.focus({ preventScroll: true });
-      row.scrollIntoView({
-        behavior: window.matchMedia(
-          '(prefers-reduced-motion: reduce)'
-        ).matches ? 'auto' : 'smooth',
-        block: 'center',
-        inline: 'nearest'
-      });
+  const clock = timing.sessionTimer;
 
-      this.sampleHighlightTimer = setTimeout(() => {
-        if (!this.destroyRef.destroyed) {
-          this.highlightedSampleIndex.set(null);
-        }
-      }, 2000);
-    }, 0);
+  if (clock.startedAt === null) {
+    this.sessionTimeDisplay.set(
+      timing.sessionClosed ? 'Not started' : '00:00:00'
+    );
+    return;
+  }
+
+  if (clock.elapsedSeconds !== null) {
+    this.sessionTimeDisplay.set(
+      this.formatSessionDuration(clock.elapsedSeconds)
+    );
+    return;
+  }
+
+  if (timing.sessionClosed || clock.endedAt !== null) {
+    this.sessionTimeDisplay.set('—');
+    return;
+  }
+
+  const elapsedMilliseconds =
+    Date.parse(timing.serverNow)
+    - Date.parse(clock.startedAt)
+    + (performance.now() - this.sessionTimingReceivedAt);
+
+    this.sessionTimeDisplay.set(
+      this.formatSessionDuration(
+        Math.floor(elapsedMilliseconds / 1000)
+      )
+    );
+  }
+
+  private formatSessionDuration(seconds: number): string {
+    const total = Math.max(0, Math.floor(seconds));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const remainingSeconds = total % 60;
+
+    return [hours, minutes, remainingSeconds]
+      .map(value => String(value).padStart(2, '0'))
+      .join(':');
+  }
+
+  private updateEvaluatorTimingDisplays(): void {
+    const timing = this.sessionTiming();
+    if (!timing) return;
+
+    const displays: Record<
+      number,
+      { status: string; duration: string }
+    > = {};
+
+    const estimatedServerNow =
+      Date.parse(timing.serverNow)
+      + (performance.now() - this.sessionTimingReceivedAt);
+
+    for (const evaluator of timing.evaluators) {
+      const personal = evaluator.evaluatorTimer;
+      const outcome = evaluator.completionOutcome;
+
+      let status: string;
+
+      switch (outcome) {
+        case 'FINALIZED':
+          status = 'Finalized';
+          break;
+        case 'INCOMPLETE_SESSION_CLOSED':
+          status = 'Incomplete — Session Closed';
+          break;
+        case 'IN_PROGRESS':
+          status = timing.sessionClosed
+            ? 'Session closed'
+            : 'Evaluating';
+          break;
+        default:
+          status = timing.sessionClosed
+            ? 'Session closed — outcome unavailable'
+            : 'Not started';
+      }
+
+      let duration: string;
+
+      if (personal.elapsedSeconds !== null) {
+        duration = this.formatSessionDuration(personal.elapsedSeconds);
+      } else if (
+        personal.startedAt === null &&
+        outcome === 'INCOMPLETE_SESSION_CLOSED'
+      ) {
+        duration = 'Not started';
+      } else if (
+        personal.startedAt === null &&
+        !timing.sessionClosed &&
+        outcome === null
+      ) {
+        duration = '00:00:00';
+      } else if (
+        personal.startedAt !== null &&
+        personal.endedAt === null &&
+        outcome === 'IN_PROGRESS' &&
+        !timing.sessionClosed
+      ) {
+        duration = this.formatSessionDuration(
+          Math.floor(
+            (estimatedServerNow - Date.parse(personal.startedAt)) / 1000
+          )
+        );
+      } else {
+        duration = '—';
+      }
+
+      displays[evaluator.sessionEvaluatorId] = {
+        status,
+        duration
+      };
+    }
+
+    this.evaluatorTimingDisplays.set(displays);
+  }
+
+  @ViewChild('finalizeSessionDialog')
+  private finalizeSessionDialog?: ElementRef<HTMLDialogElement>;
+
+  readonly finalizingSession = signal(false);
+  readonly sessionFinalizationError = signal('');
+  readonly sessionFinalizationSuccess = signal('');
+
+  openFinalizeSessionModal(): void {
+    const info = this.session();
+
+    if (!info?.isCreator || info.closed || this.finalizingSession()) {
+      return;
+    }
+
+    this.sessionFinalizationError.set('');
+    this.sessionFinalizationSuccess.set('');
+    this.finalizeSessionDialog?.nativeElement.showModal();
+  }
+
+  closeFinalizeSessionModal(): void {
+    if (this.finalizingSession()) return;
+    this.finalizeSessionDialog?.nativeElement.close();
+  }
+
+  onFinalizeSessionCancel(event: Event): void {
+    event.preventDefault();
+    this.closeFinalizeSessionModal();
+  }
+
+  confirmSessionFinalization(): void {
+    const info = this.session();
+
+    if (!info?.isCreator || info.closed || this.finalizingSession()) {
+      return;
+    }
+
+    this.finalizingSession.set(true);
+    this.sessionFinalizationError.set('');
+
+    this.api.finalizeSession(info.sessionId, true).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: () => this.finishSessionFinalization(),
+      error: (error: HttpErrorResponse) => {
+        // The response may have been lost after successful closure.
+        // Read backend state before allowing another attempt.
+        this.api.get(info.sessionId).pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe({
+          next: current => {
+            this.session.set(current);
+
+            if (current.closed) {
+              this.finishSessionFinalization();
+              return;
+            }
+
+            this.finalizingSession.set(false);
+            this.sessionFinalizationError.set(
+              error.error?.message ||
+              'Session finalization failed. The session remains open.'
+            );
+          },
+          error: () => {
+            this.finalizingSession.set(false);
+            this.sessionFinalizationError.set(
+              'Could not confirm the session status. Refresh the page before trying again.'
+            );
+          }
+        });
+      }
+    });
+  }
+
+  private finishSessionFinalization(): void {
+    this.finalizingSession.set(false);
+    this.finalizeSessionDialog?.nativeElement.close();
+    this.sessionFinalizationSuccess.set(
+      'Session closed successfully. Refreshing session details…'
+    );
+    this.refreshEvaluators();
   }
 }

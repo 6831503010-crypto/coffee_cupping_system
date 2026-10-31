@@ -53,6 +53,7 @@ export interface SessionView {
 
 export interface CreateIndividualSessionRequest {
   sessionName: string;
+  description: string | null;
   evaluatorLimit: number;
   creatorParticipates: boolean;
   samples: SampleChoice[];
@@ -97,6 +98,38 @@ interface CsrfResponse {
   token: string;
 }
 
+export interface EvaluatorTimingView {
+  sessionEvaluatorId: number;
+  completionOutcome:
+    | 'IN_PROGRESS'
+    | 'FINALIZED'
+    | 'INCOMPLETE_SESSION_CLOSED'
+    | null;
+  evaluatorTimer: {
+    startedAt: string | null;
+    endedAt: string | null;
+    elapsedSeconds: number | null;
+  };
+}
+
+export interface SessionTimingView {
+  sessionId: number;
+  serverNow: string;
+  sessionClosed: boolean;
+  sessionTimer: {
+    startedAt: string | null;
+    endedAt: string | null;
+    elapsedSeconds: number | null;
+  };
+  evaluators: EvaluatorTimingView[];
+}
+
+interface SessionUpdateSource {
+  sessionName: string;
+  mode: string;
+  description: string | null;
+  cuppingDate: string | null;
+}
 @Injectable({ providedIn: 'root' })
 export class IndividualSessionService {
 
@@ -116,6 +149,57 @@ export class IndividualSessionService {
     return this.http.get<SessionView>(
       `${this.baseUrl}/individual-sessions/${id}`,
       { withCredentials: true }
+    );
+  }
+
+  getSessionDescription(sessionId: number) {
+    return this.http.get<{ description: string | null }>(
+      `${this.baseUrl}/sessions/${sessionId}`,
+      { withCredentials: true }
+    );
+  }
+
+  getSessionTiming(sessionId: number) {
+    return this.http.get<SessionTimingView>(
+      `http://localhost:8080/api/sessions/${sessionId}/timing`,
+      { withCredentials: true }
+    );
+  }
+
+  finalizeSession(
+    sessionId: number,
+    acknowledgeIncomplete: boolean
+  ) {
+    return this.http.get<SessionUpdateSource>(
+      `${this.baseUrl}/sessions/${sessionId}`,
+      { withCredentials: true }
+    ).pipe(
+      switchMap(session =>
+        this.http.get<CsrfResponse>(
+          `${this.baseUrl}/csrf`,
+          { withCredentials: true }
+        ).pipe(
+          switchMap(csrf =>
+            this.http.put<unknown>(
+              `${this.baseUrl}/sessions/${sessionId}`,
+              {
+                sessionName: session.sessionName,
+                mode: session.mode,
+                description: session.description,
+                cuppingDate: session.cuppingDate,
+                status: 'FINALIZED',
+                acknowledgeIncomplete
+              },
+              {
+                withCredentials: true,
+                headers: {
+                  [csrf.headerName]: csrf.token
+                }
+              }
+            )
+          )
+        )
+      )
     );
   }
 

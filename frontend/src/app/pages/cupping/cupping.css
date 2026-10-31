@@ -2,6 +2,8 @@
   display: block;
 }
 
+/* Navigation */
+
 .back-link {
   display: inline-block;
   margin-bottom: 26px;
@@ -10,6 +12,35 @@
   font-weight: 800;
 }
 
+button.back-link.session-return-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 2rem;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #4a2c11;
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+button.back-link.session-return-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+button.back-link.session-return-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+/* Tasting notes and cup controls */
+
 .tasting-notes-field {
   margin-top: 16px;
 }
@@ -17,16 +48,16 @@
 .cup-section-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 12px;
 }
 
 .check-all-btn {
   border: 1px solid var(--line);
-  background: #fff;
-  color: var(--mocha);
   border-radius: 10px;
   padding: 7px 12px;
+  background: #fff;
+  color: var(--mocha);
   font: inherit;
   font-size: 13px;
   font-weight: 800;
@@ -42,26 +73,795 @@
   cursor: default;
 }
 
-/* Grouped qualities in Review & Finalize */
+/* Aroma lock confirmation */
 
-.review-quality-groups {
-  display: grid;
-  gap: 8px;
-  margin-top: 12px;
+.aroma-lock-dialog {
+  box-sizing: border-box;
+  width: min(480px, calc(100vw - 32px));
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 24px;
+  background: #fff;
+  color: var(--espresso);
 }
 
-.review-quality-line {
-  color: var(--roast);
-  font-size: 14px;
+.aroma-lock-dialog::backdrop {
+  background: rgb(0 0 0 / 40%);
+}
+
+.aroma-lock-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.aroma-lock-heading h2 {
+  margin: 0;
+}
+
+.aroma-lock-close {
+  border: 0;
+  padding: 4px 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.aroma-lock-close:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.aroma-lock-dialog p {
+  margin: 20px 0;
   line-height: 1.6;
+}
+
+.aroma-lock-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Review sample navigation */
+
+.review-sample-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 4px 14px;
+}
+
+.review-sample-button {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 18px;
+  background: #fff;
+  color: var(--mocha);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.review-sample-button:hover:not(.selected) {
+  background: #fffaf5;
+}
+
+.review-sample-button.selected {
+  border-color: var(--espresso);
+  background: var(--espresso);
+  color: #fff;
+}
+
+.review-sample-button:focus-visible,
+.review-more-details summary:focus-visible {
+  outline: 2px solid var(--mocha);
+  outline-offset: 3px;
+}
+
+/* Review card and heading */
+
+.review-summary-card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.review-summary-heading,
+.review-summary-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.review-summary-heading {
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.review-summary-title {
+  min-width: 0;
+}
+
+.review-summary-title h3 {
+  margin: 0;
   overflow-wrap: anywhere;
 }
 
-.review-quality-line strong {
+.review-lock-badge,
+.review-descriptor-chip {
+  border-radius: 20px;
+  padding: 6px 12px;
+  background: #f5eee7;
+  color: var(--mocha);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Ten category scores */
+
+.review-score-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.review-score-tile {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.review-score-tile>span {
+  display: block;
+  color: var(--espresso);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.review-score-value {
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.review-score-value strong {
+  color: var(--espresso);
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.review-score-value span {
+  margin-left: 4px;
+  color: var(--roast);
+  font-size: 14px;
+}
+
+.review-score-tile small {
+  display: block;
+  margin-top: 8px;
+  color: var(--roast);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Defects and total */
+
+.review-defect-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: var(--mocha);
+}
+
+.review-defect-strip.has-defects {
+  border-color: #d6a24b;
+  background: #fff7e7;
+}
+
+.review-defect-strip span {
+  overflow-wrap: anywhere;
+}
+
+.review-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  border-radius: 10px;
+  padding: 18px;
+  background: #f7f2ec;
+}
+
+.review-total>strong {
+  color: var(--espresso);
+  font-size: 20px;
+}
+
+.review-total>div {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.review-total-value {
+  color: var(--espresso);
+  font-size: 38px;
+  line-height: 1.2;
+}
+
+.review-total div>span {
+  margin-left: 6px;
+  color: var(--roast);
+  font-size: 22px;
+}
+
+/* Descriptors and optional notes */
+
+.review-descriptor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.review-descriptor-grid section {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.review-descriptor-grid h4 {
+  margin: 0 0 12px;
+  color: var(--espresso);
+}
+
+.review-descriptor-grid h5 {
+  margin: 16px 0 6px;
+  color: var(--espresso);
+  font-size: 14px;
+}
+
+.review-descriptor-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.review-descriptor-chip {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+.review-summary-notes {
+  margin: 0;
+  color: var(--roast);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Expandable intensity and cup details */
+
+.review-more-details {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.review-more-details summary {
+  color: var(--mocha);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.review-intensity-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
+  margin: 20px 0;
+}
+
+.review-intensity-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.review-intensity-list dt {
+  color: var(--roast);
+}
+
+.review-intensity-list dd {
+  flex-shrink: 0;
+  margin: 0;
   color: var(--espresso);
   font-weight: 800;
 }
 
-.review-quality-line span {
+.review-cup-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.review-cup-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.review-cup-table caption {
+  padding: 8px;
+  color: var(--espresso);
+  text-align: left;
+  font-weight: 800;
+}
+
+.review-cup-table th,
+.review-cup-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px;
+  text-align: center;
+}
+
+.review-cup-table th {
+  color: var(--espresso);
+}
+
+.review-cup-table td {
   color: var(--roast);
+}
+
+/* Responsive layout */
+
+@media (max-width: 900px) {
+  .review-score-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .review-summary-card {
+    padding: 14px;
+  }
+
+  .review-score-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .review-descriptor-grid,
+  .review-intensity-list {
+    grid-template-columns: 1fr;
+  }
+
+  .review-summary-heading>.btn {
+    width: 100%;
+  }
+
+  .review-total {
+    padding: 14px;
+  }
+
+  .review-total-value {
+    font-size: 32px;
+  }
+
+  .review-total div>span {
+    font-size: 18px;
+  }
+
+  .aroma-lock-dialog {
+    padding: 20px;
+  }
+}
+.actions.review-finalize-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Compact evaluation UI — scoped to this page, leaving timer and scoring logic intact. */
+:host .shell {
+  padding-top: 18px;
+}
+
+:host .hero {
+  padding: 15px 21px;
+  border-radius: 14px;
+  min-height: 0;
+}
+
+:host .hero h1 {
+  font-size: clamp(21px, 2.5vw, 28px);
+  line-height: 1.25;
+}
+
+:host .cupping-progress {
+  margin: 14px 0;
+  padding: 10px 15px;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+:host .cupping-progress .steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+:host .cupping-progress .step {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 7px 5px 12px;
+  text-align: left;
+}
+
+:host .cupping-progress .step:not(:last-child)::after,
+:host .cupping-progress .step:last-child::after {
+  content: '';
+  position: absolute;
+  top: auto;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  border-radius: 3px;
+  background: #e5d8cc;
+}
+
+:host .cupping-progress .step.active::after,
+:host .cupping-progress .step.done::after {
+  background: var(--espresso);
+}
+
+:host .cupping-progress .step-icon {
+  width: 32px;
+  height: 32px;
+}
+
+:host .cupping-progress .step-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+:host .cupping-progress .step-label {
+  gap: 0;
+  font-size: 13px;
+}
+
+:host .cupping-progress .step-caption {
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+
+:host .panel {
+  border-radius: 16px;
+}
+
+:host .panel-head {
+  align-items: center;
+  padding: 16px 20px;
+}
+
+:host .panel-head h2 {
+  font-size: 22px;
+}
+
+:host .tabs {
+  padding: 10px 20px;
+}
+
+:host .tab {
+  padding: 7px 11px;
+  font-size: 13px;
+}
+
+:host .content {
+  padding: 18px 20px;
+}
+
+:host .sample-title {
+  margin-bottom: 12px;
+}
+
+:host .sample-title h3 {
+  font-size: 18px;
+}
+
+:host .grid {
+  gap: 12px;
+}
+
+:host .section {
+  padding: 14px;
+  border-radius: 12px;
+}
+
+:host .section h4 {
+  margin-bottom: 10px;
+}
+
+:host .score-grid {
+  gap: 12px;
+}
+
+:host .field-card {
+  min-width: 0;
+  padding: 13px;
+  border-radius: 10px;
+}
+
+:host .aroma-confirm-hint {
+  font-size: 12px;
+  color: var(--mocha);
+}
+
+@media (max-width: 760px) {
+  :host .cupping-progress .steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  :host .cupping-progress .step {
+    flex-direction: column;
+    text-align: center;
+    gap: 4px;
+  }
+
+  :host .cupping-progress .step-label {
+    font-size: 11px;
+  }
+
+  :host .cupping-progress .step-caption {
+    display: none;
+  }
+
+  :host .panel-head {
+    padding: 14px 16px;
+  }
+
+  :host .content {
+    padding: 15px;
+  }
+
+  :host .tabs {
+    padding: 9px 15px;
+  }
+}
+
+/* Single card, vertically stacked: title/timer row above full-width progress. */
+:host .cupping-session-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+:host .cupping-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+:host .cupping-header-top h1 {
+  flex: 1 1 240px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+:host .cupping-progress-inline {
+  width: 100%;
+  box-sizing: border-box;
+  flex: none;
+}
+
+:host .cupping-header-timer {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  color: inherit;
+  font-size: 13px;
+  text-align: right;
+}
+
+:host .cupping-header-timer strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+:host .cupping-header-timer small {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+
+:host .cupping-status-message {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 10px 0;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--mocha);
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  :host .cupping-header-top {
+    align-items: flex-start;
+  }
+
+  :host .cupping-header-timer {
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
+
+
+/* Cleanup nested borders and merge header/progress into one card */
+:host .cupping-session-header { padding-bottom: 14px; }
+:host .cupping-progress-inline { margin: 8px 0 0; padding: 8px 0 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+:host .cupping-progress-inline .steps { gap: 8px; }
+:host .cupping-progress-inline .step { padding-bottom: 10px; }
+:host .cupping-progress-inline .step:not(:last-child)::after,
+:host .cupping-progress-inline .step:last-child::after { bottom: 0; }
+:host .section { padding: 12px; }
+:host .section > label { margin-bottom: 8px; }
+:host .field-card,
+:host .field-card.field-card-minimal { border: 0; padding: 0; background: transparent; box-shadow: none; }
+:host .field-card.field-card-minimal { margin-top: 2px; }
+:host .tasting-notes-field { margin-top: 10px; padding: 0 !important; border: 0 !important; background: transparent !important; }
+:host .tasting-notes-field textarea { min-height: 88px; }
+
+:host .aroma-quality-children { margin-top: 6px; }
+:host .aroma-quality-option { border-radius: 10px; }
+:host .sample-title { margin-bottom: 8px; }
+@media (max-width: 760px) {
+  :host .cupping-session-header { padding-bottom: 10px; }
+  :host .cupping-progress-inline { margin-top: 10px; }
+}
+
+
+/* Evaluation UI refinements: spacing and concise required field headings. */
+:host .cupping-session-header {
+  margin-bottom: 20px;
+}
+
+:host .grid > .section h4 .required-mark {
+  color: var(--danger, #c0392b);
+  margin-left: 3px;
+}
+
+:host .aroma-quality-score-section .field-card-minimal {
+  margin-top: 0;
+}
+
+
+/* Group descriptor checkboxes into bordered cards in their original row/column order. */
+:host .aroma-quality-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+:host .aroma-quality-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* The group has one outer border; no nested borders around parents or children. */
+:host .aroma-quality-group .aroma-quality-option {
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  padding: 7px 4px;
+  min-height: 30px;
+  line-height: 1.35;
+}
+
+:host .aroma-quality-group .aroma-quality-parent {
+  font-weight: 800;
+}
+
+:host .aroma-quality-group .aroma-quality-children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0 0 0 16px;
+  border: 0;
+}
+
+:host .aroma-quality-group .aroma-quality-option:hover {
+  background: #faf8f5;
+}
+
+:host .aroma-quality-group .aroma-quality-option:has(input:checked) {
+  border: 0;
+  background: #f7f1e7;
+  color: var(--espresso);
+}
+
+:host .aroma-quality-group .aroma-quality-option:focus-within {
+  outline: 2px solid var(--mocha);
+  outline-offset: 1px;
+}
+
+@media (max-width: 900px) {
+  :host .aroma-quality-groups {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  :host .aroma-quality-group { padding: 8px; }
+}
+
+@media (max-width: 680px) {
+  :host .aroma-quality-groups { grid-template-columns: 1fr; }
+}
+
+
+/* Flavor stage: individual bordered score fields and single-row heading/value. */
+:host .score-grid .score-evaluation-card {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+}
+:host .score-grid .score-evaluation-card.validation-error {
+  border-color: var(--danger, #c0392b);
+}
+:host .score-grid .score-evaluation-card app-score-picker {
+  display: block;
+  min-width: 0;
+}
+:host .grid > .section > h4 > .required-mark {
+  margin-left: 3px;
+  color: var(--danger, #c0392b);
+}
+@media (max-width: 760px) {
+  :host .score-grid .score-evaluation-card { padding: 12px; }
 }
