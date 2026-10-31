@@ -1,0 +1,202 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.back-link {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #3d2314;
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #b58357;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #2c221e;
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  font-size: 1.05rem;
+  color: #6b5344;
+  margin-bottom: 2rem;
+}
+
+.section-heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c221e;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Same layout as First User Guide */
+.guide-row {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.guide-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.guide-img-container {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.guide-image {
+  height: auto;
+  border-radius: 0.375rem;
+  box-shadow: 0 6px 18px rgba(44, 34, 30, 0.25);
+  cursor: zoom-in;
+}
+
+@media (max-width: 768px) {
+  .guide-row {
+    flex-direction: column;
+  }
+
+  .guide-text,
+  .guide-img-container {
+    flex: 1;
+    width: 100%;
+  }
+}
+
+/* Click Button */
+.button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.click-button {
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+  background-color: #3d2314;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.8rem 2rem;
+  cursor: pointer;
+  box-shadow: 0 5px 12px rgba(44, 34, 30, 0.25);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.click-button:hover {
+  background-color: #6b5344;
+  box-shadow: 0 7px 16px rgba(44, 34, 30, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Image Zoom Button */
+.image-zoom-button {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(61, 35, 20, 0.85);
+  border: none;
+  border-radius: 50%;
+  cursor: zoom-in;
+  z-index: 2;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.image-zoom-button:hover {
+  background-color: #6b5344;
+  transform: scale(1.1);
+}
+
+/* Magnifying Glass Icon */
+.lens-icon {
+  position: relative;
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+}
+
+.lens-icon::after {
+  content: '';
+  position: absolute;
+  width: 7px;
+  height: 2px;
+  background-color: #ffffff;
+  right: -5px;
+  bottom: -3px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+
+/* Image Lightbox */
+.image-lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  z-index: 2000;
+}
+
+.image-lightbox img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 0.375rem;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 35px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 2001;
+}
+
+.lightbox-close:hover {
+  color: #ccc;
+}

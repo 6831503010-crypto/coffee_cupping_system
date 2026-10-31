@@ -7,6 +7,7 @@ import { Register } from './pages/register/register';
 import { authGuard } from './guards/auth.guard';
 import { Guide } from './pages/guide/guide';
 import { FirstUserGuide } from './pages/first-user-guide/first-user-guide';
+import { FlavorTest } from './pages/flavor-test/flavor-test';
 import { IndividualSession } from './pages/individual-session/individual-session';
 import { JoinSession } from './pages/join-session/join-session';
 import { Inventory } from './pages/inventory/inventory';
@@ -48,6 +49,11 @@ export const routes: Routes = [
   {
     path: 'guide',
     component: FirstUserGuide,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'guide/flavor-test',
+    component: FlavorTest,
     canActivate: [authGuard]
   },
   {
