@@ -98,15 +98,14 @@ export class IndividualSession {
   readonly visibleUnselectedSamples = computed(() => {
     const query = this.sampleSearch().trim().toLowerCase();
     const selected = this.selectedLibraryIds();
-
     return this.savedSamples().filter(sample =>
-      !selected.has(sample.sampleId) &&
-      (!query || [
+      selected.has(sample.sampleId) || !query || [
         sample.sampleName,
         sample.growingLocation,
-        sample.process
-      ].some(value => (value ?? '').toLowerCase().includes(query)))
-    );
+        sample.process,
+        sample.ownerProducer,
+        sample.harvestYear?.toString()
+      ].some(value => (value ?? '').toLowerCase().includes(query)));
   });
 
   private readonly rememberedCodes = new Map<number, string>();
@@ -168,6 +167,7 @@ export class IndividualSession {
     if (this.saving()) return;
 
     if (this.isSelected(sample.sampleId)) {
+      this.rememberedCodes.set(sample.sampleId, this.sampleCode(sample.sampleId));
       this.chosen.update(items =>
         items.filter(choice => choice.sampleId !== sample.sampleId)
       );
@@ -259,30 +259,6 @@ export class IndividualSession {
   }
 
   creatorParticipates = false;
-
-  selectedExistingId: number | null = null;
-  existingCode = '';
-  sampleSearch = '';
-
-  get filteredSavedSamples(): LibrarySample[] {
-    const query = this.sampleSearch.trim().toLowerCase();
-    if (!query) return this.savedSamples();
-    return this.savedSamples().filter(sample =>
-      [sample.sampleName, sample.process, sample.growingLocation, sample.ownerProducer,
-        sample.harvestYear?.toString()]
-        .some(value => (value ?? '').toLowerCase().includes(query))
-    );
-  }
-
-  isChosenSample(sampleId: number): boolean {
-    return this.chosen().some(sample => sample.sampleId === sampleId);
-  }
-
-  selectExistingSample(sampleId: number): void {
-    if (!this.canAddSample() || this.isChosenSample(sampleId)) return;
-    this.selectedExistingId = sampleId;
-    this.existingSampleError.set('');
-  }
 
 
   constructor() {
@@ -915,41 +891,6 @@ async copyParticipationLink(): Promise<void> {
         block: 'center',
         inline: 'nearest'
       });
-    }, 0);
-  }
-
-  readonly highlightedSampleIndex = signal<number | null>(null);
-
-  private sampleHighlightTimer?: ReturnType<typeof setTimeout>;
-
-  private revealAddedSample(index: number): void {
-    clearTimeout(this.sampleHighlightTimer);
-    this.highlightedSampleIndex.set(index);
-
-    // Wait until Angular renders the newly added row.
-    setTimeout(() => {
-      if (this.destroyRef.destroyed) return;
-
-      const row = this.host.nativeElement.querySelector<HTMLElement>(
-        `#selected-sample-${index}`
-      );
-
-      if (!row) return;
-
-      row.focus({ preventScroll: true });
-      row.scrollIntoView({
-        behavior: window.matchMedia(
-          '(prefers-reduced-motion: reduce)'
-        ).matches ? 'auto' : 'smooth',
-        block: 'center',
-        inline: 'nearest'
-      });
-
-      this.sampleHighlightTimer = setTimeout(() => {
-        if (!this.destroyRef.destroyed) {
-          this.highlightedSampleIndex.set(null);
-        }
-      }, 2000);
     }, 0);
   }
 
