@@ -47,3 +47,45 @@
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }
+
+/* 40:60 Layout Ratio Styles (Text 40%, Image 60%) */
+.guide-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.guide-text {
+  flex: 0 0 40%;
+}
+
+.guide-img-container {
+  flex: 0 0 60%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.guide-image {
+  width: 70%;
+  max-width: 70%;
+  height: auto;
+  border-radius: 0.375rem;
+  box-shadow: 0 6px 18px rgba(44, 34, 30, 0.25);
+}
+
+@media (max-width: 768px) {
+  .guide-row {
+    flex-direction: column;
+  }
+
+  .guide-text,
+  .guide-img-container {
+    flex: 0 0 100%;
+    width: 100%;
+  }
+
+  .guide-img-container {
+    justify-content: center;
+  }
+}
