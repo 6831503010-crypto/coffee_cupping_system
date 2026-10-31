@@ -1,5 +1,15 @@
-<header #headerArea class="site-header" [class.compact]="!showFullNavigation()">
-  <a class="brand" routerLink="/" aria-label="Coffee Cupping System home" (click)="closeMenu()">
+<header
+  #headerArea
+  class="site-header"
+  [class.compact]="!showFullNavigation()"
+>
+  <!-- Brand -->
+  <a
+    class="brand"
+    routerLink="/"
+    aria-label="Coffee Cupping System home"
+    (click)="closeMenu()"
+  >
     <span class="bean" aria-hidden="true"></span>
 
     <span class="brand-text">
@@ -9,112 +19,292 @@
   </a>
 
   <div class="header-actions">
+
+    <!-- Main Navigation -->
     @if (showFullNavigation()) {
-    <nav class="site-nav" id="sharedSiteNav" aria-label="Primary navigation" [class.open]="menuOpen()">
-      <a routerLink="/" (click)="closeMenu()">HOME</a>
-      <a routerLink="/about" (click)="closeMenu()">ABOUT</a>
-      <a routerLink="/guide" (click)="closeMenu()">GUIDE</a>
-    </nav>
+      <nav
+        class="site-nav"
+        id="sharedSiteNav"
+        aria-label="Primary navigation"
+        [class.open]="menuOpen()"
+      >
+        <a routerLink="/" (click)="closeMenu()">HOME</a>
+        <a routerLink="/about" (click)="closeMenu()">ABOUT</a>
+        <a routerLink="/guide" (click)="closeMenu()">GUIDE</a>
+      </nav>
     }
 
+    <!-- Account Menu -->
     @if (showAccount()) {
-    @if (currentUser(); as user) {
-    <div #accountArea class="account-area" (pointerenter)="openAccountOnHover($event)"
-      (pointerleave)="closeAccountOnLeave($event)" (focusout)="onAccountFocusOut($event)"
-      (keydown.escape)="onAccountEscape($event)">
-      <button #accountTrigger type="button" class="account-trigger" [attr.aria-expanded]="accountOpen()"
-        aria-controls="sharedAccountDropdown" [attr.aria-label]="
-          'Account options for ' + user.name +
-          (user.qualificationStatus === 'QUALIFIED'
-            ? ', qualified evaluator'
-            : '')
-        "
-        (click)="accountOpen.set(true)" (keydown.arrowdown)="
+      @if (currentUser(); as user) {
+
+        <div
+          #accountArea
+          class="account-area"
+          (pointerenter)="openAccountOnHover($event)"
+          (pointerleave)="closeAccountOnLeave($event)"
+          (focusout)="onAccountFocusOut($event)"
+          (keydown.escape)="onAccountEscape($event)"
+        >
+
+          <!-- Account Trigger -->
+          <button
+            #accountTrigger
+            type="button"
+            class="account-trigger"
+            [attr.aria-expanded]="accountOpen()"
+            aria-controls="sharedAccountDropdown"
+            [attr.aria-label]="
+              'Account options for ' + user.name +
+              (
+                user.qualificationStatus === 'QUALIFIED'
+                  ? ', qualified evaluator'
+                  : ''
+              )
+            "
+            (click)="accountOpen.set(true)"
+            (keydown.arrowdown)="
               accountOpen.set(true);
               $event.preventDefault()
-            ">
-        <span class="account-avatar" aria-hidden="true">
-          {{ userInitial() }}
-        </span>
+            "
+          >
 
-        <span class="account-details">
-          <span class="account-name-row">
-            <strong class="account-name" [title]="user.name">
-              {{ user.name }}
-            </strong>
-
-            @if (user.qualificationStatus === 'QUALIFIED') {
-            <span class="qualification-badge" title="Qualified evaluator" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="currentColor" />
-                <path d="m7.5 12 3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
+            <!-- User Avatar -->
+            <span class="account-avatar" aria-hidden="true">
+              {{ userInitial() }}
             </span>
-            }
-          </span>
-          <span class="account-email" [title]="user.email">
-            {{ user.email }}
-          </span>
-        </span>
 
-        <svg class="account-chevron" [class.expanded]="accountOpen()" width="16" height="16" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </button>
+            <!-- User Information -->
+            <span class="account-details">
 
-      <div id="sharedAccountDropdown" class="account-dropdown" [hidden]="!accountOpen()">
-        <div class="account-dropdown-panel">
-          <span class="account-menu-label">YOUR ACCOUNT</span>
-          <a class="account-menu-link account-menu-placeholder" aria-disabled="true" title="Profile page coming soon">
-            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
-            </svg>
-            <span>My Profile</span>
-            <span class="account-menu-soon">Soon</span>
-          </a>
-          <a routerLink="/history" class="account-menu-link" (click)="closeMenu()">
-            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3.5 2" />
-            </svg>
-            <span>History</span>
-          </a>
-          <a routerLink="/inventory" class="account-menu-link" (click)="closeMenu()">
-            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="16" rx="2" />
-              <path d="M3 9h18M8 13h8" />
-            </svg>
-            <span>Coffee Inventory</span>
-          </a>
-          <div class="account-menu-divider" role="separator"></div>
-          <button type="button" class="account-logout" [disabled]="loggingOut()" (click)="logout()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <!-- Door -->
-              <path d="M9 4H4v16h5" />
+              <span class="account-name-row">
+                <strong
+                  class="account-name"
+                  [title]="user.name"
+                >
+                  {{ user.name }}
+                </strong>
 
-              <!-- Arrow pointing out -->
-              <path d="M10 12h10" />
-              <path d="m16 8 4 4-4 4" />
-            </svg>
-            <span>
-              {{ loggingOut() ? 'Logging out…' : 'Log out' }}
+                <!-- Qualification Badge -->
+                @if (
+                  user.qualificationStatus === 'QUALIFIED'
+                ) {
+                  <span
+                    class="qualification-badge"
+                    title="Qualified evaluator"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        fill="currentColor"
+                      />
+
+                      <path
+                        d="m7.5 12 3 3 6-6"
+                        stroke="#fff"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </span>
+                }
+              </span>
+
+              <span
+                class="account-email"
+                [title]="user.email"
+              >
+                {{ user.email }}
+              </span>
+
             </span>
+
+            <!-- Dropdown Arrow -->
+            <svg
+              class="account-chevron"
+              [class.expanded]="accountOpen()"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+
           </button>
+
+          <!-- Account Dropdown -->
+          <div
+            id="sharedAccountDropdown"
+            class="account-dropdown"
+            [hidden]="!accountOpen()"
+          >
+            <div class="account-dropdown-panel">
+
+              <span class="account-menu-label">
+                YOUR ACCOUNT
+              </span>
+
+              <!-- My Profile -->
+              <a
+                routerLink="/profile"
+                class="account-menu-link"
+                (click)="closeMenu()"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="19"
+                  height="19"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="8" r="4" />
+
+                  <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+                </svg>
+
+                <span>My Profile</span>
+              </a>
+
+              <!-- History -->
+              <a
+                routerLink="/history"
+                class="account-menu-link"
+                (click)="closeMenu()"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="19"
+                  height="19"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+
+                  <path d="M12 7v5l3.5 2" />
+                </svg>
+
+                <span>History</span>
+              </a>
+
+              <!-- Coffee Inventory -->
+              <a
+                routerLink="/inventory"
+                class="account-menu-link"
+                (click)="closeMenu()"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="19"
+                  height="19"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect
+                    x="3"
+                    y="4"
+                    width="18"
+                    height="16"
+                    rx="2"
+                  />
+
+                  <path d="M3 9h18M8 13h8" />
+                </svg>
+
+                <span>Coffee Inventory</span>
+              </a>
+
+              <!-- Divider -->
+              <div
+                class="account-menu-divider"
+                role="separator"
+              ></div>
+
+              <!-- Logout -->
+              <button
+                type="button"
+                class="account-logout"
+                [disabled]="loggingOut()"
+                (click)="logout()"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <!-- Door -->
+                  <path d="M9 4H4v16h5" />
+
+                  <!-- Logout Arrow -->
+                  <path d="M10 12h10" />
+
+                  <path d="m16 8 4 4-4 4" />
+                </svg>
+
+                <span>
+                  {{
+                    loggingOut()
+                      ? 'Logging out…'
+                      : 'Log out'
+                  }}
+                </span>
+              </button>
+
+            </div>
+          </div>
+
         </div>
-      </div>
-    </div>
-    }
+
+      }
     }
 
+    <!-- Mobile Navigation Toggle -->
     @if (showFullNavigation()) {
-    <button class="menu-toggle" type="button" [attr.aria-label]="
-          menuOpen() ? 'Close navigation' : 'Open navigation'
-        " [attr.aria-expanded]="menuOpen()" aria-controls="sharedSiteNav" (click)="toggleMenu()">
-      ☰
-    </button>
+      <button
+        class="menu-toggle"
+        type="button"
+        [attr.aria-label]="
+          menuOpen()
+            ? 'Close navigation'
+            : 'Open navigation'
+        "
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="sharedSiteNav"
+        (click)="toggleMenu()"
+      >
+        ☰
+      </button>
     }
+
   </div>
-</header>
+</header> 
