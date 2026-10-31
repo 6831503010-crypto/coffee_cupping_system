@@ -23,12 +23,12 @@
       @if (showSampleCode) {
       <div class="field field--full">
         <label for="sampleCreateCode">Sample Code *</label>
-        <input id="sampleCreateCode" name="sampleCode" [(ngModel)]="sampleCode"
-          (ngModelChange)="clearFieldError('sampleCode')" maxlength="100" required placeholder="e.g. 102"
-          [class.input-error]="!!fieldErrors().sampleCode" [attr.aria-invalid]="!!fieldErrors().sampleCode"
-          [attr.aria-describedby]="
-              fieldErrors().sampleCode ? 'sampleCreateCodeError' : null
-            " />
+        <input id="sampleCreateCode" name="sampleCode" type="text" inputmode="numeric" pattern="[0-9]{3}"
+          [(ngModel)]="sampleCode" (ngModelChange)="clearFieldError('sampleCode')" maxlength="100" required
+          placeholder="e.g. 102" [class.input-error]="!!fieldErrors().sampleCode"
+          [attr.aria-invalid]="!!fieldErrors().sampleCode" [attr.aria-describedby]="
+            fieldErrors().sampleCode ? 'sampleCreateCodeError' : null
+          " />
 
         @if (fieldErrors().sampleCode) {
         <p id="sampleCreateCodeError" class="field-error" role="alert">

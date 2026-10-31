@@ -109,13 +109,13 @@ public class IndividualSessionService {
 
     for (SampleChoice choice : request.samples()) {
 
-      String code = choice.sampleCode().trim();
+      String code = choice.sampleCode();
 
-      if (code.isEmpty() || code.length() > 100) {
-        throw bad("Invalid sample code");
+      if (code == null || !code.matches("[0-9]{3}")) {
+        throw bad("Sample code must be a 3-digit number.");
       }
 
-      if (!codes.add(code.toLowerCase(Locale.ROOT))) {
+      if (!codes.add(code)) {
         throw bad("Duplicate sample code: " + code);
       }
 

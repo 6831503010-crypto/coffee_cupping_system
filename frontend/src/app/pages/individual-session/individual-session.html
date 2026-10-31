@@ -144,11 +144,14 @@
                     <td>{{ sample.harvestYear ?? '—' }}</td>
                     <td>
                       @if (isSelected(sample.sampleId)) {
-                        <input class="session-sample-code-input"
-                          [value]="sampleCode(sample.sampleId)" maxlength="100"
-                          placeholder="e.g. 101" [disabled]="saving()"
-                          [attr.aria-label]="'Session Sample Code for ' + sample.sampleName"
-                          (input)="onSampleCodeInput(sample.sampleId, $event)" />
+                        <input class="session-sample-code-input" [id]="'sample-code-' + sample.sampleId" type="text" inputmode="numeric"
+                          pattern="[0-9]{3}" [value]="sampleCode(sample.sampleId)" maxlength="100" placeholder="e.g. 101" [disabled]="saving()"
+                          [class.input-error]="!!sampleCodeError(sample.sampleId)" [attr.aria-invalid]="!!sampleCodeError(sample.sampleId)"
+                          [attr.aria-label]="'Session Sample Code for ' + sample.sampleName" [attr.aria-describedby]="
+                            sampleCodeError(sample.sampleId)
+                              ? 'sample-code-error-' + sample.sampleId
+                              : null
+                          " (input)="onSampleCodeInput(sample.sampleId, $event)" />
                       } @else {
                         <span class="creation-code-placeholder">Select coffee to enter code</span>
                       }

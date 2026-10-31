@@ -204,7 +204,7 @@ export class SampleFormModal {
 
     this.error.set('');
 
-    const sampleCode = this.sampleCode.trim();
+    const sampleCode = this.sampleCode;
     const sample: SampleDraft = {
       sampleName: this.draft.sampleName.trim(),
       process: this.draft.process,
@@ -215,12 +215,11 @@ export class SampleFormModal {
 
     const errors: Partial<Record<Field, string>> = {};
 
-    if (this.showSampleCode) {
-      if (!sampleCode) {
-        errors.sampleCode = 'Enter a sample code.';
-      } else if (sampleCode.length > 100) {
-        errors.sampleCode = 'Use 100 characters or fewer.';
-      }
+    if (
+      this.showSampleCode &&
+      !/^[0-9]{3}$/.test(sampleCode)
+    ) {
+      errors.sampleCode = 'Sample code must be a 3-digit number.';
     }
 
     if (!sample.sampleName) {

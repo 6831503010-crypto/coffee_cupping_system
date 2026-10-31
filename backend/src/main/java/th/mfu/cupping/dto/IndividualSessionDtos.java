@@ -1,4 +1,3 @@
-
 package th.mfu.cupping.dto;
 
 import java.util.List;
@@ -19,7 +18,7 @@ public final class IndividualSessionDtos {
   }
 
   public record SampleChoice(
-      @NotBlank @Size(max = 100) String sampleCode,
+      @NotBlank(message = "Sample code must be a 3-digit number.") @Pattern(regexp = "[0-9]{3}", message = "Sample code must be a 3-digit number.") String sampleCode,
       Integer sampleId,
       @Valid NewSample newSample) {
   }

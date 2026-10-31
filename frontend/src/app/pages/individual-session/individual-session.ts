@@ -162,9 +162,16 @@ export class IndividualSession {
 
   sampleCodeError(sampleId: number): string {
     if (!this.creationAttempted()) return '';
-    const choice = this.chosen().find(item => item.sampleId === sampleId);
-    if (!choice || choice.sampleCode.trim()) return '';
-    return 'Enter a session sample code.';
+
+    const choice = this.chosen().find(
+      item => item.sampleId === sampleId
+    );
+
+    if (!choice) return '';
+
+    return /^[0-9]{3}$/.test(choice.sampleCode)
+      ? ''
+      : 'Sample code must be a 3-digit number.';
   }
 
   toggleLibrarySample(sample: LibrarySample): void {
@@ -368,6 +375,10 @@ export class IndividualSession {
     this.creationAttempted.set(true);
     this.error.set('');
 
+    const invalidCodeSample = this.chosen().find(
+      sample => !/^[0-9]{3}$/.test(sample.sampleCode)
+    );
+
     const firstInvalid =
       this.sessionNameError()
         ? '#sessionName'
@@ -376,7 +387,9 @@ export class IndividualSession {
           : !this.isSampleCountValid()
             ? '#sampleCount'
             : this.selectedSamplesError()
-            ? '#sampleSelection'
+              ? this.hasExactSampleCount() && invalidCodeSample
+                ? `#sample-code-${invalidCodeSample.sampleId}`
+                : '#existingSample'
               : null;
 
     if (firstInvalid) {
@@ -871,8 +884,10 @@ async copyParticipationLink(): Promise<void> {
       sample => sample.sampleCode.trim().toLowerCase()
     );
 
-    if (codes.some(code => !code)) {
-      return 'Each selected sample needs a sample code.';
+    if (this.chosen().some(
+      sample => !/^[0-9]{3}$/.test(sample.sampleCode)
+    )) {
+      return 'Sample code must be a 3-digit number.';
     }
 
     if (new Set(codes).size !== codes.length) {
