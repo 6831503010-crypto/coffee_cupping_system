@@ -42,7 +42,11 @@ import {
   selector: 'app-individual-session',
   imports: [FormsModule, RouterLink, SampleFormModal],
   templateUrl: './individual-session.html',
-  styleUrl: './individual-session.css'
+  styleUrls: [
+    './individual-session.css',
+    './individual-session-creation.css',
+    './individual-session-management.css'
+  ]
 })
 export class IndividualSession {
 
