@@ -28,13 +28,17 @@ public class SessionParticipationService {
 
   private final JdbcTemplate jdbc;
   private final UserRepository users;
+  private final NotificationService notifications;
   private final SecureRandom secureRandom = new SecureRandom();
 
   public SessionParticipationService(
       JdbcTemplate jdbc,
-      UserRepository users) {
+      UserRepository users,
+      NotificationService notifications) {
+
     this.jdbc = jdbc;
     this.users = users;
+    this.notifications = notifications;
   }
 
   private User currentUser(String email) {
@@ -106,7 +110,18 @@ public class SessionParticipationService {
             HttpStatus.NOT_FOUND,
             "No account exists with that email"));
 
-    return addParticipant(session, evaluator.getUserId());
+    ParticipationResult result = addParticipant(
+        session, evaluator.getUserId());
+
+    if (!result.alreadyParticipating()
+        && !evaluator.getUserId().equals(creator.getUserId())) {
+
+      notifications.notifyEvaluatorAssigned(
+          result.sessionEvaluatorId(),
+          creator.getUserId());
+    }
+
+    return result;
   }
 
   // Reused later by link joining, after its token is validated.

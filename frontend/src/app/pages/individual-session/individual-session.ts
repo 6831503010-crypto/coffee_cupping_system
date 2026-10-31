@@ -12,7 +12,7 @@ import {
       of,
   } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Component,DestroyRef, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { Component,DestroyRef, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ActivatedRoute,
@@ -29,6 +29,9 @@ import {
   EvaluatorView,
   EvaluatorCandidate
 } from '../../services/individual-session.service';
+import {
+  CoffeeInventoryService
+} from '../../services/coffee-inventory.service';
 
 import {
   SampleFormModal,
@@ -44,6 +47,7 @@ import {
 export class IndividualSession {
 
   private readonly api = inject(IndividualSessionService);
+  private readonly inventory = inject(CoffeeInventoryService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   readonly sessionTiming = signal<SessionTimingView | null>(null);
@@ -54,12 +58,13 @@ export class IndividualSession {
   private sessionTimingReceivedAt = 0;
 
   readonly savedSamples = signal<LibrarySample[]>([]);
+  readonly sampleSearch = signal('');
+  readonly samplesLoading = signal(true);
+  readonly samplesError = signal('');
   readonly chosen = signal<SampleChoice[]>([]);
   readonly session = signal<SessionView | null>(null);
   readonly saving = signal(false);
   readonly error = signal('');
-  readonly existingSampleError = signal('');
-  readonly existingCodeError = signal('');
 
   readonly evaluators = signal<EvaluatorView[]>([]);
   readonly loadingEvaluators = signal(false);
@@ -80,6 +85,30 @@ export class IndividualSession {
   >({});
 
   evaluatorEmail = '';
+
+  readonly selectedLibraryIds = computed(() =>
+    new Set(
+      this.chosen()
+        .map(choice => choice.sampleId)
+        .filter((id): id is number => id !== undefined)
+    )
+  );
+
+  readonly visibleUnselectedSamples = computed(() => {
+    const query = this.sampleSearch().trim().toLowerCase();
+    const selected = this.selectedLibraryIds();
+
+    return this.savedSamples().filter(sample =>
+      !selected.has(sample.sampleId) &&
+      (!query || [
+        sample.sampleName,
+        sample.growingLocation,
+        sample.process
+      ].some(value => (value ?? '').toLowerCase().includes(query)))
+    );
+  });
+
+  private readonly rememberedCodes = new Map<number, string>();
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly evaluatorSearchRequests = new Subject<string>();
@@ -108,6 +137,68 @@ export class IndividualSession {
   openNewSampleModal(): void {
     if (!this.canAddSample()) return;
     this.sampleFormModal?.open();
+  }
+
+  setSampleSearch(value: string): void {
+    this.sampleSearch.set(value);
+  }
+
+  isSelected(sampleId: number): boolean {
+    return this.selectedLibraryIds().has(sampleId);
+  }
+
+  selectedLibrarySamples(): LibrarySample[] {
+    const selected = this.selectedLibraryIds();
+    return this.savedSamples().filter(sample => selected.has(sample.sampleId));
+  }
+
+  sampleCode(sampleId: number): string {
+    return this.chosen().find(choice => choice.sampleId === sampleId)?.sampleCode ?? '';
+  }
+
+  sampleCodeError(sampleId: number): string {
+    if (!this.creationAttempted()) return '';
+    const choice = this.chosen().find(item => item.sampleId === sampleId);
+    if (!choice || choice.sampleCode.trim()) return '';
+    return 'Enter a session sample code.';
+  }
+
+  toggleLibrarySample(sample: LibrarySample): void {
+    if (this.saving()) return;
+
+    if (this.isSelected(sample.sampleId)) {
+      this.chosen.update(items =>
+        items.filter(choice => choice.sampleId !== sample.sampleId)
+      );
+      return;
+    }
+
+    if (!this.checkSampleSlot()) return;
+
+    this.chosen.update(items => [
+      ...items,
+      {
+        sampleId: sample.sampleId,
+        sampleCode: this.rememberedCodes.get(sample.sampleId) ?? ''
+      }
+    ]);
+  }
+
+  updateSampleCode(sampleId: number, value: string): void {
+    const code = value.slice(0, 100);
+    this.rememberedCodes.set(sampleId, code);
+    this.chosen.update(items => items.map(choice =>
+      choice.sampleId === sampleId
+        ? { ...choice, sampleCode: code }
+        : choice
+    ));
+  }
+
+  onSampleCodeInput(sampleId: number, event: Event): void {
+    const input = event.target;
+    if (input instanceof HTMLInputElement) {
+      this.updateSampleCode(sampleId, input.value);
+    }
   }
 
 
@@ -167,10 +258,6 @@ export class IndividualSession {
 
   creatorParticipates = false;
 
-  selectedExistingId: number | null = null;
-  existingCode = '';
-
-
   constructor() {
     this.setupEvaluatorSearch();
     if (this.sessionIdParam !== null) {
@@ -199,67 +286,31 @@ export class IndividualSession {
         )
       });
     } else {
-      this.api.library().subscribe({
-        next: data => this.savedSamples.set(data),
-        error: () => this.error.set(
-          'Could not load saved coffee samples.'
-        )
-      });
+      this.loadLibrary();
     }
   }
 
-  addExisting() {
-  this.existingSampleError.set('');
-  this.existingCodeError.set('');
-  this.error.set('');
-
-  if (!this.checkSampleSlot()) return;
-
-  const id = this.selectedExistingId;
-  const code = this.existingCode.trim();
-
-  if (id === null) {
-    this.existingSampleError.set('Select a coffee sample.');
-  } else if (!this.savedSamples().some(s => s.sampleId === id)) {
-    this.existingSampleError.set('Select a valid saved sample.');
-  } else if (this.chosen().some(s => s.sampleId === id)) {
-    this.existingSampleError.set('This sample is already selected.');
+  private loadLibrary(selectSampleId?: number): void {
+    this.samplesLoading.set(true);
+    this.samplesError.set('');
+    this.api.library().subscribe({
+      next: data => {
+        this.savedSamples.set(data);
+        this.samplesLoading.set(false);
+        if (selectSampleId !== undefined && data.some(sample => sample.sampleId === selectSampleId)) {
+          this.toggleLibrarySample(data.find(sample => sample.sampleId === selectSampleId)!);
+        }
+      },
+      error: () => {
+        this.samplesLoading.set(false);
+        this.samplesError.set('Could not load saved coffee samples. Try again.');
+      }
+    });
   }
 
-  if (!code) {
-    this.existingCodeError.set('Enter a sample code.');
-  } else if (code.length > 100) {
-    this.existingCodeError.set('Sample code must be 100 characters or fewer.');
-  } else if (this.chosen().some(
-    sample => sample.sampleCode.trim().toLowerCase() === code.toLowerCase()
-  )) {
-    this.existingCodeError.set(
-      'This sample code is already selected. Use a unique code.'
-    );
+  retryLibrary(): void {
+    this.loadLibrary();
   }
-
-  if (
-    id === null ||
-    this.existingSampleError() ||
-    this.existingCodeError()
-  ) {
-    this.focusCreationError(
-      id === null || this.existingSampleError()
-        ? '#existingSample'
-        : '#existingCode'
-    );
-    return;
-  }
-
-  this.chosen.update(items => [
-    ...items,
-    { sampleId: id, sampleCode: code }
-  ]);
-
-  this.selectedExistingId = null;
-  this.existingCode = '';
-  this.revealAddedSample(this.chosen().length - 1);
-}
 
   addNew(submission: SampleFormSubmission): void {
   const modal = this.sampleFormModal;
@@ -274,47 +325,29 @@ export class IndividualSession {
     return;
   }
 
-  const code = submission.sampleCode.trim();
+    this.inventory.create(submission.sample).subscribe({
+      next: created => {
+        this.rememberedCodes.set(
+          created.sampleId,
+          submission.sampleCode.trim()
+        );
 
-  if (this.chosen().some(
-    sample =>
-      sample.sampleCode.trim().toLowerCase() === code.toLowerCase()
-  )) {
-    modal.fail(
-      'This sample code is already selected. Use a unique code.',
-      'sampleCode'
-    );
-    return;
-  }
-
-  this.chosen.update(items => [
-    ...items,
-    {
-      sampleCode: code,
-      newSample: { ...submission.sample }
-    }
-  ]);
-
-    modal.complete();
-    this.revealAddedSample(this.chosen().length - 1);
+        modal.complete();
+        this.loadLibrary(created.sampleId);
+      },
+      error: (response: HttpErrorResponse) => {
+        modal.fail(
+          response.status === 400
+            ? 'Check the entered sample details.'
+            : response.status === 401
+              ? 'Please sign in again.'
+              : response.status === 403
+                ? 'You do not have permission to create this sample.'
+                : 'Could not save your sample. Your entered details are still here.'
+        );
+      }
+    });
 }
-
-  removeSample(index: number) {
-    if (this.saving()) return;
-    this.chosen.update(items =>
-      items.filter((_, i) => i !== index)
-    );
-  }
-
-  displayName(choice: SampleChoice): string {
-    if (choice.newSample) {
-      return choice.newSample.sampleName;
-    }
-
-    return this.savedSamples().find(
-      s => s.sampleId === choice.sampleId
-    )?.sampleName ?? 'Unknown sample';
-  }
 
   createSession() {
     if (this.saving()) return;
@@ -330,7 +363,7 @@ export class IndividualSession {
           : !this.isSampleCountValid()
             ? '#sampleCount'
             : this.selectedSamplesError()
-              ? '#selectedSamplesReview'
+            ? '#sampleSelection'
               : null;
 
     if (firstInvalid) {

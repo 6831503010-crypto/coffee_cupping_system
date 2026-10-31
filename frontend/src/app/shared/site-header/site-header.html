@@ -9,6 +9,7 @@
   </a>
 
   <div class="header-actions">
+    <div class="header-navigation-group">
     @if (showFullNavigation()) {
     <nav class="site-nav" id="sharedSiteNav" aria-label="Primary navigation" [class.open]="menuOpen()">
       <a routerLink="/" (click)="closeMenu()">HOME</a>
@@ -16,6 +17,101 @@
       <a routerLink="/guide" (click)="closeMenu()">GUIDE</a>
     </nav>
     }
+
+    @if (showAccount()) {
+    <div #notificationArea class="notification-area" (keydown.escape)="onNotificationsEscape($event)">
+
+      <button #notificationTrigger type="button" class="notification-trigger" [attr.aria-expanded]="notificationsOpen()"
+        aria-controls="notificationPanel" [attr.aria-label]="
+            'Notifications, ' + unreadNotificationCount() + ' unread'
+          " (click)="toggleNotifications()">
+
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+          <path d="M10 21h4" />
+        </svg>
+
+        @if (unreadNotificationCount() > 0) {
+        <span class="notification-badge" aria-hidden="true">
+          {{ unreadNotificationCount() > 99
+          ? '99+'
+          : unreadNotificationCount() }}
+        </span>
+        }
+      </button>
+
+      <section id="notificationPanel" class="notification-panel" [hidden]="!notificationsOpen()"
+        aria-labelledby="notificationTitle" [attr.aria-busy]="notificationsLoading()">
+
+        <div class="notification-heading">
+          <h2 id="notificationTitle">Notifications</h2>
+          <span>{{ unreadNotificationCount() }} unread</span>
+        </div>
+
+        @if (notificationsError()) {
+        <p class="notification-message" role="alert">
+          {{ notificationsError() }}
+        </p>
+        }
+
+        <div class="notification-list">
+          @for (item of notificationItems(); track item.notificationId) {
+          <button type="button" class="notification-item" [class.unread]="item.readAt === null"
+            [disabled]="
+              openingNotificationId() !== null ||
+              loadingOlderNotifications()
+            " (click)="openNotification(item)">
+
+            <span class="notification-item-message">
+              @if (item.readAt === null) {
+              <span class="notification-dot" aria-hidden="true"></span>
+              <span class="notification-sr-only">Unread: </span>
+              }
+
+              {{ item.message }}
+            </span>
+
+            <time [attr.datetime]="item.createdAt">
+              {{ formatNotificationDate(item.createdAt) }}
+            </time>
+
+            @if (!item.sessionAccessible) {
+            <span class="notification-unavailable">
+              Session unavailable
+            </span>
+            }
+
+            @if (openingNotificationId() === item.notificationId) {
+            <span role="status">Opening…</span>
+            }
+          </button>
+          } @empty {
+          <p class="notification-message">
+            {{ notificationsLoading()
+            ? 'Loading notifications…'
+            : notificationsError()
+            ? 'Notifications could not be loaded.'
+            : 'You have no notifications yet.' }}
+          </p>
+          }
+        </div>
+        @if (notificationsHasMore()) {
+        <div class="notification-footer">
+          <button type="button" class="notification-load-older" [disabled]="
+                loadingOlderNotifications() ||
+                openingNotificationId() !== null
+              " (click)="loadOlderNotifications()">
+            {{ loadingOlderNotifications()
+            ? 'Loading…'
+            : 'Load older notifications' }}
+          </button>
+        </div>
+        }
+      </section>
+    </div>
+    }
+    </div>
 
     @if (showAccount()) {
     @if (currentUser(); as user) {
