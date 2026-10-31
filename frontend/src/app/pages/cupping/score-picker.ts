@@ -1,5 +1,7 @@
 import {
   AfterViewInit,
+  OnChanges,
+  SimpleChanges,
   Component,
   DestroyRef,
   ElementRef,
@@ -11,6 +13,7 @@ import {
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { signal } from '@angular/core';
 
 /** Five-value viewport over the existing score options; no scoring rules are changed. */
 @Component({
@@ -26,7 +29,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
           </h4>
         }
         <span class="score-picker-value" aria-live="polite">
-          {{ control.value === null ? 'Select score' : control.value.toFixed(2) }}
+          {{ selectedScore() === null ? 'Select score' : selectedScore()!.toFixed(2) }}
         </span>
       </div>
       <div class="score-picker-row">
@@ -39,7 +42,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
           (keydown.arrowRight)="scrollByOne(1); $event.preventDefault()">
           @for (score of options; track score; let i = $index) {
             <button type="button" class="score-picker-option" [id]="i === 0 ? fieldId : null"
-              [class.selected]="control.value === score" [attr.aria-pressed]="control.value === score"
+              [class.selected]="selectedScore() === score" [attr.aria-pressed]="selectedScore() === score"
               [disabled]="control.disabled" (click)="choose(score)">
               {{ score % 1 === 0 ? score.toFixed(0) : score.toFixed(2) }}
             </button>
@@ -92,8 +95,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     }
   `]
 })
-export class ScorePicker implements AfterViewInit {
+export class ScorePicker implements AfterViewInit, OnChanges {
   @Input({ required: true }) control!: FormControl<number | null>;
+  @Input({ required: true }) sampleId!: number;
   @Input({ required: true }) options: readonly number[] = [];
   @Input() ariaLabel = 'Score options';
   @Input() fieldId = '';
@@ -103,16 +107,31 @@ export class ScorePicker implements AfterViewInit {
   @ViewChild('scoreTrack') private track?: ElementRef<HTMLElement>;
 
   private readonly destroyRef = inject(DestroyRef);
+  readonly selectedScore = signal<number | null>(null);
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Every sample shares the same FormControl instance. The parent resets it
+    // with emitEvent: false, so valueChanges doesn't fire when samples change.
+    if ((changes['sampleId'] || changes['control']) && this.control) {
+      this.selectedScore.set(this.control.value);
+      this.centerCurrentScore();
+    }
+  }
 
   ngAfterViewInit(): void {
+    this.selectedScore.set(this.control.value);
     this.centerCurrentScore();
     this.control.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.centerCurrentScore());
+      .subscribe(value => {
+        this.selectedScore.set(value);
+        this.centerCurrentScore();
+      });
   }
 
   choose(score: number): void {
     if (this.control.disabled || this.control.value === score) return;
     this.control.setValue(score);
+    this.selectedScore.set(score);
     this.control.markAsTouched();
     this.scoreSelected.emit();
   }
@@ -131,7 +150,7 @@ export class ScorePicker implements AfterViewInit {
       if (this.destroyRef.destroyed) return;
       const element = this.track?.nativeElement;
       if (!element) return;
-      const value = this.control.value;
+      const value = this.selectedScore();
       const index = value === null ? Math.floor(this.options.length / 2) : this.options.indexOf(value);
       const buttons = element.querySelectorAll<HTMLElement>('.score-picker-option');
       const button = buttons[index >= 0 ? index : 0];

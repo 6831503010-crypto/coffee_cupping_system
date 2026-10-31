@@ -1,0 +1,208 @@
+<main class="profile-shell">
+
+  <a class="back-link" routerLink="/">
+    ← Back to Home
+  </a>
+
+  <header class="page-heading">
+    <span class="eyebrow">YOUR ACCOUNT</span>
+
+    <h1>My Profile</h1>
+
+    <p>
+      View and manage your Coffee Cupping System account information.
+    </p>
+  </header>
+
+  @if (loading()) {
+
+    <section class="profile-card state-card" aria-live="polite">
+      <span class="loader" aria-hidden="true"></span>
+      <p>Loading your profile…</p>
+    </section>
+
+  } @else if (profile(); as user) {
+
+    <section class="profile-card">
+
+      <!-- Profile header -->
+      <div class="profile-hero">
+
+        <div class="large-avatar" aria-hidden="true">
+          {{ initials }}
+        </div>
+
+        <div class="profile-identity">
+          <h2>{{ user.name }}</h2>
+
+          <p>{{ user.email }}</p>
+
+          @if (user.qualificationStatus === 'QUALIFIED') {
+            <span class="status-badge qualified">
+              ✓ Qualified evaluator
+            </span>
+          } @else {
+            <span class="status-badge">
+              {{ user.qualificationStatus || 'Evaluator status not set' }}
+            </span>
+          }
+        </div>
+
+        @if (!editing()) {
+          <button
+            class="btn primary edit-button"
+            type="button"
+            (click)="startEditing()"
+          >
+            Edit profile
+          </button>
+        }
+
+      </div>
+
+      <!-- Error message -->
+      @if (error()) {
+        <p class="notice error" role="alert">
+          {{ error() }}
+        </p>
+      }
+
+      <!-- Success message -->
+      @if (success()) {
+        <p class="notice success" role="status">
+          {{ success() }}
+        </p>
+      }
+
+      <!-- Edit profile form -->
+      @if (editing()) {
+
+        <form
+          class="edit-form"
+          (ngSubmit)="saveProfile()"
+        >
+
+          <label for="profile-name">
+            Full name
+          </label>
+
+          <input
+            id="profile-name"
+            name="name"
+            type="text"
+            [(ngModel)]="name"
+            maxlength="100"
+            required
+            autocomplete="name"
+          />
+
+          <p class="field-hint">
+            Your name is shown in your account menu and profile.
+          </p>
+
+          <div class="form-actions">
+
+            <button
+              class="btn secondary"
+              type="button"
+              (click)="cancelEditing()"
+            >
+              Cancel
+            </button>
+
+            <button
+              class="btn primary"
+              type="submit"
+              [disabled]="saving()"
+            >
+              {{ saving() ? 'Saving…' : 'Save changes' }}
+            </button>
+
+          </div>
+
+        </form>
+
+      } @else {
+
+        <!-- User information -->
+        <div class="details-grid">
+
+          <article class="detail-item">
+            <span class="detail-label">
+              Full name
+            </span>
+
+            <strong>{{ user.name }}</strong>
+          </article>
+
+          <article class="detail-item">
+            <span class="detail-label">
+              Email address
+            </span>
+
+            <strong>{{ user.email }}</strong>
+
+            <small>
+              Email address cannot be changed here.
+            </small>
+          </article>
+
+          <article class="detail-item">
+            <span class="detail-label">
+              Member since
+            </span>
+
+            <strong>
+              {{ displayDate(user.createdAt) }}
+            </strong>
+          </article>
+
+          <article class="detail-item">
+            <span class="detail-label">
+              Qualification status
+            </span>
+
+            <strong>
+              {{ user.qualificationStatus || 'Not set' }}
+            </strong>
+          </article>
+
+          @if (user.qualificationConfirmedAt) {
+            <article class="detail-item">
+              <span class="detail-label">
+                Qualification confirmed
+              </span>
+
+              <strong>
+                {{ displayDate(user.qualificationConfirmedAt) }}
+              </strong>
+            </article>
+          }
+
+        </div>
+
+      }
+
+    </section>
+
+  } @else {
+
+    <!-- Profile unavailable -->
+    <section class="profile-card state-card">
+
+      <h2>Profile unavailable</h2>
+
+      <p>
+        {{ error() || 'We could not find your profile.' }}
+      </p>
+
+      <a class="btn primary" routerLink="/login">
+        Go to login
+      </a>
+
+    </section>
+
+  }
+
+</main>
+```

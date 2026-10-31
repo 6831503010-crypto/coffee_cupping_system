@@ -9,6 +9,7 @@ import { Guide } from './pages/guide/guide';
 import { IndividualSession } from './pages/individual-session/individual-session';
 import { JoinSession} from './pages/join-session/join-session';
 import { Inventory } from './pages/inventory/inventory';
+import { Profile } from './pages/profile/profile';
 
 
 export const routes: Routes = [
@@ -64,5 +65,10 @@ export const routes: Routes = [
     path: 'individual/:id',
     component: IndividualSession,
     canActivate: [authGuard]
+  },
+  {
+  path: 'profile',
+  component: Profile,
+  canActivate: [authGuard]
   },
 ];

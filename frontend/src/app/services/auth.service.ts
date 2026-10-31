@@ -119,7 +119,11 @@ export class AuthService {
   }
 
 
+  updateCurrentUser(user: AuthUser) {
+  this.userSignal.set(user);
+  }
+
   clearUser() {
-    this.userSignal.set(null);
+  this.userSignal.set(null);
   }
 }
