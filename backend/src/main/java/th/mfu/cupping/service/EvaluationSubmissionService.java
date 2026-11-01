@@ -594,7 +594,7 @@ public class EvaluationSubmissionService {
           id, text, stage);
   }
 
-  private List<SavedSample> loadForMember(int membershipId) {
+  List<SavedSample> loadForMember(int membershipId) {
     List<Integer> evaluationIds = jdbc.query("""
         SELECT evaluation_id FROM evaluations WHERE session_evaluator_id = ?
         ORDER BY session_sample_id
@@ -675,13 +675,14 @@ public class EvaluationSubmissionService {
     for (int sessionId : sessionIds) {
       var session = jdbc.queryForObject("""
           SELECT session_name, created_by, created_at,
-                 status, finalized_at, session_started_at,
+                 result_visibility, status, finalized_at, session_started_at,
                  session_ended_at, session_elapsed_seconds
           FROM cupping_sessions WHERE session_id = ?
           """, (rs, row) -> new HistorySessionInfo(
               rs.getString("session_name"),
               rs.getInt("created_by"),
               rs.getObject("created_at", LocalDateTime.class),
+              rs.getString("result_visibility"),
               rs.getString("status"),
               rs.getObject("finalized_at", LocalDateTime.class),
               rs.getObject("session_started_at", LocalDateTime.class),
@@ -788,14 +789,14 @@ public class EvaluationSubmissionService {
           creator ? List.of() : ownSamples,
           closed, ownOutcome, sessionTimer, ownTimer,
           creator && ownTimer == null,
-          creator, displayStatus, sampleIds,
+          creator, session.visibility(), displayStatus, sampleIds,
           creator ? creatorJudges : List.of(), members.size()));
     }
     return result;
   }
 
   private record HistorySessionInfo(String name, int createdBy,
-      LocalDateTime createdAt, String status, LocalDateTime finalizedAt,
+      LocalDateTime createdAt, String visibility, String status, LocalDateTime finalizedAt,
       LocalDateTime startedAt, LocalDateTime endedAt, Long elapsedSeconds) {
   }
 

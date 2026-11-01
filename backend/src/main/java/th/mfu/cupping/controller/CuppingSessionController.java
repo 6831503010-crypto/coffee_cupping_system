@@ -167,6 +167,24 @@ public class CuppingSessionController {
     return repo.saveAndFlush(item);
   }
 
+  /** Publication can be changed after closure; only the session creator may do so. */
+  public record VisibilityUpdate(String resultVisibility) {}
+
+  @PatchMapping("/{id}/visibility")
+  @Transactional
+  public CuppingSession updateVisibility(@PathVariable Integer id,
+      @RequestBody VisibilityUpdate request, Authentication auth) {
+    User user = access.current(auth);
+    access.requireSessionOwner(id, user);
+    if (request == null || !java.util.Set.of("PUBLIC", "PRIVATE").contains(request.resultVisibility())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Visibility must be PUBLIC or PRIVATE");
+    }
+    CuppingSession session = repo.findByIdForUpdate(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
+    session.setResultVisibility(request.resultVisibility());
+    return repo.saveAndFlush(session);
+  }
+
   @DeleteMapping("/{id}")
   @Transactional
   @ResponseStatus(HttpStatus.NO_CONTENT)

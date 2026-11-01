@@ -69,6 +69,7 @@ public final class EvaluationSubmissionDtos {
       TimerView evaluatorTimer,
       boolean creatorOnly,
       boolean creator,
+      String resultVisibility,
       String displayStatus,
       List<Integer> sessionSampleIds,
       List<HistoryJudge> judges,

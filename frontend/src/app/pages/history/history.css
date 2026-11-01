@@ -650,3 +650,12 @@
 @media (max-width: 600px) {
   .session-detail-actions { justify-content: flex-end; }
 }
+
+/* Creator-only publication control. Default is Private. */
+.visibility-control { display: inline-flex; align-items: center; flex-wrap: nowrap; }
+.visibility-options { display: inline-flex; border: 1px solid var(--line, #e4dbd2); border-radius: 8px; padding: 2px; background: #faf8f5; }
+.visibility-options button { border: 0; border-radius: 6px; background: transparent; color: var(--mocha); padding: 5px 9px; font: inherit; font-size: 11px; font-weight: 750; cursor: pointer; }
+.visibility-options button.is-selected { background: var(--espresso, #392318); color: #fff; }
+.visibility-options button:disabled { cursor: wait; opacity: .65; }
+.visibility-options button:focus-visible { outline: 2px solid var(--mocha); outline-offset: 2px; }
+

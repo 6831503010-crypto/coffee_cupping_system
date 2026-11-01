@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { Home } from './pages/home/home';
 import { Cupping } from './pages/cupping/cupping';
 import { History } from './pages/history/history';
+import { Feed } from './pages/feed/feed';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { authGuard } from './guards/auth.guard';
@@ -34,6 +35,11 @@ export const routes: Routes = [
   {
     path: 'cupping',
     component: Cupping,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'feed',
+    component: Feed,
     canActivate: [authGuard]
   },
   {

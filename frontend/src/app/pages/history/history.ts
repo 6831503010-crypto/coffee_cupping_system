@@ -3,6 +3,7 @@ import { EvaluationSubmissionService, EvaluationHistoryGroup, SavedEvaluation } 
 import { RouterLink } from '@angular/router';
 import { CuppingModeModal } from '../../shared/cupping-mode-modal/cupping-mode-modal';
 import { IndividualSessionService } from '../../services/individual-session.service';
+import { ToastService } from '../../shared/toast-notification/toast.service';
 
 interface AromaEvaluation {
   qualityScore?: string | number;
@@ -55,6 +56,7 @@ interface HistoryRecord {
   creatorOnly?: boolean;
   creator: boolean;
   displayStatus: EvaluationHistoryGroup['displayStatus'];
+  resultVisibility: 'PUBLIC' | 'PRIVATE';
   sessionSampleIds: number[];
   judges: HistoryJudge[];
   evaluatorCount: number;
@@ -69,6 +71,8 @@ interface HistoryRecord {
 export class History implements OnInit {
   private readonly submissions = inject(EvaluationSubmissionService);
   private readonly sessions = inject(IndividualSessionService);
+  private readonly toast = inject(ToastService);
+  readonly visibilityUpdating = signal<number | null>(null);
   private readonly loadingEvaluatorCounts = new Set<number>();
   readonly evaluatorCounts = signal<Record<number, { joined: number; capacity: number }>>({});
 
@@ -159,6 +163,7 @@ export class History implements OnInit {
       creatorOnly: group.creatorOnly,
       creator: group.creator,
       displayStatus: group.displayStatus,
+      resultVisibility: group.resultVisibility ?? 'PRIVATE',
       sessionSampleIds: sampleIds,
       evaluatorCount: group.evaluatorCount,
       judges: (group.judges || []).map(judge => ({
@@ -169,6 +174,25 @@ export class History implements OnInit {
       })),
       samples: toSamples(group.samples || [])
     };
+  }
+
+  setVisibility(record: HistoryRecord, value: 'PUBLIC' | 'PRIVATE'): void {
+    if (!record.creator || record.resultVisibility === value || this.visibilityUpdating() !== null) return;
+    this.visibilityUpdating.set(record.id);
+    this.submissions.updateVisibility(record.id, value).subscribe({
+      next: updated => {
+        this.records.update(records => records.map(item => item.id === record.id
+          ? { ...item, resultVisibility: updated.resultVisibility } : item));
+        this.visibilityUpdating.set(null);
+        this.toast.success(value === 'PUBLIC'
+          ? 'Session results set to Public. Finalized results will appear in Feed.'
+          : 'Session results are now Private. They will not appear in Feed.');
+      },
+      error: () => {
+        this.visibilityUpdating.set(null);
+        this.toast.error('Could not update result visibility. Please try again.');
+      }
+    });
   }
 
   private average(values: unknown[]): number | null {

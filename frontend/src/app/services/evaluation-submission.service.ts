@@ -65,6 +65,7 @@ export interface EvaluationHistoryGroup {
   creator: boolean;
   displayStatus: 'IN_PROGRESS' | 'FINALIZED' | 'INCOMPLETE';
   sessionSampleIds: number[];
+  resultVisibility: 'PUBLIC' | 'PRIVATE';
   judges: EvaluationHistoryJudge[];
   evaluatorCount: number;
 }
@@ -147,6 +148,16 @@ export class EvaluationSubmissionService {
     return this.http.get<EvaluationHistoryGroup[]>(
       `${this.base}/my-evaluation-history`, { withCredentials: true }
     );
+  }
+
+  updateVisibility(sessionId: number, resultVisibility: 'PUBLIC' | 'PRIVATE') {
+    return this.http.get<{ token: string; headerName: string }>(
+      'http://localhost:8080/api/csrf', { withCredentials: true }
+    ).pipe(switchMap(csrf => this.http.patch<{ resultVisibility: 'PUBLIC' | 'PRIVATE' }>(
+      `http://localhost:8080/api/sessions/${sessionId}/visibility`,
+      { resultVisibility },
+      { withCredentials: true, headers: { [csrf.headerName]: csrf.token } }
+    )));
   }
 
   progress(sessionId: number) {
