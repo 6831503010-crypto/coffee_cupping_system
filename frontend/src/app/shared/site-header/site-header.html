@@ -27,6 +27,7 @@
         aria-label="Primary navigation"
         [class.open]="menuOpen()"
       >
+        <a routerLink="/feed" (click)="closeMenu()">FEED</a>
         <a routerLink="/" (click)="closeMenu()">HOME</a>
         <a routerLink="/about" (click)="closeMenu()">ABOUT</a>
         <a routerLink="/guide" (click)="closeMenu()">GUIDE</a>

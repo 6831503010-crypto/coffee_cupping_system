@@ -48,6 +48,10 @@
                     [attr.aria-pressed]="statusFilter() === 'all'" (click)="setStatusFilter('all')">
               All <span>{{ sessionCount() }}</span>
             </button>
+            <button type="button" [class.is-active]="statusFilter() === 'own'"
+                    [attr.aria-pressed]="statusFilter() === 'own'" (click)="setStatusFilter('own')">
+              Own <span>{{ ownCount() }}</span>
+            </button>
             <button type="button" [class.is-active]="statusFilter() === 'in-progress'"
                     [attr.aria-pressed]="statusFilter() === 'in-progress'" (click)="setStatusFilter('in-progress')">
               In Progress <span>{{ inProgressCount() }}</span>
@@ -116,6 +120,20 @@
               <p class="session-detail-date">{{ formatDate(record.completedAt) }}</p>
             </div>
             <div class="session-detail-actions">
+              @if (record.creator) {
+                <div class="visibility-control" role="group" aria-label="Result visibility for this session">
+                  <div class="visibility-options">
+                    <button type="button" [class.is-selected]="record.resultVisibility === 'PRIVATE'"
+                            [attr.aria-pressed]="record.resultVisibility === 'PRIVATE'"
+                            [disabled]="visibilityUpdating() !== null"
+                            (click)="setVisibility(record, 'PRIVATE')">Private</button>
+                    <button type="button" [class.is-selected]="record.resultVisibility === 'PUBLIC'"
+                            [attr.aria-pressed]="record.resultVisibility === 'PUBLIC'"
+                            [disabled]="visibilityUpdating() !== null"
+                            (click)="setVisibility(record, 'PUBLIC')">Public</button>
+                  </div>
+                </div>
+              }
               @if (record.creator && record.displayStatus === 'IN_PROGRESS' && !record.sessionClosed) {
                 <a class="session-manage-link" [routerLink]="['/individual', record.id]">Manage Session <span aria-hidden="true">↗</span></a>
               }

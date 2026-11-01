@@ -1,0 +1,159 @@
+<main class="feed-shell">
+  <a class="back-link" routerLink="/">← Back to Home</a>
+  <header class="feed-hero">
+    <div>
+      <h1>Public Cupping Feed</h1>
+    </div>
+  </header>
+
+  <section class="feed-panel" aria-label="Public cupping results">
+    <div class="feed-toolbar">
+      <label class="feed-search-label">
+        <span class="sr-only">Search coffee samples or sessions</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></svg>
+        <input type="search" placeholder="Search session or coffee sample..." [value]="search()"
+               (input)="updateSearch($any($event.target).value)" />
+      </label>
+      <label class="feed-sort-label">Sort by
+        <select [value]="sort()" (change)="updateSort($any($event.target).value)">
+          <option value="latest">Latest</option>
+          <option value="highest">Highest score</option>
+        </select>
+      </label>
+    </div>
+
+    @if (loading()) {
+      <p class="feed-state" role="status">Loading public cupping results…</p>
+    } @else if (error()) {
+      <div class="feed-state" role="alert">{{ error() }}
+        <button class="feed-retry" type="button" (click)="refresh()">Retry</button>
+      </div>
+    } @else if (filtered().length === 0) {
+      <p class="feed-state">{{ search() ? 'No public results match your search.' : 'No public cupping results have been shared yet.' }}</p>
+    } @else {
+      <div class="feed-table-head" aria-hidden="true">
+        <span>Cupping session</span><span>Coffee sample</span><span>Average score</span>
+      </div>
+      <div class="feed-table-body">
+        @for (item of visible(); track item.sessionSampleId) {
+          <article class="feed-entry" [class.is-expanded]="expandedSampleId() === item.sessionSampleId">
+            <button type="button" class="feed-row" [attr.aria-expanded]="expandedSampleId() === item.sessionSampleId"
+                    (click)="toggleRow(item.sessionSampleId)">
+              <span class="feed-session"><strong>{{ item.sessionName }}</strong><small>{{ formatDate(item.closedAt) }}</small></span>
+              <span class="feed-coffee">{{ item.sampleName }}</span>
+              <span class="feed-score"><strong>{{ format(item.averageScore) }} <small>/ 100</small></strong>
+                <svg [class.rotated]="expandedSampleId() === item.sessionSampleId" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            @if (expandedSampleId() === item.sessionSampleId) {
+              <div class="feed-expanded">
+                @if (item.sampleDetails; as sample) {
+                  @if (sample.process || sample.harvestYear != null || sample.growingLocation || sample.ownerProducer) {
+                    <section class="feed-sample-details" aria-label="Coffee sample details">
+                      <h3>Sample Details</h3>
+                      <dl class="feed-sample-meta">
+                        @if (sample.process) {
+                          <div><dt>Process</dt><dd>{{ sample.process }}</dd></div>
+                        }
+                        @if (sample.harvestYear != null) {
+                          <div><dt>Harvest Year</dt><dd>{{ sample.harvestYear }}</dd></div>
+                        }
+                        @if (sample.growingLocation) {
+                          <div><dt>Origin</dt><dd>{{ sample.growingLocation }}</dd></div>
+                        }
+                        @if (sample.ownerProducer) {
+                          <div><dt>Producer</dt><dd>{{ sample.ownerProducer }}</dd></div>
+                        }
+                      </dl>
+                    </section>
+                  }
+                }
+                <div class="feed-results-grid">
+                  <section class="feed-scores-panel" aria-label="Score details">
+                    <h3>Score Details</h3>
+                    <div class="feed-score-grid">
+                      <div class="feed-score-column">
+                        <div><span>Aroma Quality</span><strong>{{ format(item.scores.aromaQuality) }}</strong></div>
+                        <div><span>Flavor</span><strong>{{ format(item.scores.flavor) }}</strong></div>
+                        <div><span>Aftertaste</span><strong>{{ format(item.scores.aftertaste) }}</strong></div>
+                        <div><span>Acidity</span><strong>{{ format(item.scores.acidity) }}</strong></div>
+                        <div><span>Body</span><strong>{{ format(item.scores.body) }}</strong></div>
+                      </div>
+                      <div class="feed-score-column">
+                        <div><span>Uniformity</span><strong>{{ format(item.scores.uniformity) }}</strong></div>
+                        <div><span>Clean Cup</span><strong>{{ format(item.scores.cleanCup) }}</strong></div>
+                        <div><span>Balance</span><strong>{{ format(item.scores.balance) }}</strong></div>
+                        <div><span>Sweetness</span><strong>{{ format(item.scores.sweetness) }}</strong></div>
+                        <div><span>Overall</span><strong>{{ format(item.scores.overall) }}</strong></div>
+                      </div>
+                    </div>
+                    @if (item.scores.defectDeduction != null && item.scores.defectDeduction > 0) {
+                      <div class="feed-defect"><span>Defects (average deduction)</span><strong>−{{ format(item.scores.defectDeduction) }}</strong></div>
+                    }
+                  </section>
+
+                  <section class="feed-notes-panel" aria-label="Cupping notes">
+                    <h3>Cupping Notes</h3>
+                    @if (combinedNotes().get(item.sessionSampleId); as notes) {
+                      @if (notes.hasAny) {
+                        <dl class="feed-note-fields">
+                          @if (notes.aromaQualities.length) {
+                            <div class="feed-note-group">
+                              <dt>Aroma</dt>
+                              <dd>{{ notes.aromaQualities.join(', ') }}</dd>
+                            </div>
+                          }
+                          @if (notes.aromaOthers.length) {
+                            <div class="feed-note-group">
+                              <dt>Others</dt>
+                              <dd>
+                                @for (entry of notes.aromaOthers; track $index) {
+                                  <p class="feed-note-entry">{{ entry }}</p>
+                                }
+                              </dd>
+                            </div>
+                          }
+                          @if (notes.hasAroma && notes.hasFlavor) {
+                            <div class="feed-note-divider" aria-hidden="true"></div>
+                          }
+                          @if (notes.flavorQualities.length) {
+                            <div class="feed-note-group">
+                              <dt>Flavour</dt>
+                              <dd>{{ notes.flavorQualities.join(', ') }}</dd>
+                            </div>
+                          }
+                          @if (notes.flavorOthers.length) {
+                            <div class="feed-note-group">
+                              <dt>Others</dt>
+                              <dd>
+                                @for (entry of notes.flavorOthers; track $index) {
+                                  <p class="feed-note-entry">{{ entry }}</p>
+                                }
+                              </dd>
+                            </div>
+                          }
+                        </dl>
+                      } @else {
+                        <p class="feed-empty-notes">No tasting notes were recorded.</p>
+                      }
+                    }
+                  </section>
+                </div>
+              </div>
+            }
+          </article>
+        }
+      </div>
+      <footer class="feed-pagination">
+        <span>Showing {{ (currentPage() - 1) * perPage + 1 }}–{{ currentPage() * perPage < filtered().length ? currentPage() * perPage : filtered().length }} of {{ filtered().length }}</span>
+        @if (totalPages() > 1) {
+          <div class="feed-page-controls">
+            <button type="button" [disabled]="currentPage() === 1" (click)="changePage(currentPage() - 1)">Previous</button>
+            <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+            <button type="button" [disabled]="currentPage() === totalPages()" (click)="changePage(currentPage() + 1)">Next</button>
+          </div>
+        }
+      </footer>
+    }
+  </section>
+</main>
