@@ -16,7 +16,7 @@ export class Form1 {
   zoomLevel: number = 1;
   zoomOrigin: string = '50% 50%';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   async goToNextPage(): Promise<void> {
     const navigated = await this.router.navigateByUrl('/guide/aroma-test');

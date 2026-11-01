@@ -1,4 +1,3 @@
-
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -68,7 +67,7 @@
 }
 
 /* Move only the Step 1 image container slightly upward */
-.container > .card:first-of-type .guide-img-container {
+.container>.card:first-of-type .guide-img-container {
   transform: translateY(-20px);
 }
 
@@ -90,7 +89,7 @@
     width: 100%;
   }
 
-  .container > .card:first-of-type .guide-img-container {
+  .container>.card:first-of-type .guide-img-container {
     transform: none;
   }
 }
