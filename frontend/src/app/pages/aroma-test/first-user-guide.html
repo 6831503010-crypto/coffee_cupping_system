@@ -1,3 +1,4 @@
+
 <div class="container py-4">
   <a routerLink="/guide/creating-sessions" class="back-link">← Previous Page</a>
 
@@ -62,24 +63,31 @@
         </div>
       </div>
 
-      <div class="guide-img-container" style="flex: 0 0 60%; min-width: 0;">
-        <img
-          src="/images/Guide-Page-Images/4-AromaScores.png"
-          alt="Aroma Test Form"
-          class="guide-image"
-          style="width: 100%; max-width: 100%; height: 350px; display: block;"
-          (click)="openImage('/images/Guide-Page-Images/4-AromaScores.png', 'Aroma Test Form')"
-        />
+      <div class="guide-img-container" style="flex: 0 0 60%; min-width: 0; display: flex; flex-direction: column; align-items: stretch;">
+        <div style="position: relative; width: 100%;">
+          <img
+            src="/images/Guide-Page-Images/4-AromaScores.png"
+            alt="Aroma Test Form"
+            class="guide-image"
+            style="width: 100%; max-width: 100%; height: 350px; display: block;"
+            (click)="openImage('/images/Guide-Page-Images/4-AromaScores.png', 'Aroma Test Form')"
+          />
 
-        <button
-          type="button"
-          class="image-zoom-button"
-          aria-label="Enlarge Aroma Test Form image"
-          title="Enlarge image"
-          (click)="openImage('/images/Guide-Page-Images/4-AromaScores.png', 'Aroma Test Form')"
-        >
-          <span class="lens-icon"></span>
-        </button>
+          <button
+            type="button"
+            class="image-zoom-button"
+            aria-label="Enlarge Aroma Test Form image"
+            title="Enlarge image"
+            style="position: absolute; bottom: 8px; right: 8px; width: 30px; height: 30px; padding: 4px; display: flex; align-items: center; justify-content: center;"
+            (click)="openImage('/images/Guide-Page-Images/4-AromaScores.png', 'Aroma Test Form')"
+          >
+            <span class="lens-icon"></span>
+          </button>
+        </div>
+
+        <div style="width: 100%; text-align: right; margin-top: 6px; margin-bottom: 1.5rem;">
+          <strong><em>*Click the image to view</em></strong>
+        </div>
       </div>
     </div>
   </div>
@@ -131,24 +139,31 @@
         </div>
       </div>
 
-      <div class="guide-img-container" style="flex: 1; min-width: 0;">
-        <img
-          src="/images/Guide-Page-Images/5-0-AromaQualities.png"
-          alt="Aroma Qualities Form"
-          class="guide-image"
-          style="width: 100%; max-width: 100%; height: auto; display: block;"
-          (click)="openImage('/images/Guide-Page-Images/5-0-AromaQualities.png', 'Aroma Qualities Form')"
-        />
+      <div class="guide-img-container" style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch;">
+        <div style="position: relative; width: 100%;">
+          <img
+            src="/images/Guide-Page-Images/5-0-AromaQualities.png"
+            alt="Aroma Qualities Form"
+            class="guide-image"
+            style="width: 100%; max-width: 100%; height: auto; display: block;"
+            (click)="openImage('/images/Guide-Page-Images/5-0-AromaQualities.png', 'Aroma Qualities Form')"
+          />
 
-        <button
-          type="button"
-          class="image-zoom-button"
-          aria-label="Enlarge Aroma Qualities Form image"
-          title="Enlarge image"
-          (click)="openImage('/images/Guide-Page-Images/5-0-AromaQualities.png', 'Aroma Qualities Form')"
-        >
-          <span class="lens-icon"></span>
-        </button>
+          <button
+            type="button"
+            class="image-zoom-button"
+            aria-label="Enlarge Aroma Qualities Form image"
+            title="Enlarge image"
+            style="position: absolute; bottom: 8px; right: 8px; width: 30px; height: 30px; padding: 4px; display: flex; align-items: center; justify-content: center;"
+            (click)="openImage('/images/Guide-Page-Images/5-0-AromaQualities.png', 'Aroma Qualities Form')"
+          >
+            <span class="lens-icon"></span>
+          </button>
+        </div>
+
+        <div style="width: 100%; text-align: left; margin-top: 6px; margin-bottom: 1.5rem;">
+          <strong><em>*Click the image to view</em></strong>
+        </div>
       </div>
     </div>
   </div>
@@ -174,24 +189,31 @@
         </p>
       </div>
 
-      <div class="guide-img-container" style="flex: 1; min-width: 0;">
-        <img
-          src="/images/Guide-Page-Images/5-1-AromaLock.png"
-          alt="Confirm Aroma Stage"
-          class="guide-image"
-          style="width: 80%; max-width: 100%; height: auto; display: block;"
-          (click)="openImage('/images/Guide-Page-Images/5-1-AromaLock.png', 'Confirm Aroma Stage')"
-        />
+      <div class="guide-img-container" style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;">
+        <div style="position: relative; width: 80%;">
+          <img
+            src="/images/Guide-Page-Images/5-1-AromaLock.png"
+            alt="Confirm Aroma Stage"
+            class="guide-image"
+            style="width: 100%; max-width: 100%; height: auto; display: block;"
+            (click)="openImage('/images/Guide-Page-Images/5-1-AromaLock.png', 'Confirm Aroma Stage')"
+          />
 
-        <button
-          type="button"
-          class="image-zoom-button"
-          aria-label="Enlarge Confirm Aroma Stage image"
-          title="Enlarge image"
-          (click)="openImage('/images/Guide-Page-Images/5-1-AromaLock.png', 'Confirm Aroma Stage')"
-        >
-          <span class="lens-icon"></span>
-        </button>
+          <button
+            type="button"
+            class="image-zoom-button"
+            aria-label="Enlarge Confirm Aroma Stage image"
+            title="Enlarge image"
+            style="position: absolute; bottom: 8px; right: 8px; width: 30px; height: 30px; padding: 4px; display: flex; align-items: center; justify-content: center;"
+            (click)="openImage('/images/Guide-Page-Images/5-1-AromaLock.png', 'Confirm Aroma Stage')"
+          >
+            <span class="lens-icon"></span>
+          </button>
+        </div>
+
+        <div style="width: 80%; text-align: right; margin-top: 6px; margin-bottom: 1.5rem;">
+          <strong><em>*Click the image to view</em></strong>
+        </div>
       </div>
     </div>
   </div>
@@ -219,14 +241,16 @@
     </button>
 
     <img
-  [src]="selectedImage"
-  [alt]="selectedImageAlt"
-  class="lightbox-image"
-  [style.transform]="'scale(' + zoomLevel + ')'"
-  [style.transform-origin]="zoomOrigin"
-  (click)="$event.stopPropagation()"
-  (dblclick)="toggleZoom($event)"
-  (wheel)="onImageWheel($event)"
-/>
+      [src]="selectedImage"
+      [alt]="selectedImageAlt"
+      class="lightbox-image"
+      [style.transform]="'scale(' + zoomLevel + ')'"
+      [style.transform-origin]="zoomOrigin"
+      (click)="$event.stopPropagation()"
+      (dblclick)="toggleZoom($event)"
+      (wheel)="onImageWheel($event)"
+    />
+
+  </div>
 
 </div>

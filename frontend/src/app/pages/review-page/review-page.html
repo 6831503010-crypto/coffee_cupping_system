@@ -1,3 +1,4 @@
+
 <div class="container py-4">
 
   <a routerLink="/guide/flavor-test" class="back-link">← Previous Page</a>
@@ -12,14 +13,21 @@
       Review Your Coffee Cupping Results
     </h2>
 
-    <div class="review-image-container mt-3 mb-4">
+    <div
+      class="review-image-container mt-3 mb-4"
+      style="display: flex; flex-direction: column; align-items: stretch;"
+    >
 
-      <div class="review-image-wrapper">
+      <div
+        class="review-image-wrapper"
+        style="width: 100%; display: flex; flex-direction: column; align-items: center;"
+      >
 
         <img
           src="/images/Guide-Page-Images/9-ReviewAndFinalize.png"
           alt="Review and Finalize Coffee Cupping Results"
           class="review-image"
+          style="display: block;"
           (click)="openImage('/images/Guide-Page-Images/9-ReviewAndFinalize.png', 'Review and Finalize Coffee Cupping Results')"
         />
 
@@ -48,6 +56,10 @@
           </svg>
         </button>
 
+      </div>
+
+      <div style="width: 100%; text-align: right; margin-top: 6px; margin-bottom: 1.5rem;">
+        <strong><em>*Click the image to view</em></strong>
       </div>
 
     </div>
@@ -122,14 +134,14 @@
     &times;
   </button>
 
- <img
-  [src]="selectedImage"
-  [alt]="selectedImageAlt"
-  class="lightbox-image"
-  [style.transform]="'scale(' + zoomLevel + ')'"
-  [style.transform-origin]="zoomOrigin"
-  (click)="$event.stopPropagation()"
-  (dblclick)="toggleZoom($event)"
-  (wheel)="onImageWheel($event)"
-/>
+  <img
+    [src]="selectedImage"
+    [alt]="selectedImageAlt"
+    class="lightbox-image"
+    [style.transform]="'scale(' + zoomLevel + ')'"
+    [style.transform-origin]="zoomOrigin"
+    (click)="$event.stopPropagation()"
+    (dblclick)="toggleZoom($event)"
+    (wheel)="onImageWheel($event)"
+  />
 </div>

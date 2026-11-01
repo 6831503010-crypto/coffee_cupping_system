@@ -1,3 +1,4 @@
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -116,6 +117,14 @@
   box-shadow: 0 5px 12px rgba(44, 34, 30, 0.25);
   transition: all 0.2s ease;
   text-decoration: none;
+}
+
+/* Ensure Return Home button matches Aroma Test size */
+.button-container .click-button {
+  font-size: 16px !important;
+  padding: 12px 24px !important;
+  width: auto;
+  height: auto;
 }
 
 .click-button:hover {
