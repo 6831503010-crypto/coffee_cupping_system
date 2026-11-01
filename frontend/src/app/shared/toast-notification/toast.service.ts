@@ -3,6 +3,7 @@ import { Injectable, signal } from '@angular/core';
 export interface ToastMessage {
   id: number;
   text: string;
+  type?: 'success' | 'error';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -17,7 +18,16 @@ export class ToastService {
     this.clearTimer();
 
     const id = ++this.lastId;
-    this.active.set([{ id, text }]);
+    this.active.set([{ id, text, type: 'success' }]);
+    this.timer = setTimeout(() => this.dismiss(id), 5000);
+  }
+
+  /** Display an error in the same dismissible, five-second toast. */
+  error(text: string): void {
+    this.clearTimer();
+
+    const id = ++this.lastId;
+    this.active.set([{ id, text, type: 'error' }]);
     this.timer = setTimeout(() => this.dismiss(id), 5000);
   }
 

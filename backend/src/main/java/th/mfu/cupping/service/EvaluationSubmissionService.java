@@ -651,225 +651,163 @@ public class EvaluationSubmissionService {
         """, (rs, row) -> rs.getString(1), evaluationId, type);
   }
 
+  /**
+   * All sessions that the current account created or joined. This is a read-only
+   * projection: only the creator receives other evaluators' names and scores.
+   * A judge only receives their own FINALIZED sheets, never another judge's data.
+   */
   @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
   public List<HistoryEntry> history(String email) {
     int account = userId(email);
 
     List<Integer> sessionIds = jdbc.query("""
-        SELECT se.session_id
-        FROM session_evaluators se
-        JOIN cupping_sessions cs
-          ON cs.session_id = se.session_id
-        WHERE se.user_id = ?
-          AND (
-            (
-              se.completion_outcome = 'INCOMPLETE_SESSION_CLOSED'
-              AND (
-                cs.status IN ('FINALIZED', 'CANCELLED')
-                OR cs.finalized_at IS NOT NULL
-              )
-            )
-            OR (
-              (
-                se.completion_outcome = 'FINALIZED'
-                OR (
-                  se.completion_outcome IS NULL
-                  AND se.evaluation_started_at IS NULL
-                  AND se.evaluation_ended_at IS NULL
-                )
-              )
-              AND EXISTS (
-                SELECT 1
-                FROM session_samples ss
-                WHERE ss.session_id = se.session_id
-              )
-              AND NOT EXISTS (
-                SELECT 1
-                FROM session_samples ss
-                WHERE ss.session_id = se.session_id
-                  AND NOT EXISTS (
-                    SELECT 1
-                    FROM evaluations e
-                    WHERE e.session_evaluator_id =
-                          se.session_evaluator_id
-                      AND e.session_sample_id = ss.session_sample_id
-                      AND e.status = 'FINALIZED'
-                      AND e.total_score IS NOT NULL
-                  )
-              )
-            )
-          )
-        ORDER BY se.session_id DESC
-        """,
-        (rs, row) -> rs.getInt("session_id"),
-        account);
-
-    List<HistoryEntry> history = new ArrayList<>();
-
-    for (int sessionId : sessionIds) {
-      HistoryTiming timing = historyTiming(sessionId, account);
-
-      String name = jdbc.queryForObject("""
-          SELECT session_name
-          FROM cupping_sessions
-          WHERE session_id = ?
-          """,
-          String.class,
-          sessionId);
-
-      boolean incomplete = "INCOMPLETE_SESSION_CLOSED"
-          .equals(timing.completionOutcome());
-
-      List<SavedSample> samples;
-      String completedAt;
-
-      if (incomplete) {
-        // Keep incomplete scores out of the finalized history payload.
-        samples = List.of();
-
-        // A never-started evaluator can still belong to a timed session.
-        // If nobody started, no timing end exists; leave the date unavailable.
-        completedAt = timing.sessionTimer().endedAt() == null
-            ? ""
-            : timing.sessionTimer().endedAt().toString();
-      } else {
-        int member = membership(sessionId, account);
-
-        samples = loadForMember(member).stream()
-            .filter(item -> "FINALIZED".equals(item.status()))
-            .toList();
-
-        if (samples.isEmpty()) {
-          continue;
-        }
-
-        completedAt = timing.evaluatorTimer().endedAt() != null
-            ? timing.evaluatorTimer().endedAt().toString()
-            : samples.stream()
-                .map(SavedSample::finalizedAt)
-                .filter(Objects::nonNull)
-                .max(String::compareTo)
-                .orElse("");
-      }
-
-      history.add(new HistoryEntry(
-          sessionId,
-          name,
-          completedAt,
-          samples,
-          timing.sessionClosed(),
-          timing.completionOutcome(),
-          timing.sessionTimer(),
-          timing.evaluatorTimer(),
-          false));
-    }
-
-    List<HistoryEntry> creatorEntries = jdbc.query("""
-        SELECT
-          cs.session_id,
-          cs.session_name,
-          cs.session_started_at,
-          cs.session_ended_at,
-          cs.session_elapsed_seconds
+        SELECT cs.session_id
         FROM cupping_sessions cs
         WHERE cs.created_by = ?
-          AND (
-            cs.status IN ('FINALIZED', 'CANCELLED')
-            OR cs.finalized_at IS NOT NULL
-          )
-          AND NOT EXISTS (
-            SELECT 1
-            FROM session_evaluators se
-            WHERE se.session_id = cs.session_id
-              AND se.user_id = ?
-          )
-        ORDER BY cs.session_id DESC
-        """,
-        (rs, row) -> {
-          LocalDateTime startedAt = rs.getObject("session_started_at", LocalDateTime.class);
+           OR EXISTS (
+             SELECT 1 FROM session_evaluators se
+             WHERE se.session_id = cs.session_id AND se.user_id = ?
+           )
+        ORDER BY cs.created_at DESC, cs.session_id DESC
+        """, (rs, row) -> rs.getInt(1), account, account);
 
-          LocalDateTime endedAt = rs.getObject("session_ended_at", LocalDateTime.class);
-
-          TimerView sessionTimer = new TimerView(
-              startedAt == null
-                  ? null
-                  : startedAt.toInstant(ZoneOffset.UTC),
-              endedAt == null
-                  ? null
-                  : endedAt.toInstant(ZoneOffset.UTC),
-              rs.getObject("session_elapsed_seconds", Long.class));
-
-          return new HistoryEntry(
-              rs.getInt("session_id"),
+    List<HistoryEntry> result = new ArrayList<>();
+    for (int sessionId : sessionIds) {
+      var session = jdbc.queryForObject("""
+          SELECT session_name, created_by, created_at,
+                 status, finalized_at, session_started_at,
+                 session_ended_at, session_elapsed_seconds
+          FROM cupping_sessions WHERE session_id = ?
+          """, (rs, row) -> new HistorySessionInfo(
               rs.getString("session_name"),
-              endedAt == null
-                  ? ""
-                  : endedAt.toInstant(ZoneOffset.UTC).toString(),
-              List.of(),
-              true,
-              null,
-              sessionTimer,
-              null,
-              true);
-        },
-        account,
-        account);
+              rs.getInt("created_by"),
+              rs.getObject("created_at", LocalDateTime.class),
+              rs.getString("status"),
+              rs.getObject("finalized_at", LocalDateTime.class),
+              rs.getObject("session_started_at", LocalDateTime.class),
+              rs.getObject("session_ended_at", LocalDateTime.class),
+              rs.getObject("session_elapsed_seconds", Long.class)), sessionId);
 
-    history.addAll(creatorEntries);
+      boolean creator = session.createdBy() == account;
+      boolean closed = session.finalizedAt() != null
+          || "FINALIZED".equals(session.status())
+          || "CANCELLED".equals(session.status());
 
-    return history;
-  }
+      List<Integer> sampleIds = jdbc.query("""
+          SELECT session_sample_id FROM session_samples
+          WHERE session_id = ? ORDER BY display_order, session_sample_id
+          """, (rs, row) -> rs.getInt(1), sessionId);
 
-  private record HistoryTiming(
-      boolean sessionClosed,
-      String completionOutcome,
-      TimerView sessionTimer,
-      TimerView evaluatorTimer) {
-  }
-
-  private HistoryTiming historyTiming(int sessionId, int account) {
-    return jdbc.queryForObject("""
-        SELECT
-          (cs.status IN ('FINALIZED', 'CANCELLED')
-            OR cs.finalized_at IS NOT NULL) AS session_closed,
-          cs.session_started_at,
-          cs.session_ended_at,
-          cs.session_elapsed_seconds,
-          se.evaluation_started_at,
-          se.evaluation_ended_at,
-          se.elapsed_seconds,
-          se.completion_outcome
-        FROM cupping_sessions cs
-        JOIN session_evaluators se
-          ON se.session_id = cs.session_id
-        WHERE cs.session_id = ? AND se.user_id = ?
-        """,
-        (rs, row) -> {
-          LocalDateTime sessionStart = rs.getObject("session_started_at", LocalDateTime.class);
-          LocalDateTime sessionEnd = rs.getObject("session_ended_at", LocalDateTime.class);
-          LocalDateTime evaluationStart = rs.getObject("evaluation_started_at", LocalDateTime.class);
-          LocalDateTime evaluationEnd = rs.getObject("evaluation_ended_at", LocalDateTime.class);
-
-          return new HistoryTiming(
-              rs.getBoolean("session_closed"),
+      // Always fetch completion status for the session as a whole, but only
+      // construct judge identities and score sheets for an authorized creator.
+      List<HistoryMemberInfo> members = jdbc.query("""
+          SELECT se.session_evaluator_id, se.user_id,
+                 u.name AS judge_name,
+                 se.completion_outcome,
+                 se.evaluation_started_at,
+                 se.evaluation_ended_at,
+                 se.elapsed_seconds
+          FROM session_evaluators se
+          JOIN users u ON u.user_id = se.user_id
+          WHERE se.session_id = ?
+          ORDER BY se.session_evaluator_id
+          """, (rs, row) -> new HistoryMemberInfo(
+              rs.getInt("session_evaluator_id"),
+              rs.getInt("user_id"),
+              rs.getString("judge_name"),
               rs.getString("completion_outcome"),
-              new TimerView(
-                  sessionStart == null
-                      ? null
-                      : sessionStart.toInstant(ZoneOffset.UTC),
-                  sessionEnd == null
-                      ? null
-                      : sessionEnd.toInstant(ZoneOffset.UTC),
-                  rs.getObject("session_elapsed_seconds", Long.class)),
-              new TimerView(
-                  evaluationStart == null
-                      ? null
-                      : evaluationStart.toInstant(ZoneOffset.UTC),
-                  evaluationEnd == null
-                      ? null
-                      : evaluationEnd.toInstant(ZoneOffset.UTC),
-                  rs.getObject("elapsed_seconds", Long.class)));
-        },
-        sessionId, account);
+              rs.getObject("evaluation_started_at", LocalDateTime.class),
+              rs.getObject("evaluation_ended_at", LocalDateTime.class),
+              rs.getObject("elapsed_seconds", Long.class)), sessionId);
+
+      // Legacy records may have finalized sample evaluations but no
+      // completion_outcome. This mirrors SessionClosureService.isComplete().
+      List<HistoryJudge> creatorJudges = new ArrayList<>();
+      int completedMembers = 0;
+      String ownOutcome = null;
+      TimerView ownTimer = null;
+      List<SavedSample> ownSamples = List.of();
+
+      for (HistoryMemberInfo member : members) {
+        boolean isOwn = member.userId() == account;
+        // For non-creators, never load another evaluator's scoring data.
+        List<SavedSample> finalizedSamples = List.of();
+        boolean completed = "FINALIZED".equals(member.outcome());
+
+        boolean possiblyFinalized = "FINALIZED".equals(member.outcome())
+            || (member.outcome() == null
+                && member.startedAt() == null && member.endedAt() == null);
+        if ((creator || isOwn) && possiblyFinalized) {
+          List<SavedSample> stored = loadForMember(member.memberId());
+          finalizedSamples = stored.stream()
+              .filter(item -> "FINALIZED".equals(item.status()) && item.totalScore() != null)
+              .toList();
+          boolean legacyComplete = member.outcome() == null
+              && member.startedAt() == null && member.endedAt() == null
+              && !sampleIds.isEmpty() && finalizedSamples.size() == sampleIds.size();
+          completed = completed || legacyComplete;
+        } else if (!completed && member.outcome() == null && !sampleIds.isEmpty()) {
+          // Check only the aggregate, without reading somebody else's scores.
+          Integer finalizedCount = jdbc.queryForObject("""
+              SELECT COUNT(*) FROM evaluations
+              WHERE session_evaluator_id = ?
+                AND status = 'FINALIZED' AND total_score IS NOT NULL
+              """, Integer.class, member.memberId());
+          completed = member.startedAt() == null && member.endedAt() == null
+              && finalizedCount != null && finalizedCount == sampleIds.size();
+        }
+
+        if (completed) completedMembers++;
+        String effectiveOutcome = completed ? "FINALIZED" : member.outcome();
+        TimerView memberTimer = timer(member.startedAt(), member.endedAt(), member.elapsedSeconds());
+        if (creator) {
+          creatorJudges.add(new HistoryJudge(member.userId(), member.name(),
+              effectiveOutcome, memberTimer,
+              completed ? finalizedSamples : List.of()));
+        }
+        if (isOwn) {
+          ownOutcome = effectiveOutcome;
+          ownTimer = memberTimer;
+          ownSamples = completed ? finalizedSamples : List.of();
+        }
+      }
+
+      // Session list labels are separate from the persisted closure state:
+      // a creator-finalized session with unfinished judges is "INCOMPLETE".
+      String displayStatus = !closed ? "IN_PROGRESS"
+          : "CANCELLED".equals(session.status())
+              || (members.size() > completedMembers)
+                  ? "INCOMPLETE" : "FINALIZED";
+      TimerView sessionTimer = timer(session.startedAt(), session.endedAt(),
+          session.elapsedSeconds());
+      LocalDateTime date = session.endedAt() != null ? session.endedAt()
+          : session.createdAt();
+
+      result.add(new HistoryEntry(sessionId, session.name(),
+          date == null ? "" : date.toInstant(ZoneOffset.UTC).toString(),
+          creator ? List.of() : ownSamples,
+          closed, ownOutcome, sessionTimer, ownTimer,
+          creator && ownTimer == null,
+          creator, displayStatus, sampleIds,
+          creator ? creatorJudges : List.of(), members.size()));
+    }
+    return result;
   }
+
+  private record HistorySessionInfo(String name, int createdBy,
+      LocalDateTime createdAt, String status, LocalDateTime finalizedAt,
+      LocalDateTime startedAt, LocalDateTime endedAt, Long elapsedSeconds) {
+  }
+
+  private record HistoryMemberInfo(int memberId, int userId, String name,
+      String outcome, LocalDateTime startedAt, LocalDateTime endedAt,
+      Long elapsedSeconds) {
+  }
+
+  private TimerView timer(LocalDateTime started, LocalDateTime ended, Long elapsed) {
+    return new TimerView(
+        started == null ? null : started.toInstant(ZoneOffset.UTC),
+        ended == null ? null : ended.toInstant(ZoneOffset.UTC), elapsed);
+  }
+
 }

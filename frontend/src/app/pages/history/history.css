@@ -489,3 +489,164 @@
   .details-backdrop { padding: 14px; }
   .details-modal { max-height: 90vh; padding: 20px; border-radius: 18px; }
 }
+
+/* History: sample score-sheet tabs, not numbered sample pagination. */
+.sample-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 1px 1px 12px;
+  margin-bottom: 10px;
+  scrollbar-width: thin;
+}
+.sample-tabs button {
+  flex: 0 0 auto;
+  min-width: 92px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 10px 15px;
+  background: #fff;
+  color: var(--roast);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sample-tabs button.is-active {
+  background: var(--espresso);
+  border-color: var(--espresso);
+  color: white;
+}
+.sample-tabs button:focus-visible,
+.evaluator-picker-trigger:focus-visible,
+.judge-dropdown-row:focus-visible,
+.return-average:focus-visible {
+  outline: 2px solid var(--mocha);
+  outline-offset: 2px;
+}
+.results-view-heading, .judge-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.results-view-heading { margin-bottom: 16px; }
+.results-view-heading h3, .judge-results-head h3 {
+  margin: 0;
+  color: var(--espresso);
+  font-size: 16px;
+}
+.results-view-heading p {
+  margin: 6px 0 0;
+  color: var(--mocha);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.return-average {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  padding: 9px 12px;
+  color: var(--espresso);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.no-judges { color: var(--mocha); font-size: 13px; padding: 14px 0; }
+
+/* Creator-only evaluator chooser: compact, scrollable judge names and scores. */
+.session-timing { position: relative; z-index: 2; }
+.evaluator-picker { position: relative; min-width: 0; }
+.evaluator-picker-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 60px;
+  padding: 11px 12px;
+  border: 1px solid #e4dbd2;
+  border-radius: 11px;
+  background: #fff;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.evaluator-picker-trigger:hover, .evaluator-picker-trigger.is-open {
+  border-color: var(--mocha);
+  background: #fdf9f5;
+}
+.evaluator-picker-trigger .timing-copy { flex: 1; }
+.evaluator-picker-chevron { flex: 0 0 auto; color: var(--mocha); transition: transform .16s ease; }
+.evaluator-picker-chevron.is-open { transform: rotate(180deg); }
+.evaluator-dropdown {
+  position: absolute;
+  z-index: 4;
+  top: calc(100% + 8px);
+  right: 0;
+  width: max(100%, 270px);
+  max-width: min(370px, calc(100vw - 40px));
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(57, 35, 24, .13);
+}
+.judge-dropdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--espresso);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.judge-dropdown-row:hover:not(:disabled), .judge-dropdown-row.is-active { background: #faf4ee; }
+.judge-dropdown-row:disabled { cursor: default; }
+.judge-dropdown-name { min-width: 0; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.judge-dropdown-meta { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; font-size: 12px; color: var(--mocha); white-space: nowrap; }
+.judge-dropdown-meta strong { font-size: 12px; color: var(--espresso); }
+.judge-dropdown-arrow { color: var(--mocha); }
+.evaluator-dropdown .no-judges { margin: 0; padding: 12px; }
+@media (max-width: 1120px) {
+  .evaluator-picker-trigger { gap: 7px; padding: 9px 8px; }
+}
+
+/* The creator can reopen management for sessions that are still running. */
+.session-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.session-manage-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--espresso);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.session-manage-link:hover { background: #faf4ee; border-color: var(--mocha); }
+.session-manage-link:focus-visible { outline: 2px solid var(--mocha); outline-offset: 2px; }
+@media (max-width: 600px) {
+  .session-detail-actions { justify-content: flex-end; }
+}

@@ -289,8 +289,6 @@
                   </button>
                 </div>
               }
-              @if (linkMessage() && linkMessage() !== 'Your participation link is ready to copy.') { <p role="status" class="link-feedback">{{ linkMessage() }}</p> }
-              @if (linkError()) { <p class="field-error" role="alert">{{ linkError() }}</p> }
               @if (!participationLink() && !generatingLink()) {
                 <button type="button" class="link-retry" (click)="generateParticipationLink()">Retry</button>
               }
@@ -311,13 +309,6 @@
               {{ loadingEvaluators() ? 'Refreshing...' : 'Refresh' }}
             </button>
           </div>
-
-          @if (evaluatorListError()) {
-            <p class="field-error" role="alert">{{ evaluatorListError() }}</p>
-          }
-          @if (evaluatorRemovalError()) {
-            <p class="field-error" role="alert">{{ evaluatorRemovalError() }}</p>
-          }
 
           <div class="current-evaluators-list">
             @for (evaluator of evaluators(); track evaluator.sessionEvaluatorId) {
@@ -352,13 +343,14 @@
                     <p class="help">Timing not available yet.</p>
                   }
                 </div>
-                <button type="button" class="remove-evaluator-button" [disabled]="
-                    info.closed || loadingEvaluators() || assigningEvaluator() || removingEvaluatorId() !== null
-                  " [attr.aria-label]="'Remove ' + evaluator.name + ' as an evaluator'"
-                  [title]="info.closed ? 'Evaluators cannot be removed from a closed session' : 'Remove evaluator'"
-                  (click)="removeEvaluator(evaluator)">
-                  {{ removingEvaluatorId() === evaluator.sessionEvaluatorId ? '…' : '×' }}
-                </button>
+                @if (!info.closed && evaluatorTimingDisplays()[evaluator.sessionEvaluatorId]?.status !== 'Finalized') {
+                  <button type="button" class="remove-evaluator-button" [disabled]="
+                      loadingEvaluators() || assigningEvaluator() || removingEvaluatorId() !== null
+                    " [attr.aria-label]="'Remove ' + evaluator.name + ' as an evaluator'"
+                    title="Remove evaluator" (click)="removeEvaluator(evaluator)">
+                    {{ removingEvaluatorId() === evaluator.sessionEvaluatorId ? '…' : '×' }}
+                  </button>
+                }
               </article>
             } @empty {
               @if (!loadingEvaluators() && !evaluatorListError()) {
@@ -385,8 +377,6 @@
                       [attr.aria-controls]="evaluatorDropdownOpen() ? 'evaluatorSuggestions' : null"
                       [attr.aria-activedescendant]="evaluatorDropdownOpen() && activeCandidateIndex() >= 0
                         ? 'evaluator-option-' + activeCandidateIndex() : null"
-                      [attr.aria-describedby]="evaluatorEmailError() || evaluatorSearchError()
-                        ? 'assignmentHelp evaluatorSearchError' : 'assignmentHelp'"
                       placeholder="Type at least 2 characters" />
                     @if (evaluatorDropdownOpen()) {
                       <div class="evaluator-dropdown">
@@ -415,20 +405,8 @@
                     {{ assigningEvaluator() ? 'Adding...' : '+ Add' }}
                   </button>
                 </div>
-                <p id="assignmentHelp" class="help">Select an account from the suggestions to add them.</p>
-                @if (evaluatorEmailError() || evaluatorSearchError()) {
-                  <p id="evaluatorSearchError" class="field-error" role="alert">
-                    {{ evaluatorEmailError() || evaluatorSearchError() }}
-                  </p>
-                }
-                @if (selectedEvaluator(); as selected) {
-                  <p class="help" role="status">Selected: <strong>{{ selected.name }}</strong> — {{ selected.email }}</p>
-                }
               </form>
             </div>
-          }
-          @if (participationSuccess()) {
-            <p role="status" class="evaluator-success">{{ participationSuccess() }}</p>
           }
         </section>
       }
@@ -454,34 +432,27 @@
           }
         </div>
 
-        @if (info.isCreator && !info.closed) {
+        @if ((info.isCreator && !info.closed) || info.finalized) {
           <div class="session-actions-card">
             <div class="session-actions-copy">
               <h3>Session Actions</h3>
-              @if (sessionFinalizationSuccess()) {
-                <p role="status">{{ sessionFinalizationSuccess() }}</p>
-              }
             </div>
-            <button class="finalize-session-button" type="button"
-              [disabled]="finalizingSession() || loadingEvaluators() || assigningEvaluator() || removingEvaluatorId() !== null"
-              (click)="openFinalizeSessionModal()">Finalize Session</button>
+            @if (info.finalized) {
+              <a class="finalize-session-button history-session-button" routerLink="/history">Go to History</a>
+            } @else {
+              <button class="finalize-session-button" type="button"
+                [disabled]="finalizingSession() || loadingEvaluators() || assigningEvaluator() || removingEvaluatorId() !== null"
+                (click)="openFinalizeSessionModal()">Finalize Session</button>
+            }
           </div>
         }
       </section>
     </div>
   </div>
 
-  @if (info.finalized) {
-  <p class="help">
-    This session is completed. Sample details are now available.
-  </p>
-  } @else if (info.closed) {
+  @if (info.closed && !info.finalized) {
   <p class="help">
     This session is closed. Evaluation is unavailable.
-  </p>
-  } @else if (!info.canEvaluate) {
-  <p class="help">
-    You are managing this session without participating as an evaluator.
   </p>
   }
   }

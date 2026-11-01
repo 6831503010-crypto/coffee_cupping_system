@@ -72,3 +72,7 @@
 @media (prefers-reduced-motion: reduce) {
   .toast-box { animation: none; }
 }
+
+/* Error notifications share the existing toast placement and dismissal. */
+.toast-box.toast-error { border-left-color: #b3261e; }
+.toast-box.toast-error .toast-check { color: #b3261e; background: #fcebea; font-weight: 800; }

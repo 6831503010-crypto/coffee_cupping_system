@@ -1,9 +1,15 @@
 @for (toast of toasts.active(); track toast.id) {
-  <div class="toast-box" role="status" aria-live="polite">
+  <div class="toast-box" [class.toast-error]="toast.type === 'error'"
+       [attr.role]="toast.type === 'error' ? 'alert' : 'status'"
+       [attr.aria-live]="toast.type === 'error' ? 'assertive' : 'polite'">
     <span class="toast-check" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 12.5 10 17l9-10" />
-      </svg>
+      @if (toast.type === 'error') {
+        <span aria-hidden="true">!</span>
+      } @else {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12.5 10 17l9-10" />
+        </svg>
+      }
     </span>
     <p>{{ toast.text }}</p>
     <button type="button" class="toast-close" aria-label="Dismiss notification" (click)="toasts.dismiss(toast.id)">×</button>
