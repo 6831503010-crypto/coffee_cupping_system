@@ -539,3 +539,29 @@
     width: 100%;
   }
 }
+
+/* The History action takes the same place and appearance as Finalize Session. */
+.session-details-view .session-actions-card .history-session-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 50px;
+  padding: 0.85rem 1rem;
+  color: #fff;
+  background: #5d4037;
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+.session-details-view .session-actions-card .history-session-button:hover {
+  background: #392318;
+}
+.session-details-view .session-actions-card .history-session-button:focus-visible {
+  outline: 2px solid #9a6545;
+  outline-offset: 3px;
+}

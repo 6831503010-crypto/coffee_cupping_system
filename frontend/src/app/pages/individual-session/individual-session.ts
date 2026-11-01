@@ -12,6 +12,7 @@ import {
       of,
   } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ToastService } from '../../shared/toast-notification/toast.service';
 import { Component,DestroyRef, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -50,6 +51,7 @@ import {
 })
 export class IndividualSession {
 
+  private readonly toast = inject(ToastService);
   private readonly api = inject(IndividualSessionService);
   private readonly inventory = inject(CoffeeInventoryService);
   private readonly router = inject(Router);
@@ -77,13 +79,11 @@ export class IndividualSession {
 
   readonly assigningEvaluator = signal(false);
   readonly evaluatorEmailError = signal('');
-  readonly participationSuccess = signal('');
 
   readonly participationLink = signal('');
   readonly generatingLink = signal(false);
   readonly copyingLink = signal(false);
   readonly linkError = signal('');
-  readonly linkMessage = signal('');
 
   readonly evaluatorTimingDisplays = signal<
     Record<number, { status: string; duration: string }>
@@ -489,6 +489,7 @@ export class IndividualSession {
                     ? 'The session is full or closed. Refresh the evaluator list.'
                     : 'Could not search accounts. Edit the search to try again.'
             );
+            this.toast.error(this.evaluatorSearchError());
 
             return EMPTY;
           }),
@@ -515,7 +516,6 @@ export class IndividualSession {
     this.evaluatorSearchCompleted.set(false);
     this.evaluatorSearchError.set('');
     this.evaluatorEmailError.set('');
-    this.participationSuccess.set('');
 
     const query = value.trim();
 
@@ -658,7 +658,6 @@ export class IndividualSession {
 
   this.resetEvaluatorSearch();
   this.evaluatorRemovalError.set('');
-  this.participationSuccess.set('');
   this.removingEvaluatorId.set(evaluator.sessionEvaluatorId);
 
   this.api.removeEvaluator(evaluator.sessionEvaluatorId).pipe(
@@ -666,7 +665,7 @@ export class IndividualSession {
     finalize(() => this.removingEvaluatorId.set(null))
   ).subscribe({
     next: () => {
-      this.participationSuccess.set(
+      this.toast.success(
         evaluator.creator
           ? 'You are no longer an evaluator. You can still manage this session.'
           : `${evaluator.name} was removed from this session.`
@@ -701,6 +700,7 @@ export class IndividualSession {
           );
       }
 
+      this.toast.error(this.evaluatorRemovalError());
       this.refreshEvaluators();
     }
   });
@@ -729,6 +729,7 @@ refreshEvaluators(): void {
       this.evaluatorListError.set(
         'Could not refresh the evaluator list. Please try again.'
       );
+      this.toast.error(this.evaluatorListError());
     }
   });
 }
@@ -739,7 +740,6 @@ assignEvaluator(): void {
   if (!info || !this.canSearchEvaluators()) return;
 
   this.evaluatorEmailError.set('');
-  this.participationSuccess.set('');
 
   const candidate = this.selectedEvaluator();
 
@@ -747,6 +747,7 @@ assignEvaluator(): void {
     this.evaluatorEmailError.set(
       'Select an account from the suggestions first.'
     );
+    this.toast.error(this.evaluatorEmailError());
     return;
   }
 
@@ -760,7 +761,7 @@ assignEvaluator(): void {
   ).subscribe({
     next: result => {
       this.resetEvaluatorSearch();
-      this.participationSuccess.set(
+      this.toast.success(
         result.alreadyParticipating
           ? 'This account is already an evaluator. No extra place was used.'
           : 'Evaluator added successfully.'
@@ -797,6 +798,7 @@ assignEvaluator(): void {
           );
       }
 
+      this.toast.error(this.evaluatorEmailError());
       this.refreshEvaluators();
     }
   });
@@ -809,7 +811,6 @@ generateParticipationLink(): void {
 
   this.generatingLink.set(true);
   this.linkError.set('');
-  this.linkMessage.set('');
 
   this.api.getParticipationLink(info.sessionId).pipe(
     finalize(() => this.generatingLink.set(false))
@@ -821,7 +822,6 @@ generateParticipationLink(): void {
       this.participationLink.set(
         new URL(path, window.location.origin).href
       );
-      this.linkMessage.set('Your participation link is ready to copy.');
     },
     error: (error: HttpErrorResponse) => {
       this.linkError.set(
@@ -831,6 +831,7 @@ generateParticipationLink(): void {
             ? 'Please sign in again.'
             : 'Could not get the participation link. Please try again.'
       );
+      this.toast.error(this.linkError());
     }
   });
 }
@@ -842,15 +843,15 @@ async copyParticipationLink(): Promise<void> {
 
     this.copyingLink.set(true);
     this.linkError.set('');
-    this.linkMessage.set('');
-
+  
     try {
       await navigator.clipboard.writeText(link);
-      this.linkMessage.set('Participation link copied.');
+      this.toast.success('Participation link copied.');
     } catch {
       this.linkError.set(
         'Automatic copying is unavailable. Select and copy the link manually.'
       );
+      this.toast.error(this.linkError());
     } finally {
       this.copyingLink.set(false);
     }
@@ -1074,7 +1075,6 @@ private updateSessionTimeDisplay(): void {
 
   readonly finalizingSession = signal(false);
   readonly sessionFinalizationError = signal('');
-  readonly sessionFinalizationSuccess = signal('');
 
   openFinalizeSessionModal(): void {
     const info = this.session();
@@ -1084,7 +1084,6 @@ private updateSessionTimeDisplay(): void {
     }
 
     this.sessionFinalizationError.set('');
-    this.sessionFinalizationSuccess.set('');
     this.finalizeSessionDialog?.nativeElement.showModal();
   }
 
@@ -1131,12 +1130,14 @@ private updateSessionTimeDisplay(): void {
               error.error?.message ||
               'Session finalization failed. The session remains open.'
             );
+            this.toast.error(this.sessionFinalizationError());
           },
           error: () => {
             this.finalizingSession.set(false);
             this.sessionFinalizationError.set(
               'Could not confirm the session status. Refresh the page before trying again.'
             );
+            this.toast.error(this.sessionFinalizationError());
           }
         });
       }
@@ -1146,9 +1147,7 @@ private updateSessionTimeDisplay(): void {
   private finishSessionFinalization(): void {
     this.finalizingSession.set(false);
     this.finalizeSessionDialog?.nativeElement.close();
-    this.sessionFinalizationSuccess.set(
-      'Session closed successfully. Refreshing session details…'
-    );
+    this.toast.success('Session finalized successfully.');
     this.refreshEvaluators();
   }
 }

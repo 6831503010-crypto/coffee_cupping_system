@@ -30,7 +30,7 @@
   @if (sessionCount() === 0) {
     <section class="history-empty">
       <h2>No evaluation history yet.</h2>
-      <p>Completed evaluations will appear here after a cupping session.</p>
+      <p>Sessions you create or join will appear here.</p>
       <button class="btn primary" type="button" (click)="modeModal.openModeDialog()">Start Cupping</button>
     </section>
   } @else {
@@ -48,13 +48,17 @@
                     [attr.aria-pressed]="statusFilter() === 'all'" (click)="setStatusFilter('all')">
               All <span>{{ sessionCount() }}</span>
             </button>
+            <button type="button" [class.is-active]="statusFilter() === 'in-progress'"
+                    [attr.aria-pressed]="statusFilter() === 'in-progress'" (click)="setStatusFilter('in-progress')">
+              In Progress <span>{{ inProgressCount() }}</span>
+            </button>
             <button type="button" [class.is-active]="statusFilter() === 'finalized'"
                     [attr.aria-pressed]="statusFilter() === 'finalized'" (click)="setStatusFilter('finalized')">
               Finalized <span>{{ finalizedCount() }}</span>
             </button>
-            <button type="button" [class.is-active]="statusFilter() === 'closed'"
-                    [attr.aria-pressed]="statusFilter() === 'closed'" (click)="setStatusFilter('closed')">
-              Closed <span>{{ closedCount() }}</span>
+            <button type="button" [class.is-active]="statusFilter() === 'incomplete'"
+                    [attr.aria-pressed]="statusFilter() === 'incomplete'" (click)="setStatusFilter('incomplete')">
+              Incomplete <span>{{ incompleteCount() }}</span>
             </button>
           </div>
         </div>
@@ -68,11 +72,11 @@
               <div class="session-item-text">
                 <strong>{{ record.sessionName || ('Session ' + sessionNumber(sessionIndex)) }}</strong>
                 <span>{{ formatDate(record.completedAt) }}</span>
-                <span class="session-item-meta">{{ record.samples?.length || 0 }} {{ (record.samples?.length || 0) === 1 ? 'sample' : 'samples' }}</span>
+                <span class="session-item-meta">{{ record.sessionSampleIds.length }} {{ record.sessionSampleIds.length === 1 ? 'sample' : 'samples' }}</span>
               </div>
               <div class="session-item-side">
                 <span class="session-badge" [class.badge-closed]="isIncomplete(record)"
-                      [class.badge-progress]="record.completionOutcome === 'IN_PROGRESS'">{{ statusLabel(record) }}</span>
+                      [class.badge-progress]="record.displayStatus === 'IN_PROGRESS'">{{ statusLabel(record) }}</span>
                 <span aria-hidden="true" class="item-chevron">›</span>
               </div>
             </button>
@@ -111,15 +115,20 @@
               <h2>{{ record.sessionName || 'Session ' + activeSessionNumber() }}</h2>
               <p class="session-detail-date">{{ formatDate(record.completedAt) }}</p>
             </div>
-            <span class="session-badge" [class.badge-closed]="isIncomplete(record)"
-                  [class.badge-progress]="record.completionOutcome === 'IN_PROGRESS'">{{ statusLabel(record) }}</span>
+            <div class="session-detail-actions">
+              @if (record.creator && record.displayStatus === 'IN_PROGRESS' && !record.sessionClosed) {
+                <a class="session-manage-link" [routerLink]="['/individual', record.id]">Manage Session <span aria-hidden="true">↗</span></a>
+              }
+              <span class="session-badge" [class.badge-closed]="isIncomplete(record)"
+                    [class.badge-progress]="record.displayStatus === 'IN_PROGRESS'">{{ statusLabel(record) }}</span>
+            </div>
           </header>
 
           <div class="session-timing">
-              @if (record.creatorOnly) {
+              @if (record.creator && !record.evaluatorTimer) {
                 <div class="timing-stat">
                   <span class="timing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-                  <div class="timing-copy"><span>Your role</span><strong>Creator only</strong></div>
+                  <div class="timing-copy"><span>Your role</span><strong>Creator</strong></div>
                 </div>
               } @else {
                 <div class="timing-stat">
@@ -131,75 +140,129 @@
                 <span class="timing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10M7 21h10M8 3c0 4 4 4 4 9s-4 5-4 9m8-18c0 4-4 4-4 9s4 5 4 9"/></svg></span>
                 <div class="timing-copy"><span>Session elapsed time</span><strong>{{ sessionDurationLabel(record) }}</strong></div>
               </div>
-              <div class="timing-stat" title="Evaluators joined / evaluator capacity">
-                <span class="timing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2"/></svg></span>
-                <div class="timing-copy"><span>Evaluators</span><strong>{{ evaluatorCountLabel(record) }}</strong></div>
-              </div>
+              @if (record.creator && !singleJudgeCreatorView()) {
+                <div class="evaluator-picker" title="View judges' score sheets">
+                  <button type="button" class="evaluator-picker-trigger"
+                          [class.is-open]="evaluatorDropdownOpen()"
+                          [attr.aria-expanded]="evaluatorDropdownOpen()"
+                          aria-controls="history-judge-dropdown"
+                          aria-label="Show judges and their scores"
+                          (click)="toggleEvaluatorDropdown()">
+                    <span class="timing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2"/></svg></span>
+                    <span class="timing-copy"><span>Evaluators</span><strong>{{ evaluatorCountLabel(record) }}</strong></span>
+                    <svg class="evaluator-picker-chevron" [class.is-open]="evaluatorDropdownOpen()" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                  @if (evaluatorDropdownOpen()) {
+                    <div class="evaluator-dropdown" id="history-judge-dropdown" aria-label="Judges' score sheets">
+                      @for (judge of record.judges; track judge.userId) {
+                        <button type="button" class="judge-dropdown-row"
+                                [class.is-active]="activeJudge()?.userId === judge.userId"
+                                [disabled]="judge.completionOutcome !== 'FINALIZED'"
+                                (click)="selectJudge(judge.userId)"
+                                [attr.aria-label]="judge.completionOutcome === 'FINALIZED' ? 'View ' + judge.name + ' score sheet' : judge.name + ': ' + judgeStatusLabel(judge)">
+                          <span class="judge-dropdown-name">{{ judge.name }}</span>
+                          <span class="judge-dropdown-meta">
+                            @if (judge.completionOutcome === 'FINALIZED') {
+                              <strong>{{ formatScore(judgeSampleScore(judge)) }}{{ judgeSampleScore(judge) == null ? '' : ' / 100' }}</strong>
+                              <svg class="judge-dropdown-arrow" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                            } @else {
+                              <span>{{ judgeStatusLabel(judge) }}</span>
+                            }
+                          </span>
+                        </button>
+                      } @empty {
+                        <p class="no-judges">No judges have joined this session.</p>
+                      }
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="timing-stat" title="Evaluators joined / evaluator capacity">
+                  <span class="timing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2"/></svg></span>
+                  <div class="timing-copy"><span>Evaluators</span><strong>{{ evaluatorCountLabel(record) }}</strong></div>
+                </div>
+              }
             </div>
 
           <div class="sample-results-section">
-            @if (isIncomplete(record)) {
-              <div class="history-incomplete-note">This session closed before your evaluation was finalized. No finalized scores are available for this entry.</div>
-            } @else if (activeSample(); as sample) {
+            @if (record.creator) {
+              <div class="results-view-heading">
+                <div>
+                  <h3>{{ activeJudge() ? activeJudge()!.name + ' — Score Sheet' : 'Average Result Sheet' }}</h3>
+                </div>
+                @if (activeJudge() && !singleJudgeCreatorView()) {
+                  <button class="return-average" type="button" (click)="selectJudge(null)">← Back to Average</button>
+                }
+              </div>
+            }
+
+            @if (record.sessionSampleIds.length > 1) {
+              <nav class="sample-tabs" aria-label="Select a sample score sheet">
+                @for (sampleId of record.sessionSampleIds; track sampleId; let sampleIndex = $index) {
+                  <button type="button" role="tab"
+                          [class.is-active]="selectedSampleIndex() === sampleIndex"
+                          [attr.aria-selected]="selectedSampleIndex() === sampleIndex"
+                          (click)="selectSample(sampleIndex)">
+                    Sample {{ sampleIndex + 1 }}
+                  </button>
+                }
+              </nav>
+            }
+
+            @if (activeSample(); as sample) {
               <article class="sample-result-card">
                 <div class="sample-result-head">
-                  <div>
-                    <h4>Sample {{ sample.id }}</h4>
-                  </div>
+                  <div><h4>Sample {{ sample.id }}</h4></div>
                   <div class="sample-score">
-                    <span>Final score</span>
-                    <strong>{{ formatScore(sample.finalScore) }}{{ sample.finalScore != null ? ' / 100' : '' }}</strong>
+                    <span>{{ showingAverage() ? 'Average score' : 'Final score' }}</span>
+                    <strong>{{ showingAverage() ? formatAverageScore(sample.finalScore) : formatScore(sample.finalScore) }}{{ sample.finalScore != null ? ' / 100' : '' }}</strong>
                   </div>
                 </div>
 
                 <div class="scores-two-columns">
                   <div class="score-column">
-                    <div class="score-row"><span>Aroma Quality</span><strong>{{ formatScore(sample.aroma?.qualityScore) }}</strong></div>
-                    <div class="score-row"><span>Flavor</span><strong>{{ formatScore(sample.flavor?.flavor) }}</strong></div>
-                    <div class="score-row"><span>Aftertaste</span><strong>{{ formatScore(sample.flavor?.aftertaste) }}</strong></div>
-                    <div class="score-row"><span>Acidity</span><strong>{{ formatScore(sample.flavor?.acidity) }}</strong></div>
-                    <div class="score-row"><span>Body</span><strong>{{ formatScore(sample.flavor?.body) }}</strong></div>
+                    <div class="score-row"><span>Aroma Quality</span><strong>{{ showingAverage() ? formatAverageScore(sample.aroma?.qualityScore) : formatScore(sample.aroma?.qualityScore) }}</strong></div>
+                    <div class="score-row"><span>Flavor</span><strong>{{ showingAverage() ? formatAverageScore(sample.flavor?.flavor) : formatScore(sample.flavor?.flavor) }}</strong></div>
+                    <div class="score-row"><span>Aftertaste</span><strong>{{ showingAverage() ? formatAverageScore(sample.flavor?.aftertaste) : formatScore(sample.flavor?.aftertaste) }}</strong></div>
+                    <div class="score-row"><span>Acidity</span><strong>{{ showingAverage() ? formatAverageScore(sample.flavor?.acidity) : formatScore(sample.flavor?.acidity) }}</strong></div>
+                    <div class="score-row"><span>Body</span><strong>{{ showingAverage() ? formatAverageScore(sample.flavor?.body) : formatScore(sample.flavor?.body) }}</strong></div>
                   </div>
                   <div class="score-column">
-                    <div class="score-row"><span>Uniformity</span><strong>{{ formatScore(getCupScore(sample.flavor?.uniformity)) }}</strong></div>
-                    <div class="score-row"><span>Clean Cup</span><strong>{{ formatScore(getCupScore(sample.flavor?.cleanCup)) }}</strong></div>
-                    <div class="score-row"><span>Balance</span><strong>{{ formatScore(sample.flavor?.balance) }}</strong></div>
-                    <div class="score-row"><span>Sweetness</span><strong>{{ formatScore(getCupScore(sample.flavor?.sweetness)) }}</strong></div>
-                    <div class="score-row"><span>Overall</span><strong>{{ formatScore(sample.flavor?.overall) }}</strong></div>
+                    <div class="score-row"><span>Uniformity</span><strong>{{ showingAverage() ? formatAverageScore(sample.meanCupScores?.uniformity) : formatScore(getCupScore(sample.flavor?.uniformity)) }}</strong></div>
+                    <div class="score-row"><span>Clean Cup</span><strong>{{ showingAverage() ? formatAverageScore(sample.meanCupScores?.cleanCup) : formatScore(getCupScore(sample.flavor?.cleanCup)) }}</strong></div>
+                    <div class="score-row"><span>Balance</span><strong>{{ showingAverage() ? formatAverageScore(sample.flavor?.balance) : formatScore(sample.flavor?.balance) }}</strong></div>
+                    <div class="score-row"><span>Sweetness</span><strong>{{ showingAverage() ? formatAverageScore(sample.meanCupScores?.sweetness) : formatScore(getCupScore(sample.flavor?.sweetness)) }}</strong></div>
+                    <div class="score-row"><span>Overall</span><strong>{{ showingAverage() ? formatAverageScore(sample.flavor?.overall) : formatScore(sample.flavor?.overall) }}</strong></div>
                   </div>
                 </div>
 
-                @if (getDefectiveCupCount(sample.flavor || {}) > 0 && getDefectPoints(sample.flavor?.defectType) > 0) {
+                @if (showingAverage() && (sample.meanDefectDeduction ?? 0) > 0) {
+                  <div class="defect-row"><span>Average defect deduction</span><strong>−{{ formatAverageScore(sample.meanDefectDeduction) }}</strong></div>
+                } @else if (!showingAverage() && getDefectiveCupCount(sample.flavor || {}) > 0 && getDefectPoints(sample.flavor?.defectType) > 0) {
                   <div class="defect-row">
                     <span>Defect</span>
                     <strong>{{ getDefectiveCupCount(sample.flavor || {}) }} {{ getDefectiveCupCount(sample.flavor || {}) === 1 ? 'cup' : 'cups' }} × {{ getDefectLabel(sample.flavor?.defectType) }} (−{{ getDefectPoints(sample.flavor?.defectType) }} each) = −{{ formatScore(getDefectDeduction(sample.flavor || {})) }}</strong>
                   </div>
                 }
 
-                <button class="details-toggle" type="button" (click)="openSampleDetails(sample, activeSessionNumber())">
-                  View additional details <span aria-hidden="true">›</span>
-                </button>
+                @if (!showingAverage()) {
+                  <button class="details-toggle" type="button" (click)="openSampleDetails(sample, activeSessionNumber())">
+                    View additional details <span aria-hidden="true">›</span>
+                  </button>
+                }
               </article>
-
-              @if ((record.samples?.length || 0) > 1) {
-                <nav class="sample-pagination" aria-label="Samples in this session">
-                  <span>Sample {{ activeSamplePage() }} of {{ record.samples?.length }}</span>
-                  <div class="pagination-controls">
-                    <button type="button" [disabled]="activeSamplePage() === 1" aria-label="Previous sample"
-                            (click)="selectSample(activeSamplePage() - 2)">‹</button>
-                    @for (page of samplePageNumbers(); track page) {
-                      <button type="button" [class.active]="activeSamplePage() === page"
-                              [attr.aria-current]="activeSamplePage() === page ? 'page' : null"
-                              [attr.aria-label]="'Sample ' + page" (click)="selectSample(page - 1)">{{ page }}</button>
-                    }
-                    <button type="button" [disabled]="activeSamplePage() === (record.samples?.length || 0)"
-                            aria-label="Next sample" (click)="selectSample(activeSamplePage())">›</button>
-                  </div>
-                </nav>
-              }
             } @else {
-              <div class="no-sample-results">No sample results are available for this session.</div>
+              <div class="no-sample-results">
+                @if (record.creator && showingAverage()) {
+                  No finalized judge results are available for Sample {{ activeSamplePage() }} yet.
+                } @else if (record.creator && activeJudge()) {
+                  This judge has not finalized Sample {{ activeSamplePage() }}. No completed score sheet is available.
+                } @else {
+                  Your evaluation for this sample has not been finalized. Only finalized results appear in History.
+                }
+              </div>
             }
+
           </div>
 
         } @else {

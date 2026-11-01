@@ -40,6 +40,14 @@ export interface SavedEvaluation {
   data: EvaluationSamplePayload;
 }
 
+export interface EvaluationHistoryJudge {
+  userId: number;
+  name: string;
+  completionOutcome: 'IN_PROGRESS' | 'FINALIZED' | 'INCOMPLETE_SESSION_CLOSED' | null;
+  evaluatorTimer: EvaluationTimer;
+  samples: SavedEvaluation[];
+}
+
 export interface EvaluationHistoryGroup {
   sessionId: number;
   sessionName: string;
@@ -54,6 +62,11 @@ export interface EvaluationHistoryGroup {
   sessionTimer: EvaluationTimer;
   evaluatorTimer: EvaluationTimer    | null;
   creatorOnly: boolean;
+  creator: boolean;
+  displayStatus: 'IN_PROGRESS' | 'FINALIZED' | 'INCOMPLETE';
+  sessionSampleIds: number[];
+  judges: EvaluationHistoryJudge[];
+  evaluatorCount: number;
 }
 
 export interface EvaluationTimer {
