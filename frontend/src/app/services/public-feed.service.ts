@@ -40,11 +40,19 @@ export interface FeedAdditionalDetails {
   cups: FeedCupSummary[];
 }
 
+export interface FeedSampleDetails {
+  process: string | null;
+  harvestYear: number | null;
+  growingLocation: string | null;
+  ownerProducer: string | null;
+}
+
 export interface PublicFeedResult {
   sessionId: number;
   sessionName: string;
   sessionSampleId: number;
   sampleName: string;
+  sampleDetails: FeedSampleDetails;
   closedAt: string;
   averageScore: number;
   finalizedJudges: number;

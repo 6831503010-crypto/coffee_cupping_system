@@ -11,7 +11,14 @@
 .feed-toolbar { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 22px; }
 .feed-search-label { display:flex; align-items:center; gap:9px; border:1px solid #e1d4ca; padding:0 12px; border-radius:10px; max-width:500px; flex:1; color:var(--mocha, #795548); }
 .feed-search-label:focus-within { border-color:#9a6545; box-shadow:0 0 0 3px #9a65451a; }
-.feed-search-label input { min-width:0; width:100%; padding:12px 0; font:inherit; font-size:14px; border:none; outline:none; }
+/* The wrapper provides the only focus ring. Suppress global input:focus-visible
+   shadows and browser input outlines to avoid a second inner border. */
+.feed-search-label input[type="search"],
+.feed-search-label input[type="search"]:focus,
+.feed-search-label input[type="search"]:focus-visible {
+  min-width:0; width:100%; padding:12px 0; font:inherit; font-size:14px;
+  border:0; outline:0; box-shadow:none; background:transparent;
+}
 .feed-sort-label { display:flex; align-items:center; gap:8px; color:var(--mocha, #795548); font-size:13px; font-weight:650; }
 .feed-sort-label select { padding:10px; border-radius:9px; border:1px solid #e1d4ca; background:#fff; color:var(--espresso, #392318); font:inherit; }
 .feed-table-head, .feed-row { display:grid; grid-template-columns: 1.15fr 1.35fr minmax(150px,.62fr); gap:14px; align-items:center; }
@@ -28,6 +35,15 @@
 .feed-score strong { font-size:17px; } .feed-score strong small { font-size:11px; font-weight:650; color:var(--mocha,#795548); }
 .feed-score svg { transition:transform .18s; flex-shrink:0; } .rotated { transform:rotate(180deg); }
 .feed-expanded { padding:18px 22px 24px; border-top:1px solid #eadfd6; background:#fff; }
+/* Sample metadata sits above the existing three-column score/notes layout. */
+.feed-sample-details { margin:0 0 14px; padding:16px 20px; border:1px solid #e4d7cd; border-radius:11px; background:#fdfaf7; }
+.feed-sample-details h3 { margin:0 0 12px; font-size:14px; font-weight:800; color:var(--espresso,#392318); }
+.feed-sample-meta { margin:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px 24px; }
+.feed-sample-meta > div { min-width:0; }
+.feed-sample-meta dt { font-size:12px; color:var(--mocha,#795548); margin-bottom:4px; }
+.feed-sample-meta dd { margin:0; font-size:14px; font-weight:700; overflow-wrap:anywhere; }
+@media (max-width:1080px) { .feed-sample-meta { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:520px) { .feed-sample-meta { grid-template-columns:1fr; } .feed-sample-details { padding:14px; } }
 /* Row expansion: one results area, with the ten scores in the first two
    columns and notes in the third. No inner accordion controls. */
 .feed-results-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); border:1px solid #e4d7cd; border-radius:11px; overflow:hidden; background:#fff; }

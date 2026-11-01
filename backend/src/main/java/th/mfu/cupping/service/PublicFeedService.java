@@ -40,12 +40,16 @@ public class PublicFeedService {
   public record AdditionalDetails(BigDecimal dryAromaIntensity, BigDecimal breakAromaIntensity,
       String colorIntensity, BigDecimal acidityIntensity, BigDecimal bodyLevel,
       List<CupSummary> cups) {}
+  /** Public, non-personal metadata from the coffee inventory record. */
+  public record SampleDetails(String process, Integer harvestYear,
+      String growingLocation, String ownerProducer) {}
   public record FeedResult(int sessionId, String sessionName, int sessionSampleId,
-      String sampleName, String closedAt, BigDecimal averageScore, int finalizedJudges,
-      ScoreBreakdown scores, List<JudgeNote> notes, AdditionalDetails additionalDetails) {}
+      String sampleName, SampleDetails sampleDetails, String closedAt,
+      BigDecimal averageScore, int finalizedJudges, ScoreBreakdown scores,
+      List<JudgeNote> notes, AdditionalDetails additionalDetails) {}
 
   private record PublicSession(int id, String name, LocalDateTime closedAt) {}
-  private record SampleInfo(int id, String name) {}
+  private record SampleInfo(int id, String name, SampleDetails details) {}
   private record Member(int id, String name, String outcome,
       LocalDateTime startedAt, LocalDateTime endedAt) {}
   private record JudgeEvaluation(String judgeName, Sample data, BigDecimal totalScore) {}
@@ -65,12 +69,15 @@ public class PublicFeedService {
     List<FeedResult> feed = new ArrayList<>();
     for (PublicSession session : sessions) {
       List<SampleInfo> samples = jdbc.query("""
-          SELECT ss.session_sample_id, COALESCE(c.sample_name, ss.sample_code)
+          SELECT ss.session_sample_id, COALESCE(c.sample_name, ss.sample_code),
+                 c.process, c.harvest_year, c.growing_location, c.owner_producer
           FROM session_samples ss
           LEFT JOIN coffee_samples c ON c.sample_id = ss.sample_id
           WHERE ss.session_id = ?
           ORDER BY ss.display_order, ss.session_sample_id
-          """, (rs, n) -> new SampleInfo(rs.getInt(1), rs.getString(2)), session.id());
+          """, (rs, n) -> new SampleInfo(rs.getInt(1), rs.getString(2),
+              new SampleDetails(rs.getString(3), (Integer) rs.getObject(4),
+                  rs.getString(5), rs.getString(6))), session.id());
       if (samples.isEmpty()) continue;
 
       List<Member> members = jdbc.query("""
@@ -112,7 +119,7 @@ public class PublicFeedService {
         List<JudgeEvaluation> judgeResults = bySample.getOrDefault(sample.id(), List.of());
         if (judgeResults.isEmpty()) continue;
         feed.add(new FeedResult(session.id(), session.name(), sample.id(), sample.name(),
-            session.closedAt().toInstant(ZoneOffset.UTC).toString(),
+            sample.details(), session.closedAt().toInstant(ZoneOffset.UTC).toString(),
             mean(judgeResults, JudgeEvaluation::totalScore), judgeResults.size(),
             scores(judgeResults), notes(judgeResults), details(judgeResults)));
       }

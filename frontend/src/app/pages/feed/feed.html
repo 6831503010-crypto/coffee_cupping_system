@@ -2,11 +2,8 @@
   <a class="back-link" routerLink="/">← Back to Home</a>
   <header class="feed-hero">
     <div>
-      <span class="feed-kicker">COMMUNITY RESULTS</span>
       <h1>Public Cupping Feed</h1>
-      <p>Explore coffee scores and tasting notes shared by cupping session creators.</p>
     </div>
-    <div class="feed-summary"><strong>{{ filtered().length }}</strong><span>Published samples</span></div>
   </header>
 
   <section class="feed-panel" aria-label="Public cupping results">
@@ -50,6 +47,27 @@
             </button>
             @if (expandedSampleId() === item.sessionSampleId) {
               <div class="feed-expanded">
+                @if (item.sampleDetails; as sample) {
+                  @if (sample.process || sample.harvestYear != null || sample.growingLocation || sample.ownerProducer) {
+                    <section class="feed-sample-details" aria-label="Coffee sample details">
+                      <h3>Sample Details</h3>
+                      <dl class="feed-sample-meta">
+                        @if (sample.process) {
+                          <div><dt>Process</dt><dd>{{ sample.process }}</dd></div>
+                        }
+                        @if (sample.harvestYear != null) {
+                          <div><dt>Harvest Year</dt><dd>{{ sample.harvestYear }}</dd></div>
+                        }
+                        @if (sample.growingLocation) {
+                          <div><dt>Origin</dt><dd>{{ sample.growingLocation }}</dd></div>
+                        }
+                        @if (sample.ownerProducer) {
+                          <div><dt>Producer</dt><dd>{{ sample.ownerProducer }}</dd></div>
+                        }
+                      </dl>
+                    </section>
+                  }
+                }
                 <div class="feed-results-grid">
                   <section class="feed-scores-panel" aria-label="Score details">
                     <h3>Score Details</h3>

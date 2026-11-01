@@ -48,6 +48,10 @@
                     [attr.aria-pressed]="statusFilter() === 'all'" (click)="setStatusFilter('all')">
               All <span>{{ sessionCount() }}</span>
             </button>
+            <button type="button" [class.is-active]="statusFilter() === 'own'"
+                    [attr.aria-pressed]="statusFilter() === 'own'" (click)="setStatusFilter('own')">
+              Own <span>{{ ownCount() }}</span>
+            </button>
             <button type="button" [class.is-active]="statusFilter() === 'in-progress'"
                     [attr.aria-pressed]="statusFilter() === 'in-progress'" (click)="setStatusFilter('in-progress')">
               In Progress <span>{{ inProgressCount() }}</span>

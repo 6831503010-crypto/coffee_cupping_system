@@ -237,7 +237,7 @@ export class History implements OnInit {
   readonly pageSize = 5;
   readonly currentPage = signal(1);
   readonly searchQuery = signal('');
-  readonly statusFilter = signal<'all' | 'in-progress' | 'finalized' | 'incomplete'>('all');
+  readonly statusFilter = signal<'all' | 'own' | 'in-progress' | 'finalized' | 'incomplete'>('all');
   readonly selectedSessionId = signal<number | null>(null);
   readonly selectedSampleIndex = signal(0);
   // null means the creator's average sheet, otherwise a selected judge's sheet.
@@ -278,7 +278,8 @@ export class History implements OnInit {
       const matchesSearch = !query ||
         (record.sessionName || '').toLocaleLowerCase().includes(query);
       const matchesStatus = status === 'all' ||
-        (status === 'in-progress' ? record.displayStatus === 'IN_PROGRESS' :
+        (status === 'own' ? record.creator :
+          status === 'in-progress' ? record.displayStatus === 'IN_PROGRESS' :
           status === 'incomplete' ? this.isIncomplete(record) :
           record.displayStatus === 'FINALIZED');
       return matchesSearch && matchesStatus;
@@ -307,6 +308,7 @@ export class History implements OnInit {
     const start = Math.max(1, Math.min(this.currentPage() - 2, total - 4));
     return Array.from({ length: Math.min(5, total) }, (_, index) => start + index);
   });
+  readonly ownCount = computed(() => this.records().filter(record => record.creator).length);
   readonly inProgressCount = computed(() => this.records().filter(record =>
     record.displayStatus === 'IN_PROGRESS'
   ).length);
@@ -349,7 +351,7 @@ export class History implements OnInit {
     this.resetViewSelection();
   }
 
-  setStatusFilter(filter: 'all' | 'in-progress' | 'finalized' | 'incomplete'): void {
+  setStatusFilter(filter: 'all' | 'own' | 'in-progress' | 'finalized' | 'incomplete'): void {
     this.statusFilter.set(filter);
     this.resetViewSelection();
   }
