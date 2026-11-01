@@ -1,21 +1,25 @@
-
 import { Routes } from '@angular/router';
+
 import { Home } from './pages/home/home';
 import { Cupping } from './pages/cupping/cupping';
 import { History } from './pages/history/history';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
+
 import { authGuard } from './guards/auth.guard';
+
 import { Guide } from './pages/guide/guide';
-import { Form1 } from './pages/form-1/form-1';
-import { FirstUserGuide } from './pages/first-user-guide/first-user-guide';
+import { Form1 } from './pages/creating-sessions/form-1';
+import { FirstUserGuide } from './pages/aroma-test/first-user-guide';
 import { FlavorTest } from './pages/flavor-test/flavor-test';
 import { ReviewPage } from './pages/review-page/review-page';
+
 import { IndividualSession } from './pages/individual-session/individual-session';
 import { JoinSession } from './pages/join-session/join-session';
 import { Inventory } from './pages/inventory/inventory';
 
 export const routes: Routes = [
+  // Authentication
   {
     path: 'login',
     component: Login
@@ -24,6 +28,8 @@ export const routes: Routes = [
     path: 'register',
     component: Register
   },
+
+  // Main pages
   {
     path: '',
     component: Home,
@@ -49,13 +55,20 @@ export const routes: Routes = [
     component: Guide,
     canActivate: [authGuard]
   },
+
+  // Guide pages
   {
-    path: 'guide/form-1',
+    path: 'guide',
+    redirectTo: 'guide/creating-sessions',
+    pathMatch: 'full'
+  },
+  {
+    path: 'guide/creating-sessions',
     component: Form1,
     canActivate: [authGuard]
   },
   {
-    path: 'guide',
+    path: 'guide/aroma-test',
     component: FirstUserGuide,
     canActivate: [authGuard]
   },
@@ -69,6 +82,8 @@ export const routes: Routes = [
     component: ReviewPage,
     canActivate: [authGuard]
   },
+
+  // Session pages
   {
     path: 'join/:token',
     component: JoinSession,
@@ -83,5 +98,5 @@ export const routes: Routes = [
     path: 'individual/:id',
     component: IndividualSession,
     canActivate: [authGuard]
-  },
+  }
 ];

@@ -1,5 +1,5 @@
 <div class="container py-4">
-  <a routerLink="/guide/form-1" class="back-link">← Previous Page</a>
+  <a routerLink="/guide/creating-sessions" class="back-link">← Previous Page</a>
 
   <div class="section-header mt-3">
     <span class="eyebrow">FIRST-TIME USER GUIDE</span>
@@ -196,9 +196,10 @@
     </div>
   </div>
 
-  <div class="button-container">
-    <a routerLink="/guide/flavor-test" class="click-button">Next</a>
-  </div>
+  <div class="button-container" style="justify-content: space-between;">
+  <a routerLink="/" class="click-button">Return Home</a>
+  <a (click)="goToNextPage()" class="click-button">Next</a>
+</div>
 
   <!-- IMAGE LIGHTBOX -->
   <div
@@ -218,10 +219,14 @@
     </button>
 
     <img
-      [src]="selectedImage"
-      [alt]="selectedImageAlt"
-      (click)="$event.stopPropagation()"
-    />
-  </div>
+  [src]="selectedImage"
+  [alt]="selectedImageAlt"
+  class="lightbox-image"
+  [style.transform]="'scale(' + zoomLevel + ')'"
+  [style.transform-origin]="zoomOrigin"
+  (click)="$event.stopPropagation()"
+  (dblclick)="toggleZoom($event)"
+  (wheel)="onImageWheel($event)"
+/>
 
 </div>

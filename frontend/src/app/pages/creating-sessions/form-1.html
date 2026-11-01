@@ -1,22 +1,16 @@
 
 <div class="container py-4">
   <a routerLink="/" class="back-link">← Back to Home</a>
-
-  
-
   <div class="section-header mt-3">
     <span class="eyebrow">FIRST-TIME USER GUIDE</span>
-    <h1 class="page-title">How To Use Our Coffee Cupping System</h1>
   </div>
 
-  <!-- STEP 1: SESSION SETUP -->
   <div class="card p-4 mt-4 shadow-sm border-0">
-    <h2 style="font-size: 1.75rem; font-weight: 700; color: #2c221e;">
-      Step 1: Creating Individual Session
-    </h2>
+    <h2 style="font-size: 1.75rem; font-weight: 700; color: #2c221e;">Page 1: Creating a New Session</h2>
+    <h3 class="mt-3" style="font-size: 1.25rem; font-weight: 700; color: #2c221e;">Step 1: Filling The Required Information</h3>
 
     <div class="guide-row mt-3" style="display: flex; gap: 2rem; align-items: center;">
-      <div class="guide-text" style="flex: 1; min-width: 0;">
+      <div class="guide-text" style="flex: 0 0 40%; min-width: 0;">
         <h3 class="mb-3" style="color: #2c221e; font-weight: 700; font-size: 1.3rem;">
           Overview
         </h3>
@@ -27,7 +21,7 @@
 
         <div class="mt-3">
           <ol class="text-muted mb-4" style="font-size: 1.15rem; line-height: 1.6;">
-            <li class="mb-3">
+            <li>
               <strong>Session Information</strong>
               <ul>
                 <li>
@@ -39,7 +33,7 @@
               </ul>
             </li>
 
-            <li class="mb-3">
+            <li>
               <strong>Session Settings</strong>
               <ul>
                 <li>
@@ -48,7 +42,7 @@
               </ul>
             </li>
 
-            <li class="mb-3">
+            <li>
               <strong>Select Coffee Samples</strong>
               <ul>
                 <li>
@@ -57,11 +51,11 @@
               </ul>
             </li>
 
-            <li class="mb-3">
+            <li>
               <strong>Session Summary</strong>
               <ul>
                 <li>
-                  Displays configured session parameters along with <strong>Create Session</strong> and <strong>Cancel</strong> buttons.
+                  Displays configured session parameters along with Create Session and Cancel buttons.
                 </li>
               </ul>
             </li>
@@ -69,21 +63,21 @@
         </div>
       </div>
 
-      <div class="guide-img-container" style="flex: 1; min-width: 0;">
+      <div class="guide-img-container" style="flex: 0 0 60%; min-width: 0;">
         <img
           src="/images/Guide-Page-Images/1-SessionSetUp.png"
-          alt="Create Individual Session Setup"
+          alt="Creating a New Session Form"
           class="guide-image"
-          style="width: 100%; max-width: 100%; height: auto; display: block;"
-          (click)="openImage('/images/Guide-Page-Images/1-SessionSetUp.png', 'Create Individual Session Setup')"
+          style="width: 100%; max-width: 100%; height: 350px; display: block;"
+          (click)="openImage('/images/Guide-Page-Images/1-SessionSetUp.png', 'Creating a New Session Form')"
         />
 
         <button
           type="button"
           class="image-zoom-button"
-          aria-label="Enlarge Create Individual Session Setup image"
+          aria-label="Enlarge Creating a New Session Form image"
           title="Enlarge image"
-          (click)="openImage('/images/Guide-Page-Images/1-SessionSetUp.png', 'Create Individual Session Setup')"
+          (click)="openImage('/images/Guide-Page-Images/1-SessionSetUp.png', 'Creating a New Session Form')"
         >
           <span class="lens-icon"></span>
         </button>
@@ -91,11 +85,8 @@
     </div>
   </div>
 
-  <!-- STEP 2: SESSION MANAGEMENT -->
   <div class="card p-4 mt-4 shadow-sm border-0">
-    <h2 style="font-size: 1.75rem; font-weight: 700; color: #2c221e;">
-      Step 2: Session Management
-    </h2>
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: #2c221e;">Step 2: Session Management</h3>
 
     <div class="guide-row mt-3" style="display: flex; gap: 2rem; align-items: center; flex-direction: row-reverse;">
       <div class="guide-text" style="flex: 1; min-width: 0;">
@@ -109,25 +100,25 @@
 
         <div class="mt-3">
           <ol class="text-muted mb-4" style="font-size: 1.15rem; line-height: 1.6;">
-            <li class="mb-3">
+            <li>
               <strong>Session Header &amp; Status</strong>
               <ul>
                 <li>
-                  Includes the <strong>Open Evaluation</strong> button and the <strong>Session Elapsed Time</strong> timer.
+                  Includes the Open Evaluation button and the Session Elapsed Time timer.
                 </li>
               </ul>
             </li>
 
-            <li class="mb-3">
+            <li>
               <strong>Invite Evaluators</strong>
               <ul>
                 <li>
-                  Provides a shareable session link with a <strong>Copy</strong> button and availability status.
+                  Provides a shareable session link with a Copy button and availability status.
                 </li>
               </ul>
             </li>
 
-            <li class="mb-3">
+            <li>
               <strong>Current Evaluators</strong>
               <ul>
                 <li>
@@ -136,11 +127,11 @@
               </ul>
             </li>
 
-            <li class="mb-3">
+            <li>
               <strong>Samples &amp; Session Actions</strong>
               <ul>
                 <li>
-                  Lists assigned coffee samples and includes the <strong>Finalize Session</strong> button.
+                  Lists assigned coffee samples and includes the Finalize Session button.
                 </li>
               </ul>
             </li>
@@ -151,18 +142,18 @@
       <div class="guide-img-container" style="flex: 1; min-width: 0;">
         <img
           src="/images/Guide-Page-Images/2-SessionManagement.png"
-          alt="Session Management"
+          alt="Session Management Page"
           class="guide-image"
           style="width: 100%; max-width: 100%; height: auto; display: block;"
-          (click)="openImage('/images/Guide-Page-Images/2-SessionManagement.png', 'Session Management')"
+          (click)="openImage('/images/Guide-Page-Images/2-SessionManagement.png', 'Session Management Page')"
         />
 
         <button
           type="button"
           class="image-zoom-button"
-          aria-label="Enlarge Session Management image"
+          aria-label="Enlarge Session Management Page image"
           title="Enlarge image"
-          (click)="openImage('/images/Guide-Page-Images/2-SessionManagement.png', 'Session Management')"
+          (click)="openImage('/images/Guide-Page-Images/2-SessionManagement.png', 'Session Management Page')"
         >
           <span class="lens-icon"></span>
         </button>
@@ -170,11 +161,10 @@
     </div>
   </div>
 
-  <!-- STEP 3: SESSION START -->
+  <br>
+
   <div class="card p-4 mt-4 shadow-sm border-0">
-    <h2 style="font-size: 1.75rem; font-weight: 700; color: #2c221e;">
-      Step 3: Session Start
-    </h2>
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: #2c221e;">Step 3: Session Start</h3>
 
     <div class="guide-row mt-3" style="display: flex; gap: 2rem; align-items: center;">
       <div class="guide-text" style="flex: 1; min-width: 0;">
@@ -188,7 +178,7 @@
 
         <div class="mt-3">
           <ol class="text-muted mb-4" style="font-size: 1.15rem; line-height: 1.6;">
-            <li class="mb-3">
+            <li>
               <strong>Session Header &amp; Timer</strong>
               <ul>
                 <li>
@@ -197,7 +187,7 @@
               </ul>
             </li>
 
-            <li class="mb-3">
+            <li>
               <strong>Evaluation Controls</strong>
               <ul>
                 <li>
@@ -209,12 +199,12 @@
         </div>
       </div>
 
-      <div class="guide-img-container" style="flex: 1; min-width: 0;">
+      <div class="guide-img-container" style="flex: 1; min-width: 0; display: flex; justify-content: center; align-items: center;">
         <img
           src="/images/Guide-Page-Images/3-SessionStartPage.png"
           alt="Session Start Page"
           class="guide-image"
-          style="width: 100%; max-width: 100%; height: auto; display: block;"
+          style="width: 80%; max-width: 100%; height: auto; display: block; margin: 0 auto;"
           (click)="openImage('/images/Guide-Page-Images/3-SessionStartPage.png', 'Session Start Page')"
         />
 
@@ -231,9 +221,8 @@
     </div>
   </div>
 
-  <!-- NEXT BUTTON -->
-  <div class="button-container mt-4">
-    <a routerLink="/guide" class="click-button">Next</a>
+  <div class="button-container">
+    <a (click)="goToNextPage()" class="click-button">Next</a>
   </div>
 
   <!-- IMAGE LIGHTBOX -->
@@ -256,7 +245,13 @@
     <img
       [src]="selectedImage"
       [alt]="selectedImageAlt"
+      class="lightbox-image"
+      [style.transform]="'scale(' + zoomLevel + ')'"
+      [style.transform-origin]="zoomOrigin"
       (click)="$event.stopPropagation()"
+      (dblclick)="toggleZoom($event)"
+      (wheel)="onImageWheel($event)"
     />
   </div>
+
 </div>

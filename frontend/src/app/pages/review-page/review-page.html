@@ -1,4 +1,3 @@
-
 <div class="container py-4">
 
   <a routerLink="/guide/flavor-test" class="back-link">← Previous Page</a>
@@ -13,14 +12,44 @@
       Review Your Coffee Cupping Results
     </h2>
 
-    
-
     <div class="review-image-container mt-3 mb-4">
-      <img
-        src="/images/Guide-Page-Images/9-ReviewAndFinalize.png"
-        alt="Review and Finalize Coffee Cupping Results"
-        class="review-image"
-      />
+
+      <div class="review-image-wrapper">
+
+        <img
+          src="/images/Guide-Page-Images/9-ReviewAndFinalize.png"
+          alt="Review and Finalize Coffee Cupping Results"
+          class="review-image"
+          (click)="openImage('/images/Guide-Page-Images/9-ReviewAndFinalize.png', 'Review and Finalize Coffee Cupping Results')"
+        />
+
+        <!-- Lens Icon -->
+        <button
+          type="button"
+          class="zoom-button"
+          aria-label="View enlarged image"
+          (click)="openImage('/images/Guide-Page-Images/9-ReviewAndFinalize.png', 'Review and Finalize Coffee Cupping Results')"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+            <path d="M11 8v6"></path>
+            <path d="M8 11h6"></path>
+          </svg>
+        </button>
+
+      </div>
+
     </div>
 
     <ol class="text-muted mb-4 review-list">
@@ -76,4 +105,31 @@
     </a>
   </div>
 
+</div>
+
+<!-- Enlarged Image Viewer -->
+<div
+  class="image-lightbox"
+  *ngIf="selectedImage"
+  (click)="closeImage()"
+>
+  <button
+    type="button"
+    class="lightbox-close"
+    aria-label="Close image viewer"
+    (click)="closeImage(); $event.stopPropagation()"
+  >
+    &times;
+  </button>
+
+ <img
+  [src]="selectedImage"
+  [alt]="selectedImageAlt"
+  class="lightbox-image"
+  [style.transform]="'scale(' + zoomLevel + ')'"
+  [style.transform-origin]="zoomOrigin"
+  (click)="$event.stopPropagation()"
+  (dblclick)="toggleZoom($event)"
+  (wheel)="onImageWheel($event)"
+/>
 </div>

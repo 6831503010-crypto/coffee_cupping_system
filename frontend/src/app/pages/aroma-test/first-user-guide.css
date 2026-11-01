@@ -108,13 +108,13 @@
 
 .click-button {
   font-family: inherit;
-  font-size: 1.1rem;
+  font-size: 16px;
   font-weight: 800;
   color: #ffffff;
   background-color: #3d2314;
   border: none;
   border-radius: 0.5rem;
-  padding: 0.8rem 2rem;
+  padding: 12px 24px;
   cursor: pointer;
   box-shadow: 0 5px 12px rgba(44, 34, 30, 0.25);
   transition: all 0.2s ease;
@@ -175,25 +175,30 @@
 /* Image Lightbox */
 .image-lightbox {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: rgba(0, 0, 0, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 2rem;
-  z-index: 2000;
+  z-index: 9999;
+  overflow: auto;
 }
 
-.image-lightbox img {
+.lightbox-image {
   max-width: 90%;
   max-height: 90%;
+  width: auto;
+  height: auto;
   object-fit: contain;
   border-radius: 0.375rem;
   box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
-  cursor: default;
+  cursor: zoom-in;
+  transform-origin: center center;
+  transition: transform 0.2s ease;
+  user-select: none;
 }
 
 .lightbox-close {
@@ -206,9 +211,25 @@
   font-size: 2.5rem;
   font-weight: bold;
   cursor: pointer;
-  z-index: 2001;
+  z-index: 10000;
 }
 
 .lightbox-close:hover {
   color: #ccc;
+}
+
+@media (max-width: 768px) {
+  .image-lightbox {
+    padding: 1rem;
+  }
+
+  .lightbox-image {
+    max-width: 95%;
+    max-height: 85%;
+  }
+
+  .lightbox-close {
+    top: 10px;
+    right: 15px;
+  }
 }
