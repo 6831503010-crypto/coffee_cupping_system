@@ -66,7 +66,10 @@ interface HistoryRecord {
   selector: 'app-history',
   imports: [RouterLink, CuppingModeModal],
   templateUrl: './history.html',
-  styleUrl: './history.css'
+  styleUrls: [
+    './history.css',
+    './history-details.css'
+  ]
 })
 export class History implements OnInit {
   private readonly submissions = inject(EvaluationSubmissionService);
