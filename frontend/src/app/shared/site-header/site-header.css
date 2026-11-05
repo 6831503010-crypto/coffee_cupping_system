@@ -346,12 +346,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 16px;
+  flex-shrink: 0;
   color: var(--mocha, #795548);
-}
-
-.qualification-badge svg {
-  display: block;
 }
 
 .notification-area {

@@ -18,7 +18,10 @@ import th.mfu.cupping.dto.EvaluationSubmissionDtos.Cup;
 import th.mfu.cupping.dto.EvaluationSubmissionDtos.Sample;
 import th.mfu.cupping.dto.EvaluationSubmissionDtos.SavedSample;
 
-/** Read-only, consent-filtered publication of finalized sessions' aggregate results. */
+/**
+ * Read-only, consent-filtered publication of finalized sessions' aggregate
+ * results.
+ */
 @Service
 public class PublicFeedService {
   private final JdbcTemplate jdbc;
@@ -32,27 +35,63 @@ public class PublicFeedService {
   public record ScoreBreakdown(BigDecimal aromaQuality, BigDecimal flavor,
       BigDecimal aftertaste, BigDecimal acidity, BigDecimal body, BigDecimal balance,
       BigDecimal overall, BigDecimal uniformity, BigDecimal cleanCup, BigDecimal sweetness,
-      BigDecimal defectDeduction) {}
+      BigDecimal defectDeduction) {
+  }
+
   public record JudgeNote(String judgeName, String aromaNotes, String flavorNotes,
-      List<String> aromaQualities, List<String> flavorQualities) {}
+      List<String> aromaQualities, List<String> flavorQualities) {
+  }
+
   public record CupSummary(int cupNumber, int judges, int uniformityPasses,
-      int cleanCupPasses, int sweetnessPasses) {}
+      int cleanCupPasses, int sweetnessPasses) {
+  }
+
   public record AdditionalDetails(BigDecimal dryAromaIntensity, BigDecimal breakAromaIntensity,
       String colorIntensity, BigDecimal acidityIntensity, BigDecimal bodyLevel,
-      List<CupSummary> cups) {}
+      List<CupSummary> cups) {
+  }
+
   /** Public, non-personal metadata from the coffee inventory record. */
   public record SampleDetails(String process, Integer harvestYear,
-      String growingLocation, String ownerProducer) {}
-  public record FeedResult(int sessionId, String sessionName, int sessionSampleId,
-      String sampleName, SampleDetails sampleDetails, String closedAt,
-      BigDecimal averageScore, int finalizedJudges, ScoreBreakdown scores,
-      List<JudgeNote> notes, AdditionalDetails additionalDetails) {}
+      String growingLocation, String ownerProducer) {
+  }
 
-  private record PublicSession(int id, String name, LocalDateTime closedAt) {}
-  private record SampleInfo(int id, String name, SampleDetails details) {}
-  private record Member(int id, String name, String outcome,
-      LocalDateTime startedAt, LocalDateTime endedAt) {}
-  private record JudgeEvaluation(String judgeName, Sample data, BigDecimal totalScore) {}
+  public record FeedResult(
+      int sessionId,
+      String sessionName,
+      int sessionSampleId,
+      String sampleName,
+      SampleDetails sampleDetails,
+      String closedAt,
+      BigDecimal averageScore,
+      int finalizedJudges,
+      ScoreBreakdown scores,
+      List<JudgeNote> notes,
+      AdditionalDetails additionalDetails,
+      boolean allContributingEvaluatorsVerified) {
+  }
+
+  private record PublicSession(int id, String name, LocalDateTime closedAt) {
+  }
+
+  private record SampleInfo(int id, String name, SampleDetails details) {
+  }
+
+  private record Member(
+      int id,
+      String name,
+      String outcome,
+      LocalDateTime startedAt,
+      LocalDateTime endedAt,
+      boolean verifiedAtFinalization) {
+  }
+
+  private record JudgeEvaluation(
+      String judgeName,
+      Sample data,
+      BigDecimal totalScore,
+      boolean verifiedAtFinalization) {
+  }
 
   /** Do not expose private, active, cancelled, or unsubmitted evaluation data. */
   @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -64,7 +103,7 @@ public class PublicFeedService {
           AND finalized_at IS NOT NULL
         ORDER BY finalized_at DESC, session_id DESC
         """, (rs, n) -> new PublicSession(rs.getInt(1), rs.getString(2),
-            rs.getObject(3, LocalDateTime.class)));
+        rs.getObject(3, LocalDateTime.class)));
 
     List<FeedResult> feed = new ArrayList<>();
     for (PublicSession session : sessions) {
@@ -76,20 +115,32 @@ public class PublicFeedService {
           WHERE ss.session_id = ?
           ORDER BY ss.display_order, ss.session_sample_id
           """, (rs, n) -> new SampleInfo(rs.getInt(1), rs.getString(2),
-              new SampleDetails(rs.getString(3), (Integer) rs.getObject(4),
-                  rs.getString(5), rs.getString(6))), session.id());
-      if (samples.isEmpty()) continue;
+          new SampleDetails(rs.getString(3), (Integer) rs.getObject(4),
+              rs.getString(5), rs.getString(6))),
+          session.id());
+      if (samples.isEmpty())
+        continue;
 
       List<Member> members = jdbc.query("""
-          SELECT se.session_evaluator_id, u.name, se.completion_outcome,
-                 se.evaluation_started_at, se.evaluation_ended_at
+          SELECT se.session_evaluator_id,
+                 u.name,
+                 se.completion_outcome,
+                 se.evaluation_started_at,
+                 se.evaluation_ended_at,
+                 se.verified_at_finalization
           FROM session_evaluators se
           JOIN users u ON u.user_id = se.user_id
           WHERE se.session_id = ?
           ORDER BY se.session_evaluator_id
-          """, (rs, n) -> new Member(rs.getInt(1), rs.getString(2), rs.getString(3),
-              rs.getObject(4, LocalDateTime.class),
-              rs.getObject(5, LocalDateTime.class)), session.id());
+          """,
+          (rs, n) -> new Member(
+              rs.getInt("session_evaluator_id"),
+              rs.getString("name"),
+              rs.getString("completion_outcome"),
+              rs.getObject("evaluation_started_at", LocalDateTime.class),
+              rs.getObject("evaluation_ended_at", LocalDateTime.class),
+              rs.getBoolean("verified_at_finalization")),
+          session.id());
 
       Map<Integer, List<JudgeEvaluation>> bySample = new HashMap<>();
       for (Member member : members) {
@@ -98,7 +149,8 @@ public class PublicFeedService {
         boolean modern = "FINALIZED".equals(member.outcome());
         boolean legacy = member.outcome() == null
             && member.startedAt() == null && member.endedAt() == null;
-        if (!modern && !legacy) continue;
+        if (!modern && !legacy)
+          continue;
         List<SavedSample> saved = evaluations.loadForMember(member.id());
         Map<Integer, SavedSample> valid = new HashMap<>();
         for (SavedSample item : saved) {
@@ -107,21 +159,40 @@ public class PublicFeedService {
           }
         }
         if (valid.size() != samples.size()
-            || samples.stream().anyMatch(sample -> !valid.containsKey(sample.id()))) continue;
+            || samples.stream().anyMatch(sample -> !valid.containsKey(sample.id())))
+          continue;
         for (SampleInfo sample : samples) {
           SavedSample item = valid.get(sample.id());
           bySample.computeIfAbsent(sample.id(), ignored -> new ArrayList<>())
-              .add(new JudgeEvaluation(member.name(), item.data(), item.totalScore()));
+              .add(new JudgeEvaluation(
+                  member.name(),
+                  item.data(),
+                  item.totalScore(),
+                  member.verifiedAtFinalization()));
         }
       }
 
       for (SampleInfo sample : samples) {
         List<JudgeEvaluation> judgeResults = bySample.getOrDefault(sample.id(), List.of());
-        if (judgeResults.isEmpty()) continue;
-        feed.add(new FeedResult(session.id(), session.name(), sample.id(), sample.name(),
-            sample.details(), session.closedAt().toInstant(ZoneOffset.UTC).toString(),
-            mean(judgeResults, JudgeEvaluation::totalScore), judgeResults.size(),
-            scores(judgeResults), notes(judgeResults), details(judgeResults)));
+        if (judgeResults.isEmpty())
+          continue;
+        boolean allVerified = !judgeResults.isEmpty()
+            && judgeResults.stream()
+                .allMatch(JudgeEvaluation::verifiedAtFinalization);
+
+        feed.add(new FeedResult(
+            session.id(),
+            session.name(),
+            sample.id(),
+            sample.name(),
+            sample.details(),
+            session.closedAt().toInstant(ZoneOffset.UTC).toString(),
+            mean(judgeResults, JudgeEvaluation::totalScore),
+            judgeResults.size(),
+            scores(judgeResults),
+            notes(judgeResults),
+            details(judgeResults),
+            allVerified));
       }
     }
     return feed;
@@ -130,7 +201,8 @@ public class PublicFeedService {
   private static BigDecimal mean(List<JudgeEvaluation> results,
       Function<JudgeEvaluation, BigDecimal> field) {
     List<BigDecimal> values = results.stream().map(field).filter(Objects::nonNull).toList();
-    if (values.isEmpty()) return null;
+    if (values.isEmpty())
+      return null;
     BigDecimal sum = values.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
     return sum.divide(BigDecimal.valueOf(values.size()), 2, RoundingMode.HALF_UP);
   }
@@ -151,12 +223,14 @@ public class PublicFeedService {
   }
 
   private BigDecimal cupScore(Sample sample, Function<Cup, Boolean> check) {
-    if (sample.cups() == null || sample.cups().isEmpty()) return null;
+    if (sample.cups() == null || sample.cups().isEmpty())
+      return null;
     return BigDecimal.valueOf(sample.cups().stream().filter(c -> check.apply(c)).count() * 2);
   }
 
   private BigDecimal defectDeduction(Sample sample) {
-    if (sample.cups() == null) return null;
+    if (sample.cups() == null)
+      return null;
     long failed = sample.cups().stream().filter(c -> !c.uniformity()).count();
     int penalty = "taint".equalsIgnoreCase(sample.defectType()) ? 2
         : "fault".equalsIgnoreCase(sample.defectType()) ? 4 : 0;
@@ -187,11 +261,11 @@ public class PublicFeedService {
     List<CupSummary> cups = new ArrayList<>();
     for (int n = 1; n <= 5; n++) {
       final int number = n;
-      List<Cup> matches = results.stream().flatMap(r ->
-          r.data().cups() == null ? java.util.stream.Stream.<Cup>empty()
-              : r.data().cups().stream())
+      List<Cup> matches = results.stream().flatMap(r -> r.data().cups() == null ? java.util.stream.Stream.<Cup>empty()
+          : r.data().cups().stream())
           .filter(c -> c.cupNumber() == number).toList();
-      if (matches.isEmpty()) continue;
+      if (matches.isEmpty())
+        continue;
       cups.add(new CupSummary(n, matches.size(),
           (int) matches.stream().filter(Cup::uniformity).count(),
           (int) matches.stream().filter(Cup::cleanCup).count(),

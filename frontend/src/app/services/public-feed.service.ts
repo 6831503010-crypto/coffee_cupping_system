@@ -59,6 +59,7 @@ export interface PublicFeedResult {
   scores: FeedScores;
   notes: FeedJudgeNote[];
   additionalDetails: FeedAdditionalDetails;
+  allContributingEvaluatorsVerified: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

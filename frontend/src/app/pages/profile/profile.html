@@ -79,7 +79,7 @@
 
         <form
           class="edit-form"
-          (ngSubmit)="saveProfile()"
+          (ngSubmit)="requestProfileSave()"
         >
 
           <label for="profile-name">
@@ -99,6 +99,22 @@
           <p class="field-hint">
             Your name is shown in your account menu and profile.
           </p>
+
+          @if (profile()?.qualificationStatus === 'QUALIFIED') {
+          <div class="name-change-warning" role="note">
+            <strong>Changing your name may remove your verification.</strong>
+
+            <p>
+              Changes beyond capitalization or repeated spaces will require
+              verification again. Your profile name must match your certificate
+              name to verify.
+            </p>
+
+            <p>
+              Badges on previously finalized evaluations will remain unchanged.
+            </p>
+          </div>
+          }
 
           <div class="form-actions">
 
@@ -165,6 +181,12 @@
             <strong>
               {{ user.qualificationStatus || 'Not set' }}
             </strong>
+            @if (user.qualificationStatus !== 'QUALIFIED') {
+            <button class="btn secondary verify-button" type="button" aria-haspopup="dialog" aria-controls="qualification-dialog"
+              (click)="openVerification()">
+              Verify qualification
+            </button>
+            }
           </article>
 
           @if (user.qualificationConfirmedAt) {
@@ -203,6 +225,88 @@
     </section>
 
   }
+
+  <dialog #verificationDialog id="qualification-dialog" class="verification-dialog" aria-labelledby="verification-title"
+    aria-describedby="verification-description" (cancel)="onVerificationCancel($event)" (close)="onVerificationClosed()">
+    <div class="verification-heading">
+      <h2 id="verification-title">Verify Q Grader qualification</h2>
+
+      <button class="verification-close" type="button" aria-label="Close verification" [disabled]="verifying()"
+        (click)="closeVerification()">
+        ×
+      </button>
+    </div>
+
+    <form class="verification-form" (ngSubmit)="verifyQualification()" [attr.aria-busy]="verifying()">
+      <p id="verification-description">
+        Enter the name and license code on your certificate.
+        The certificate name must match your profile name.
+      </p>
+
+      @if (verificationError()) {
+      <p class="verification-error" role="alert">
+        {{ verificationError() }}
+      </p>
+      }
+
+      <fieldset [disabled]="verifying()">
+        <label for="certificate-name">Certificate name</label>
+        <input id="certificate-name" name="certificateName" type="text" [(ngModel)]="certificateName" maxlength="100"
+          autocomplete="name" required autofocus />
+
+        <label for="license-code">License code</label>
+        <input id="license-code" name="licenseCode" type="text" [(ngModel)]="licenseCode" placeholder="Q-123456"
+          maxlength="8" pattern="Q-[0-9]{6}" aria-describedby="license-code-hint" autocomplete="off" spellcheck="false"
+          required />
+
+        <p id="license-code-hint" class="field-hint">
+          Use uppercase Q, a hyphen, and six digits.
+        </p>
+      </fieldset>
+
+      <div class="form-actions">
+        <button class="btn secondary" type="button" [disabled]="verifying()" (click)="closeVerification()">
+          Cancel
+        </button>
+
+        <button class="btn primary" type="submit" [disabled]="verifying()">
+          {{ verifying() ? 'Verifying…' : 'Verify' }}
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog #profileSaveDialog class="profile-save-dialog" aria-labelledby="profile-save-title"
+    aria-describedby="profile-save-description" (cancel)="$event.preventDefault(); cancelProfileSave()">
+    <button class="profile-save-close" type="button" aria-label="Close name change confirmation"
+      (click)="cancelProfileSave()">
+      ×
+    </button>
+    <h2 id="profile-save-title">
+      Are you sure you want to change your name?
+    </h2>
+
+    <p id="profile-save-description">
+      @if (profile()?.qualificationStatus === 'QUALIFIED') {
+      This change may remove your verification and require you
+      to verify again. Existing result badges will stay unchanged.
+      } @else {
+      Your new name will appear in your profile and account menu.
+      }
+    </p>
+
+    <form (ngSubmit)="confirmProfileSave()">
+      <div class="form-actions">
+        <button class="btn secondary" type="button" autofocus (click)="cancelProfileSave()">
+          Keep editing
+        </button>
+
+        <button class="btn primary" type="submit">
+          Yes, change name
+        </button>
+      </div>
+    </form>
+  </dialog>
 
 </main>
 ```

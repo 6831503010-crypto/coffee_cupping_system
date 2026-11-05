@@ -73,3 +73,16 @@
 @media (max-width:520px) { .feed-shell { padding-top:20px; } .feed-summary { display:none; } .feed-expanded { padding:8px 13px 14px; } .feed-row { padding:15px; } }
 
 @media (min-width:751px) and (max-width:1080px) { .feed-results-grid { grid-template-columns:1fr; } .feed-notes-panel { border-left:0; border-top:1px solid #e9ded5; } }
+.feed-score-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.feed-verification-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--mocha, #795548);
+}

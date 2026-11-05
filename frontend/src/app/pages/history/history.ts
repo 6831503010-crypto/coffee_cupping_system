@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { CuppingModeModal } from '../../shared/cupping-mode-modal/cupping-mode-modal';
 import { IndividualSessionService } from '../../services/individual-session.service';
 import { ToastService } from '../../shared/toast-notification/toast.service';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { solarVerifiedCheckBold } from '@ng-icons/solar-icons/bold';
 
 interface AromaEvaluation {
   qualityScore?: string | number;
@@ -42,6 +44,7 @@ interface HistoryJudge {
   name: string;
   completionOutcome: EvaluationHistoryGroup['completionOutcome'];
   samples: HistorySample[];
+  verifiedAtFinalization: boolean;
 }
 
 interface HistoryRecord {
@@ -60,11 +63,13 @@ interface HistoryRecord {
   sessionSampleIds: number[];
   judges: HistoryJudge[];
   evaluatorCount: number;
+  verifiedAtFinalization: boolean;
 }
 
 @Component({
   selector: 'app-history',
-  imports: [RouterLink, CuppingModeModal],
+  imports: [RouterLink, CuppingModeModal, NgIcon],
+  providers: [provideIcons({ solarVerifiedCheckBold })],
   templateUrl: './history.html',
   styleUrls: [
     './history.css',
@@ -157,6 +162,7 @@ export class History implements OnInit {
     ).filter(sample => sample.id > 0).sort((a, b) => a.id - b.id);
     return {
       id: group.sessionId,
+      verifiedAtFinalization: group.verifiedAtFinalization === true,
       sessionName: group.sessionName,
       completedAt: group.completedAt,
       sessionClosed: group.sessionClosed,
@@ -172,6 +178,7 @@ export class History implements OnInit {
       judges: (group.judges || []).map(judge => ({
         userId: judge.userId,
         name: judge.name,
+        verifiedAtFinalization: judge.verifiedAtFinalization === true,
         completionOutcome: judge.completionOutcome,
         samples: toSamples(judge.samples || [])
       })),
@@ -707,4 +714,33 @@ sessionDurationLabel(record: HistoryRecord): string {
 
     return this.formatDuration(timer?.elapsedSeconds);
   }
+
+  readonly scoreVerified = computed(() => {
+    const record = this.activeRecord();
+
+    if (!record) return false;
+
+    if (!this.showingAverage()) {
+      return record.creator
+        ? this.activeJudge()?.verifiedAtFinalization === true
+        : record.verifiedAtFinalization === true;
+    }
+
+    // Check only finalized evaluators whose numeric score contributes
+    // to the average for the currently selected sample.
+    const contributors = record.judges.filter(judge =>
+      judge.completionOutcome === 'FINALIZED' &&
+      judge.samples.some(sample =>
+        sample.id === this.activeSamplePage() &&
+        typeof sample.finalScore === 'number' &&
+        Number.isFinite(sample.finalScore)
+      )
+    );
+
+    return contributors.length > 0 &&
+      contributors.every(judge =>
+        judge.verifiedAtFinalization === true
+      );
+  });
+
 }

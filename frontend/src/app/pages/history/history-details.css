@@ -520,3 +520,18 @@
   outline: 2px solid var(--mocha);
   outline-offset: 2px;
 }
+
+.sample-score .verification-score-label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.sample-score .history-verification-badge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--mocha, #795548);
+}

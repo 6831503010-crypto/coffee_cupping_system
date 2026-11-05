@@ -36,10 +36,14 @@ import {
   NotificationPage
 } from '../../services/notification.service';
 
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { solarVerifiedCheckBold } from '@ng-icons/solar-icons/bold';
+
 @Component({
   selector: 'app-site-header',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, NgIcon],
+  providers: [provideIcons({ solarVerifiedCheckBold })],
   templateUrl: './site-header.html',
   styleUrl: './site-header.css'
 })

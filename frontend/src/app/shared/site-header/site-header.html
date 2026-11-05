@@ -176,36 +176,10 @@
                 </strong>
 
                 <!-- Qualification Badge -->
-                @if (
-                  user.qualificationStatus === 'QUALIFIED'
-                ) {
-                  <span
-                    class="qualification-badge"
-                    title="Qualified evaluator"
-                    aria-hidden="true"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        fill="currentColor"
-                      />
-
-                      <path
-                        d="m7.5 12 3 3 6-6"
-                        stroke="#fff"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </span>
+                @if (user.qualificationStatus === 'QUALIFIED') {
+                <span class="qualification-badge" title="Verified Q Grader" aria-hidden="true">
+                  <ng-icon name="solarVerifiedCheckBold" size="18px" />
+                </span>
                 }
               </span>
 
