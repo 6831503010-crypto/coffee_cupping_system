@@ -232,7 +232,21 @@
                 <div class="sample-result-head">
                   <div><h4>Sample {{ sample.id }}</h4></div>
                   <div class="sample-score">
-                    <span>{{ showingAverage() ? 'Average score' : 'Final score' }}</span>
+                    <span class="verification-score-label">
+                      @if (scoreVerified()) {
+                      <span class="history-verification-badge" role="img" [attr.aria-label]="showingAverage()
+                            ? 'All contributing evaluators were verified at finalization'
+                            : 'Evaluator was verified at finalization'" [title]="showingAverage()
+                            ? 'All contributing evaluators were verified at finalization'
+                            : 'Evaluator was verified at finalization'">
+                        <ng-icon name="solarVerifiedCheckBold" size="18px" aria-hidden="true" />
+                      </span>
+                      }
+
+                      <span>
+                        {{ showingAverage() ? 'Average score' : 'Final score' }}
+                      </span>
+                    </span>
                     <strong>{{ showingAverage() ? formatAverageScore(sample.finalScore) : formatScore(sample.finalScore) }}{{ sample.finalScore != null ? ' / 100' : '' }}</strong>
                   </div>
                 </div>

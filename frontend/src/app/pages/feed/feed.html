@@ -41,8 +41,26 @@
                     (click)="toggleRow(item.sessionSampleId)">
               <span class="feed-session"><strong>{{ item.sessionName }}</strong><small>{{ formatDate(item.closedAt) }}</small></span>
               <span class="feed-coffee">{{ item.sampleName }}</span>
-              <span class="feed-score"><strong>{{ format(item.averageScore) }} <small>/ 100</small></strong>
-                <svg [class.rotated]="expandedSampleId() === item.sessionSampleId" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              <span class="feed-score">
+                <span class="feed-score-value">
+                  @if (item.allContributingEvaluatorsVerified) {
+                  <span class="feed-verification-badge" role="img"
+                    aria-label="All contributing evaluators were verified at finalization"
+                    title="All contributing evaluators were verified at finalization">
+                    <ng-icon name="solarVerifiedCheckBold" size="18px" aria-hidden="true" />
+                  </span>
+                  }
+
+                  <strong>
+                    {{ format(item.averageScore) }}
+                    <small>/ 100</small>
+                  </strong>
+                </span>
+
+                <svg [class.rotated]="expandedSampleId() === item.sessionSampleId" viewBox="0 0 24 24" width="18" height="18"
+                  fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
               </span>
             </button>
             @if (expandedSampleId() === item.sessionSampleId) {

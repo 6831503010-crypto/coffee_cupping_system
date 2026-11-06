@@ -46,6 +46,7 @@ export interface EvaluationHistoryJudge {
   completionOutcome: 'IN_PROGRESS' | 'FINALIZED' | 'INCOMPLETE_SESSION_CLOSED' | null;
   evaluatorTimer: EvaluationTimer;
   samples: SavedEvaluation[];
+  verifiedAtFinalization: boolean;
 }
 
 export interface EvaluationHistoryGroup {
@@ -68,6 +69,7 @@ export interface EvaluationHistoryGroup {
   resultVisibility: 'PUBLIC' | 'PRIVATE';
   judges: EvaluationHistoryJudge[];
   evaluatorCount: number;
+  verifiedAtFinalization: boolean;
 }
 
 export interface EvaluationTimer {

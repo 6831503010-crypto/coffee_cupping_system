@@ -49,13 +49,15 @@ public final class EvaluationSubmissionDtos {
       Sample data) {
   }
 
-  // Read-only History view: other judges' names/scores are exposed only to the session creator.
+  // Read-only History view: other judges' names/scores are exposed only to the
+  // session creator.
   public record HistoryJudge(
       Integer userId,
       String name,
       String completionOutcome,
       TimerView evaluatorTimer,
-      List<SavedSample> samples) {
+      List<SavedSample> samples,
+      boolean verifiedAtFinalization) {
   }
 
   public record HistoryEntry(
@@ -73,6 +75,7 @@ public final class EvaluationSubmissionDtos {
       String displayStatus,
       List<Integer> sessionSampleIds,
       List<HistoryJudge> judges,
-      int evaluatorCount) {
+      int evaluatorCount,
+      boolean verifiedAtFinalization) {
   }
 }

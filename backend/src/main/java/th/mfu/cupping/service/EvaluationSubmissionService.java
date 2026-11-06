@@ -409,6 +409,20 @@ public class EvaluationSubmissionService {
     }
 
     if (finalizing) {
+      // Lock the account while reading its current qualification.
+      // This serializes finalization with credential verification.
+      Boolean verified = jdbc.queryForObject("""
+          SELECT (
+              qualification_status = 'QUALIFIED'
+              AND qualification_confirmed_at IS NOT NULL
+          )
+          FROM users
+          WHERE user_id = ?
+          FOR UPDATE
+          """,
+          Boolean.class,
+          userId(email));
+
       LocalDateTime endedAt = LocalDateTime.ofInstant(
           clock.instant().truncatedTo(ChronoUnit.MICROS),
           ZoneOffset.UTC);
@@ -425,7 +439,8 @@ public class EvaluationSubmissionService {
           UPDATE session_evaluators
           SET evaluation_ended_at = ?,
               elapsed_seconds = ?,
-              completion_outcome = 'FINALIZED'
+              completion_outcome = 'FINALIZED',
+              verified_at_finalization = ?
           WHERE session_evaluator_id = ?
             AND evaluation_started_at IS NOT NULL
             AND evaluation_ended_at IS NULL
@@ -433,6 +448,7 @@ public class EvaluationSubmissionService {
           """,
           endedAt,
           elapsedSeconds,
+          Boolean.TRUE.equals(verified),
           memberId);
 
       if (updated != 1) {
@@ -441,7 +457,6 @@ public class EvaluationSubmissionService {
             "Evaluation timing changed; reload before retrying");
       }
     }
-
     return loadForMember(memberId);
   }
 
@@ -679,15 +694,15 @@ public class EvaluationSubmissionService {
                  session_ended_at, session_elapsed_seconds
           FROM cupping_sessions WHERE session_id = ?
           """, (rs, row) -> new HistorySessionInfo(
-              rs.getString("session_name"),
-              rs.getInt("created_by"),
-              rs.getObject("created_at", LocalDateTime.class),
-              rs.getString("result_visibility"),
-              rs.getString("status"),
-              rs.getObject("finalized_at", LocalDateTime.class),
-              rs.getObject("session_started_at", LocalDateTime.class),
-              rs.getObject("session_ended_at", LocalDateTime.class),
-              rs.getObject("session_elapsed_seconds", Long.class)), sessionId);
+          rs.getString("session_name"),
+          rs.getInt("created_by"),
+          rs.getObject("created_at", LocalDateTime.class),
+          rs.getString("result_visibility"),
+          rs.getString("status"),
+          rs.getObject("finalized_at", LocalDateTime.class),
+          rs.getObject("session_started_at", LocalDateTime.class),
+          rs.getObject("session_ended_at", LocalDateTime.class),
+          rs.getObject("session_elapsed_seconds", Long.class)), sessionId);
 
       boolean creator = session.createdBy() == account;
       boolean closed = session.finalizedAt() != null
@@ -707,19 +722,21 @@ public class EvaluationSubmissionService {
                  se.completion_outcome,
                  se.evaluation_started_at,
                  se.evaluation_ended_at,
-                 se.elapsed_seconds
+                se.elapsed_seconds,
+                se.verified_at_finalization
           FROM session_evaluators se
           JOIN users u ON u.user_id = se.user_id
           WHERE se.session_id = ?
           ORDER BY se.session_evaluator_id
           """, (rs, row) -> new HistoryMemberInfo(
-              rs.getInt("session_evaluator_id"),
-              rs.getInt("user_id"),
-              rs.getString("judge_name"),
-              rs.getString("completion_outcome"),
-              rs.getObject("evaluation_started_at", LocalDateTime.class),
-              rs.getObject("evaluation_ended_at", LocalDateTime.class),
-              rs.getObject("elapsed_seconds", Long.class)), sessionId);
+          rs.getInt("session_evaluator_id"),
+          rs.getInt("user_id"),
+          rs.getString("judge_name"),
+          rs.getString("completion_outcome"),
+          rs.getObject("evaluation_started_at", LocalDateTime.class),
+          rs.getObject("evaluation_ended_at", LocalDateTime.class),
+          rs.getObject("elapsed_seconds", Long.class),
+          rs.getBoolean("verified_at_finalization")), sessionId);
 
       // Legacy records may have finalized sample evaluations but no
       // completion_outcome. This mirrors SessionClosureService.isComplete().
@@ -727,6 +744,7 @@ public class EvaluationSubmissionService {
       int completedMembers = 0;
       String ownOutcome = null;
       TimerView ownTimer = null;
+      boolean ownVerifiedAtFinalization = false;
       List<SavedSample> ownSamples = List.of();
 
       for (HistoryMemberInfo member : members) {
@@ -758,18 +776,25 @@ public class EvaluationSubmissionService {
               && finalizedCount != null && finalizedCount == sampleIds.size();
         }
 
-        if (completed) completedMembers++;
+        if (completed)
+          completedMembers++;
         String effectiveOutcome = completed ? "FINALIZED" : member.outcome();
         TimerView memberTimer = timer(member.startedAt(), member.endedAt(), member.elapsedSeconds());
         if (creator) {
-          creatorJudges.add(new HistoryJudge(member.userId(), member.name(),
-              effectiveOutcome, memberTimer,
-              completed ? finalizedSamples : List.of()));
+          creatorJudges.add(new HistoryJudge(
+              member.userId(),
+              member.name(),
+              effectiveOutcome,
+              memberTimer,
+              completed ? finalizedSamples : List.of(),
+              completed && member.verifiedAtFinalization()));
         }
+
         if (isOwn) {
           ownOutcome = effectiveOutcome;
           ownTimer = memberTimer;
           ownSamples = completed ? finalizedSamples : List.of();
+          ownVerifiedAtFinalization = completed && member.verifiedAtFinalization();
         }
       }
 
@@ -778,7 +803,8 @@ public class EvaluationSubmissionService {
       String displayStatus = !closed ? "IN_PROGRESS"
           : "CANCELLED".equals(session.status())
               || (members.size() > completedMembers)
-                  ? "INCOMPLETE" : "FINALIZED";
+                  ? "INCOMPLETE"
+                  : "FINALIZED";
       TimerView sessionTimer = timer(session.startedAt(), session.endedAt(),
           session.elapsedSeconds());
       LocalDateTime date = session.endedAt() != null ? session.endedAt()
@@ -790,7 +816,9 @@ public class EvaluationSubmissionService {
           closed, ownOutcome, sessionTimer, ownTimer,
           creator && ownTimer == null,
           creator, session.visibility(), displayStatus, sampleIds,
-          creator ? creatorJudges : List.of(), members.size()));
+          creator ? creatorJudges : List.of(),
+          members.size(),
+          ownVerifiedAtFinalization));
     }
     return result;
   }
@@ -800,9 +828,15 @@ public class EvaluationSubmissionService {
       LocalDateTime startedAt, LocalDateTime endedAt, Long elapsedSeconds) {
   }
 
-  private record HistoryMemberInfo(int memberId, int userId, String name,
-      String outcome, LocalDateTime startedAt, LocalDateTime endedAt,
-      Long elapsedSeconds) {
+  private record HistoryMemberInfo(
+      int memberId,
+      int userId,
+      String name,
+      String outcome,
+      LocalDateTime startedAt,
+      LocalDateTime endedAt,
+      Long elapsedSeconds,
+      boolean verifiedAtFinalization) {
   }
 
   private TimerView timer(LocalDateTime started, LocalDateTime ended, Long elapsed) {

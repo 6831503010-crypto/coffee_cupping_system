@@ -1835,7 +1835,11 @@ goToReview() {
         throw new Error('Server did not confirm finalization');
       }
       this.evaluationReadOnly.set(true);
-      await this.router.navigate(['/history']);
+      if (session.isCreator) {
+        await this.router.navigate(['/individual', session.sessionId]);
+      } else {
+        await this.router.navigate(['/history']);
+      }
     } catch {
       this.saveFeedback.set(
         'Finalization was not confirmed. Your form values remain intact. Refresh to check database state before retrying.'
