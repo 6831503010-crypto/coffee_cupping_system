@@ -3,10 +3,11 @@ package th.mfu.cupping.dto;
 import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import th.mfu.cupping.model.CuppingMode;
 
-public final class IndividualSessionDtos {
+public final class CuppingSessionDtos {
 
-  private IndividualSessionDtos() {
+  private CuppingSessionDtos() {
   }
 
   public record NewSample(
@@ -28,7 +29,15 @@ public final class IndividualSessionDtos {
       @Size(max = 500) String description,
       @NotNull @Min(1) @Max(10) Integer evaluatorLimit,
       @NotNull Boolean creatorParticipates,
-      @NotEmpty List<@Valid SampleChoice> samples) {
+      @NotEmpty List<@Valid SampleChoice> samples,
+      CuppingMode mode) {
+
+    public CreateRequest {
+      // Existing clients do not send a mode yet.
+      if (mode == null) {
+        mode = CuppingMode.INDIVIDUAL;
+      }
+    }
   }
 
   public record LibrarySample(
@@ -62,7 +71,8 @@ public final class IndividualSessionDtos {
       boolean sampleDetailsVisible,
       List<SessionSample> samples,
       Integer sessionEvaluatorId,
-      boolean closed) {
+      boolean closed,
+      CuppingMode mode) {
   }
 
   // Creator assigns an existing account using its registered email.

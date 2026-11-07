@@ -68,10 +68,15 @@ public class PublicFeedService {
       ScoreBreakdown scores,
       List<JudgeNote> notes,
       AdditionalDetails additionalDetails,
-      boolean allContributingEvaluatorsVerified) {
+      boolean allContributingEvaluatorsVerified,
+      String mode) {
   }
 
-  private record PublicSession(int id, String name, LocalDateTime closedAt) {
+  private record PublicSession(
+      int id,
+      String name,
+      LocalDateTime closedAt,
+      String mode) {
   }
 
   private record SampleInfo(int id, String name, SampleDetails details) {
@@ -97,13 +102,16 @@ public class PublicFeedService {
   @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
   public List<FeedResult> list() {
     List<PublicSession> sessions = jdbc.query("""
-        SELECT session_id, session_name, finalized_at
+        SELECT session_id, session_name, finalized_at,mode
         FROM cupping_sessions
         WHERE result_visibility = 'PUBLIC' AND status = 'FINALIZED'
           AND finalized_at IS NOT NULL
         ORDER BY finalized_at DESC, session_id DESC
-        """, (rs, n) -> new PublicSession(rs.getInt(1), rs.getString(2),
-        rs.getObject(3, LocalDateTime.class)));
+        """, (rs, n) -> new PublicSession(
+        rs.getInt(1),
+        rs.getString(2),
+        rs.getObject(3, LocalDateTime.class),
+        rs.getString(4)));
 
     List<FeedResult> feed = new ArrayList<>();
     for (PublicSession session : sessions) {
@@ -192,7 +200,8 @@ public class PublicFeedService {
             scores(judgeResults),
             notes(judgeResults),
             details(judgeResults),
-            allVerified));
+            allVerified,
+            session.mode()));
       }
     }
     return feed;

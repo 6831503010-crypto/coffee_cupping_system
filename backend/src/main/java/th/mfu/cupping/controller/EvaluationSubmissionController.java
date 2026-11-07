@@ -8,7 +8,9 @@ import th.mfu.cupping.dto.EvaluationSubmissionDtos.*;
 import th.mfu.cupping.service.EvaluationSubmissionService;
 
 @RestController
-@RequestMapping("/api/individual-sessions")
+@RequestMapping({
+    "/api/cupping-sessions"
+})
 public class EvaluationSubmissionController {
   private final EvaluationSubmissionService service;
 

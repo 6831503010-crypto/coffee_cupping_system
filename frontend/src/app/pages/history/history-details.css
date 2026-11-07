@@ -535,3 +535,23 @@
   align-items: center;
   color: var(--mocha, #795548);
 }
+
+.history-session-title,
+.history-mode-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-mode-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: #8b5e3c;
+}
+
+.history-mode-label {
+  margin-top: 6px;
+  color: #8b5e3c;
+  font-size: 13px;
+  font-weight: 500;
+}

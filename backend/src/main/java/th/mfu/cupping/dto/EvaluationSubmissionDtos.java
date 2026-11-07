@@ -76,6 +76,7 @@ public final class EvaluationSubmissionDtos {
       List<Integer> sessionSampleIds,
       List<HistoryJudge> judges,
       int evaluatorCount,
-      boolean verifiedAtFinalization) {
+      boolean verifiedAtFinalization,
+      String mode) {
   }
 }

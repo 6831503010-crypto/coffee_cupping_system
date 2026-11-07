@@ -27,7 +27,18 @@ export class CuppingModeModal {
 
   selectIndividualMode() {
     this.closeModeDialog();
-    this.router.navigateByUrl('/individual/new');
+
+    this.router.navigate(['/sessions/new'], {
+      queryParams: { mode: 'INDIVIDUAL' }
+    });
+  }
+
+  selectOrganizationalMode() {
+    this.closeModeDialog();
+
+    this.router.navigate(['/sessions/new'], {
+      queryParams: { mode: 'EVENT' }
+    });
   }
 
   onModeDialogClick(event: MouseEvent) {

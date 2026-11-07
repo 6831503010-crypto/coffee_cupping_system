@@ -4,7 +4,7 @@
 
 - **Home** shows a live preview of the signed-in user's three most recently created samples, total samples, and number of samples used in at least one cupping session. Links to the full inventory and Create Sample.
 - **My Coffee Inventory** is available at `/inventory`. Users can search/view their saved coffee, create a sample, edit unused samples, and delete unused samples after confirmation.
-- **Create Individual Session** retains its existing *Select Existing Sample* and *Create a new sample* options. New samples are staged in the form and inserted into `coffee_samples` when `Create Session` succeeds. A failed/cancelled session creation does not insert them.
+- **Create Individual Session** retains its existing _Select Existing Sample_ and _Create a new sample_ options. New samples are staged in the form and inserted into `coffee_samples` when `Create Session` succeeds. A failed/cancelled session creation does not insert them.
 - The two workflows use the same sample fields (`CoffeeSampleFields` component) and write to the same `coffee_samples` database table with `created_by` set by the server.
 
 ## Backend
@@ -40,7 +40,7 @@
 
 ## Installation
 
-Use the **full-project ZIP** as a replacement checkout of the *uploaded* integrated project, or extract the **changed-files ZIP** at the root of that same code version. Merge directories; replace only the modified files. Do **not** delete your existing project folders. Flyway V1–V6 are unchanged; do not modify applied migrations.
+Use the **full-project ZIP** as a replacement checkout of the _uploaded_ integrated project, or extract the **changed-files ZIP** at the root of that same code version. Merge directories; replace only the modified files. Do **not** delete your existing project folders. Flyway V1–V6 are unchanged; do not modify applied migrations.
 
 ### Run locally
 
@@ -52,9 +52,9 @@ Use the **full-project ZIP** as a replacement checkout of the *uploaded* integra
 ## Manual verification checklist
 
 1. Sign in as User A and create a new sample in Inventory. Refresh: it should remain listed.
-2. Open `/individual/new`: newly created sample should appear in **Saved Samples**. Create a session using it; return to Inventory and confirm it is marked `In 1 session`.
+2. Open `/sessions/new`: newly created sample should appear in **Saved Samples**. Create a session using it; return to Inventory and confirm it is marked `In 1 session`.
 3. Open session creation again, choose **Create a new sample**, enter sample details and code, then create the session. Return to Inventory: the created sample should appear automatically as an owned inventory item.
-4. Create a second *unused* sample in Inventory; edit and delete it. Ensure changes survive refresh, and deletion requires confirmation.
+4. Create a second _unused_ sample in Inventory; edit and delete it. Ensure changes survive refresh, and deletion requires confirmation.
 5. Try PUT/DELETE on a **used** sample: expect HTTP 409. Try editing another account's sample: expect HTTP 403.
 6. Sign in as User B: User A's private inventory must not appear. User B can evaluate a shared session but should not own the session creator's sample.
 7. Confirm T07/T08 join and evaluator permissions, evaluation save/reload, and history still function.

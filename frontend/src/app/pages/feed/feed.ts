@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FeedJudgeNote, PublicFeedResult, PublicFeedService } from '../../services/public-feed.service';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { solarVerifiedCheckBold } from '@ng-icons/solar-icons/bold';
+import { solarVerifiedCheckBold, solarUserBold, solarUsersGroupRoundedBold } from '@ng-icons/solar-icons/bold';
 interface CombinedFeedNotes {
   aromaQualities: string[];
   aromaOthers: string[];
@@ -16,7 +16,13 @@ interface CombinedFeedNotes {
 @Component({
   selector: 'app-feed',
   imports: [RouterLink, NgIcon],
-  providers: [provideIcons({ solarVerifiedCheckBold })],
+  providers: [
+  provideIcons({
+      solarVerifiedCheckBold,
+      solarUserBold,
+      solarUsersGroupRoundedBold
+    })
+  ],
   templateUrl: './feed.html',
   styleUrl: './feed.css'
 })

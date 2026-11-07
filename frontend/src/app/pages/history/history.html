@@ -74,7 +74,17 @@
                     [attr.aria-pressed]="activeRecord()?.id === record.id"
                     (click)="selectSession(record.id)">
               <div class="session-item-text">
-                <strong>{{ record.sessionName || ('Session ' + sessionNumber(sessionIndex)) }}</strong>
+                <strong class="history-session-title">
+                  <ng-icon class="history-mode-icon" [name]="record.mode === 'EVENT'
+                      ? 'solarUsersGroupRoundedBold'
+                      : 'solarUserBold'" size="18" role="img" [attr.aria-label]="record.mode === 'EVENT'
+                      ? 'Organizational session'
+                      : 'Individual session'" [attr.title]="record.mode === 'EVENT'
+                      ? 'Organizational session'
+                      : 'Individual session'"></ng-icon>
+
+                  {{ record.sessionName || ('Session ' + sessionNumber(sessionIndex)) }}
+                </strong>
                 <span>{{ formatDate(record.completedAt) }}</span>
                 <span class="session-item-meta">{{ record.sessionSampleIds.length }} {{ record.sessionSampleIds.length === 1 ? 'sample' : 'samples' }}</span>
               </div>
@@ -117,6 +127,17 @@
           <header class="session-detail-head">
             <div>
               <h2>{{ record.sessionName || 'Session ' + activeSessionNumber() }}</h2>
+              <div class="history-mode-label">
+                <ng-icon class="history-mode-icon" [name]="record.mode === 'EVENT'
+                    ? 'solarUsersGroupRoundedBold'
+                    : 'solarUserBold'" size="18" aria-hidden="true"></ng-icon>
+
+                <span>
+                  {{ record.mode === 'EVENT'
+                  ? 'Organizational session'
+                  : 'Individual session' }}
+                </span>
+              </div>
               <p class="session-detail-date">{{ formatDate(record.completedAt) }}</p>
             </div>
             <div class="session-detail-actions">
@@ -135,7 +156,7 @@
                 </div>
               }
               @if (record.creator && record.displayStatus === 'IN_PROGRESS' && !record.sessionClosed) {
-                <a class="session-manage-link" [routerLink]="['/individual', record.id]">Manage Session <span aria-hidden="true">↗</span></a>
+                <a class="session-manage-link" [routerLink]="['/sessions', record.id]">Manage Session <span aria-hidden="true">↗</span></a>
               }
               <span class="session-badge" [class.badge-closed]="isIncomplete(record)"
                     [class.badge-progress]="record.displayStatus === 'IN_PROGRESS'">{{ statusLabel(record) }}</span>

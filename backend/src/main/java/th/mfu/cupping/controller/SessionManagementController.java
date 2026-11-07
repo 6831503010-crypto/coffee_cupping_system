@@ -9,19 +9,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import th.mfu.cupping.dto.IndividualSessionDtos.*;
-import th.mfu.cupping.service.IndividualSessionService;
+import th.mfu.cupping.dto.CuppingSessionDtos.*;
+import th.mfu.cupping.service.CuppingSessionService;
 import th.mfu.cupping.service.SessionParticipationService;
 
 @RestController
-@RequestMapping("/api/individual-sessions")
-public class IndividualSessionController {
+@RequestMapping({
+    "/api/cupping-sessions"
+})
+public class SessionManagementController {
 
-  private final IndividualSessionService service;
+  private final CuppingSessionService service;
   private final SessionParticipationService participation;
 
-  public IndividualSessionController(
-      IndividualSessionService service,
+  public SessionManagementController(
+      CuppingSessionService service,
       SessionParticipationService participation) {
     this.service = service;
     this.participation = participation;

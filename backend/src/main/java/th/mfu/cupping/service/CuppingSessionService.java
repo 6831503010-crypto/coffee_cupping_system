@@ -11,12 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import th.mfu.cupping.dto.IndividualSessionDtos.*;
+import th.mfu.cupping.dto.CuppingSessionDtos.*;
 import th.mfu.cupping.model.User;
 import th.mfu.cupping.repository.UserRepository;
+import th.mfu.cupping.model.CuppingMode;
 
 @Service
-public class IndividualSessionService {
+public class CuppingSessionService {
 
   private final JdbcTemplate jdbc;
   private final UserRepository users;
@@ -24,7 +25,7 @@ public class IndividualSessionService {
   private final SimpleJdbcInsert insertSession;
   private final SimpleJdbcInsert insertSample;
 
-  public IndividualSessionService(
+  public CuppingSessionService(
       JdbcTemplate jdbc,
       UserRepository users) {
 
@@ -86,6 +87,17 @@ public class IndividualSessionService {
       String email) {
 
     int creatorId = currentUser(email).getUserId();
+
+    CuppingMode mode = request.mode();
+
+    if (mode == CuppingMode.EVENT
+        && Boolean.TRUE.equals(request.creatorParticipates())) {
+      throw bad(
+          "The organizer cannot participate as an evaluator in Organizational Mode");
+    }
+
+    boolean creatorParticipates = mode == CuppingMode.INDIVIDUAL
+        && Boolean.TRUE.equals(request.creatorParticipates());
 
     if (request.evaluatorLimit() < 1 ||
         request.evaluatorLimit() > 10) {
@@ -156,7 +168,7 @@ public class IndividualSessionService {
     String description = request.description();
     sessionValues.put("description",
         description == null || description.isBlank() ? null : description.trim());
-    sessionValues.put("mode", "INDIVIDUAL");
+    sessionValues.put("mode", mode.name());
 
     sessionValues.put(
         "evaluator_capacity",
@@ -164,14 +176,14 @@ public class IndividualSessionService {
 
     sessionValues.put(
         "creator_participates",
-        request.creatorParticipates());
+        creatorParticipates);
 
     int sessionId = insertSession
         .executeAndReturnKey(sessionValues)
         .intValue();
 
     // Creator participates only when they opt in.
-    if (request.creatorParticipates()) {
+    if (creatorParticipates) {
       jdbc.update("""
           INSERT INTO session_evaluators
               (session_id, user_id, joined_at)
@@ -233,14 +245,15 @@ public class IndividualSessionService {
 
     List<SessionRow> rows = jdbc.query("""
         SELECT session_id, session_name, created_by,
-               evaluator_capacity,
+               evaluator_capacity, mode,
                (status = 'FINALIZED' AND finalized_at IS NOT NULL)
                    AS session_finalized,
                (finalized_at IS NOT NULL
                    OR status IN ('FINALIZED', 'CANCELLED'))
                    AS session_closed
         FROM cupping_sessions
-        WHERE session_id = ? AND mode = 'INDIVIDUAL'
+        WHERE session_id = ?
+        AND mode IN ('INDIVIDUAL', 'EVENT')
         """,
         (rs, row) -> new SessionRow(
             rs.getInt("session_id"),
@@ -248,7 +261,8 @@ public class IndividualSessionService {
             rs.getInt("created_by"),
             rs.getInt("evaluator_capacity"),
             rs.getBoolean("session_finalized"),
-            rs.getBoolean("session_closed")),
+            rs.getBoolean("session_closed"),
+            CuppingMode.valueOf(rs.getString("mode"))),
         sessionId);
 
     if (rows.isEmpty()) {
@@ -274,7 +288,9 @@ public class IndividualSessionService {
     boolean isEvaluator = sessionEvaluatorId != null;
 
     boolean finalized = session.finalized();
-    boolean canEvaluate = isEvaluator && !session.closed();
+    boolean canEvaluate = isEvaluator
+        && !session.closed()
+        && !(isCreator && session.mode() == CuppingMode.EVENT);
     boolean sampleDetailsVisible = isCreator || finalized;
 
     if (!isCreator && !isEvaluator) {
@@ -343,7 +359,8 @@ public class IndividualSessionService {
         sampleDetailsVisible,
         samples,
         sessionEvaluatorId,
-        session.closed());
+        session.closed(),
+        session.mode());
   }
 
   private record SessionRow(
@@ -352,68 +369,7 @@ public class IndividualSessionService {
       int createdBy,
       int evaluatorLimit,
       boolean finalized,
-      boolean closed) {
-  }
-
-  // For T08: call only AFTER invitation/account
-  // authorization has succeeded.
-  @Transactional
-  public void addAuthorizedEvaluator(
-      Integer sessionId,
-      Integer userId) {
-
-    List<Integer> limits = jdbc.query("""
-        SELECT evaluator_capacity
-        FROM cupping_sessions
-        WHERE session_id = ? AND mode = 'INDIVIDUAL'
-        FOR UPDATE
-        """,
-        (rs, row) -> rs.getInt(1),
-        sessionId);
-
-    if (limits.isEmpty()) {
-      throw new ResponseStatusException(
-          HttpStatus.NOT_FOUND, "Session not found");
-    }
-
-    Integer count = jdbc.queryForObject("""
-        SELECT COUNT(*) FROM session_evaluators
-        WHERE session_id = ?
-        """,
-        Integer.class,
-        sessionId);
-
-    if (count != null && count >= limits.get(0)) {
-      throw new ResponseStatusException(
-          HttpStatus.CONFLICT,
-          "Evaluator limit reached");
-    }
-
-    Integer alreadyJoined = jdbc.queryForObject("""
-        SELECT COUNT(*) FROM session_evaluators
-        WHERE session_id = ? AND user_id = ?
-        """,
-        Integer.class,
-        sessionId,
-        userId);
-
-    if (alreadyJoined != null && alreadyJoined > 0) {
-      throw new ResponseStatusException(
-          HttpStatus.CONFLICT,
-          "Already participating");
-    }
-
-    if (!users.existsById(userId)) {
-      throw new ResponseStatusException(
-          HttpStatus.NOT_FOUND,
-          "Evaluator account not found");
-    }
-
-    jdbc.update("""
-        INSERT INTO session_evaluators
-            (session_id, user_id, joined_at)
-        VALUES (?, ?, ?)
-        """,
-        sessionId, userId, LocalDateTime.now());
+      boolean closed,
+      CuppingMode mode) {
   }
 }

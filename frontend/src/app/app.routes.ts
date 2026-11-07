@@ -15,7 +15,7 @@ import { FirstUserGuide } from './pages/aroma-test/first-user-guide';
 import { FlavorTest } from './pages/flavor-test/flavor-test';
 import { ReviewPage } from './pages/review-page/review-page';
 
-import { IndividualSession } from './pages/individual-session/individual-session';
+import { CuppingSessionPage } from './pages/cupping-session/cupping-session';
 import { JoinSession } from './pages/join-session/join-session';
 import { Inventory } from './pages/inventory/inventory';
 import { Profile } from './pages/profile/profile';
@@ -97,14 +97,24 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'individual/new',
-    component: IndividualSession,
+  path: 'sessions/new',
+    component: CuppingSessionPage,
     canActivate: [authGuard]
   },
   {
-    path: 'individual/:id',
-    component: IndividualSession,
+    path: 'sessions/:id',
+    component: CuppingSessionPage,
     canActivate: [authGuard]
+  },
+  {
+    path: 'individual/new',
+    redirectTo: 'sessions/new',
+    pathMatch: 'full'
+  },
+  {
+    path: 'individual/:id',
+    redirectTo: 'sessions/:id',
+    pathMatch: 'full'
   },
   {
     path: 'profile',

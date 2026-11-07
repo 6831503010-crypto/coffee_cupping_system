@@ -39,7 +39,21 @@
           <article class="feed-entry" [class.is-expanded]="expandedSampleId() === item.sessionSampleId">
             <button type="button" class="feed-row" [attr.aria-expanded]="expandedSampleId() === item.sessionSampleId"
                     (click)="toggleRow(item.sessionSampleId)">
-              <span class="feed-session"><strong>{{ item.sessionName }}</strong><small>{{ formatDate(item.closedAt) }}</small></span>
+              <span class="feed-session">
+                <strong class="feed-session-title">
+                  <ng-icon class="feed-mode-icon" [name]="item.mode === 'EVENT'
+                      ? 'solarUsersGroupRoundedBold'
+                      : 'solarUserBold'" size="18" role="img" [attr.aria-label]="item.mode === 'EVENT'
+                      ? 'Organizational session'
+                      : 'Individual session'" [attr.title]="item.mode === 'EVENT'
+                      ? 'Organizational session'
+                      : 'Individual session'"></ng-icon>
+
+                  <span>{{ item.sessionName }}</span>
+                </strong>
+
+                <small>{{ formatDate(item.closedAt) }}</small>
+              </span>
               <span class="feed-coffee">{{ item.sampleName }}</span>
               <span class="feed-score">
                 <span class="feed-score-value">

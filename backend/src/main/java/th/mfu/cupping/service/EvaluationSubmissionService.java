@@ -690,8 +690,8 @@ public class EvaluationSubmissionService {
     for (int sessionId : sessionIds) {
       var session = jdbc.queryForObject("""
           SELECT session_name, created_by, created_at,
-                 result_visibility, status, finalized_at, session_started_at,
-                 session_ended_at, session_elapsed_seconds
+          result_visibility, status, finalized_at, session_started_at,
+          session_ended_at, session_elapsed_seconds, mode
           FROM cupping_sessions WHERE session_id = ?
           """, (rs, row) -> new HistorySessionInfo(
           rs.getString("session_name"),
@@ -702,7 +702,8 @@ public class EvaluationSubmissionService {
           rs.getObject("finalized_at", LocalDateTime.class),
           rs.getObject("session_started_at", LocalDateTime.class),
           rs.getObject("session_ended_at", LocalDateTime.class),
-          rs.getObject("session_elapsed_seconds", Long.class)), sessionId);
+          rs.getObject("session_elapsed_seconds", Long.class),
+          rs.getString("mode")), sessionId);
 
       boolean creator = session.createdBy() == account;
       boolean closed = session.finalizedAt() != null
@@ -818,14 +819,23 @@ public class EvaluationSubmissionService {
           creator, session.visibility(), displayStatus, sampleIds,
           creator ? creatorJudges : List.of(),
           members.size(),
-          ownVerifiedAtFinalization));
+          ownVerifiedAtFinalization,
+          session.mode()));
     }
     return result;
   }
 
-  private record HistorySessionInfo(String name, int createdBy,
-      LocalDateTime createdAt, String visibility, String status, LocalDateTime finalizedAt,
-      LocalDateTime startedAt, LocalDateTime endedAt, Long elapsedSeconds) {
+  private record HistorySessionInfo(
+      String name,
+      int createdBy,
+      LocalDateTime createdAt,
+      String visibility,
+      String status,
+      LocalDateTime finalizedAt,
+      LocalDateTime startedAt,
+      LocalDateTime endedAt,
+      Long elapsedSeconds,
+      String mode) {
   }
 
   private record HistoryMemberInfo(
