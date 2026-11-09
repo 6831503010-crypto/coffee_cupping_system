@@ -1,6 +1,5 @@
 <div class="container py-4">
-  <a routerLink="/guide/aroma-test" class="back-link">← Previous Page</a>
-
+  <a routerLink="/" class="back-link">← Back to Home</a>
   <div class="section-header mt-3">
     <span class="eyebrow">FIRST-TIME USER GUIDE</span>
   </div>
@@ -21,13 +20,13 @@
           Overview
         </h3>
 
-        <p class="text-muted mb-4" style="font-size: 1.15rem; line-height: 1.6;">
+        <p class="text-muted mb-4" style="font-size: 1.025rem; line-height: 1.6;">
           The Flavor section evaluates the taste characteristics of the coffee
           sample and its overall flavor quality. The evaluation consists of six
           criteria, each scored using the official SCA 6 to 10 scale:
         </p>
 
-        <ol class="text-muted mb-4" style="font-size: 1.15rem; line-height: 1.6;">
+        <ol class="text-muted mb-4" style="font-size: 1.025rem; line-height: 1.6;">
           <li class="mb-3">
             <strong>Flavor</strong>
             <ul>
@@ -97,7 +96,13 @@
             title="Enlarge image"
             style="position: absolute; bottom: 8px; right: 8px; width: 30px; height: 30px; padding: 4px; display: flex; align-items: center; justify-content: center;"
             (click)="openImage('/images/Guide-Page-Images/6-FlavorScores.png', 'Flavor Test Step 1')">
-            <span class="lens-icon"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+              <path d="M11 8v6"></path>
+              <path d="M8 11h6"></path>
+            </svg>
           </button>
         </div>
 
@@ -107,6 +112,8 @@
       </div>
     </div>
   </div>
+
+  <hr>
 
   <!-- STEP 2 -->
   <div class="card p-4 mt-4 shadow-sm border-0">
@@ -120,12 +127,12 @@
           Overview
         </h3>
 
-        <p class="text-muted mb-4" style="font-size: 1.15rem; line-height: 1.6;">
+        <p class="text-muted mb-4" style="font-size: 1.025rem; line-height: 1.6;">
           Select the applicable flavor descriptors to identify the specific
           characteristics and flavor profile of the coffee sample.
         </p>
 
-        <ol class="text-muted mb-4" style="font-size: 1.15rem; line-height: 1.6;">
+        <ol class="text-muted mb-4" style="font-size: 1.025rem; line-height: 1.6;">
           <li class="mb-3">
             <strong>Uniformity — Cup 1 to Cup 5</strong>
             <ul>
@@ -166,7 +173,13 @@
             title="Enlarge image"
             style="position: absolute; bottom: 8px; right: 8px; width: 30px; height: 30px; padding: 4px; display: flex; align-items: center; justify-content: center;"
             (click)="openImage('/images/Guide-Page-Images/7-FlavorCupChecks.png', 'Flavor Test Step 2')">
-            <span class="lens-icon"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+              <path d="M11 8v6"></path>
+              <path d="M8 11h6"></path>
+            </svg>
           </button>
         </div>
 
@@ -176,6 +189,8 @@
       </div>
     </div>
   </div>
+
+  <hr>
 
   <!-- STEP 3 -->
   <div class="card p-4 mt-4 shadow-sm border-0">
@@ -189,13 +204,13 @@
           Overview
         </h3>
 
-        <p class="text-muted mb-4" style="font-size: 1.15rem; line-height: 1.6;">
+        <p class="text-muted mb-4" style="font-size: 1.025rem; line-height: 1.6;">
           This stage checks the sweetness and flavor attributes of the samples
           across all 5 cups, ensuring the data is accurate and capturing the
           detailed sensory profile of the coffee.
         </p>
 
-        <ol class="text-muted mb-4" style="font-size: 1.15rem; line-height: 1.6;">
+        <ol class="text-muted mb-4" style="font-size: 1.025rem; line-height: 1.6;">
           <li class="mb-3">
             <strong>Sweetness — Cup 1 to Cup 5</strong>
             <ul>
@@ -240,7 +255,13 @@
             title="Enlarge image"
             style="position: absolute; bottom: 8px; right: 8px; width: 30px; height: 30px; padding: 4px; display: flex; align-items: center; justify-content: center;"
             (click)="openImage('/images/Guide-Page-Images/8-FlavorQualities.png', 'Confirm Flavor Stage')">
-            <span class="lens-icon"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+              <path d="M11 8v6"></path>
+              <path d="M8 11h6"></path>
+            </svg>
           </button>
         </div>
 
@@ -251,9 +272,11 @@
     </div>
   </div>
 
+  <hr>
+
   <!-- NEXT BUTTON -->
   <div class="button-container" style="justify-content: space-between;">
-    <a routerLink="/" class="click-button">Return Home</a>
+    <a routerLink="/guide/aroma-test" class="click-button">Previous Page</a>
     <a (click)="goToNextPage()" class="click-button">Next</a>
   </div>
 
