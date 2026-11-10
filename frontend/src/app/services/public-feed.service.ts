@@ -60,6 +60,7 @@ export interface PublicFeedResult {
   notes: FeedJudgeNote[];
   additionalDetails: FeedAdditionalDetails;
   allContributingEvaluatorsVerified: boolean;
+  mode: 'INDIVIDUAL' | 'EVENT';
 }
 
 @Injectable({ providedIn: 'root' })

@@ -22,14 +22,15 @@ import {
 } from '@angular/router';
 
 import {
-  IndividualSessionService,
+  CuppingMode,
+  CuppingSessionService,
   LibrarySample,
   SampleChoice,
   SessionView,
   SessionTimingView,
   EvaluatorView,
   EvaluatorCandidate
-} from '../../services/individual-session.service';
+} from '../../services/cupping-session.service';
 import {
   CoffeeInventoryService
 } from '../../services/coffee-inventory.service';
@@ -40,19 +41,19 @@ import {
 } from '../../shared/sample-form-modal/sample-form-modal';
 
 @Component({
-  selector: 'app-individual-session',
+  selector: 'app-cupping-session',
   imports: [FormsModule, RouterLink, SampleFormModal],
-  templateUrl: './individual-session.html',
+  templateUrl: './cupping-session.html',
   styleUrls: [
-    './individual-session.css',
-    './individual-session-creation.css',
-    './individual-session-management.css'
+    './cupping-session.css',
+    './cupping-session-creation.css',
+    './cupping-session-management.css'
   ]
 })
-export class IndividualSession {
+export class CuppingSessionPage {
 
   private readonly toast = inject(ToastService);
-  private readonly api = inject(IndividualSessionService);
+  private readonly api = inject(CuppingSessionService);
   private readonly inventory = inject(CoffeeInventoryService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -216,6 +217,13 @@ export class IndividualSession {
 
   readonly sessionIdParam =
     this.route.snapshot.paramMap.get('id');
+  readonly creationMode: CuppingMode =
+    this.route.snapshot.queryParamMap.get('mode') === 'EVENT'
+      ? 'EVENT'
+      : 'INDIVIDUAL';
+
+  readonly isOrganizationalCreation =
+    this.creationMode === 'EVENT';
 
   sessionName = '';
   sessionDescription = '';
@@ -406,12 +414,13 @@ export class IndividualSession {
       sessionName: name,
       description: this.sessionDescription.trim() || null,
       evaluatorLimit: this.evaluatorLimit,
-      creatorParticipates: this.creatorParticipates,
+      mode: this.creationMode,
+      creatorParticipates:!this.isOrganizationalCreation && this.creatorParticipates,
       samples: this.chosen()
     }).subscribe({
       next: result => {
         this.saving.set(false);
-        this.router.navigate(['/individual', result.sessionId]);
+        this.router.navigate(['/sessions', result.sessionId]);
       },
       error: () => {
         this.saving.set(false);
@@ -843,7 +852,7 @@ async copyParticipationLink(): Promise<void> {
 
     this.copyingLink.set(true);
     this.linkError.set('');
-  
+
     try {
       await navigator.clipboard.writeText(link);
       this.toast.success('Participation link copied.');

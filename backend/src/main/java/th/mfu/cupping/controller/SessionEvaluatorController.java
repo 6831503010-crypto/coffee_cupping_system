@@ -15,7 +15,7 @@ import th.mfu.cupping.service.CuppingAccessService;
 
 import org.springframework.transaction.annotation.Isolation;
 import th.mfu.cupping.service.SessionParticipationService;
-import th.mfu.cupping.dto.IndividualSessionDtos.ParticipationResult;
+import th.mfu.cupping.dto.CuppingSessionDtos.ParticipationResult;
 
 @RestController
 @RequestMapping("/api/session-evaluators")
@@ -76,39 +76,23 @@ public class SessionEvaluatorController {
     User user = access.current(auth);
     access.requireSessionOwner(request.sessionId(), user);
 
-    CuppingSession session = access.session(request.sessionId());
-
     User evaluator = users.findById(request.userId())
         .orElseThrow(() -> new ResponseStatusException(
             HttpStatus.NOT_FOUND,
             "User not found"));
 
-    if ("INDIVIDUAL".equals(session.getMode())) {
-      ParticipationResult result = participation.assign(
-          request.sessionId(),
-          evaluator.getEmail(),
-          auth.getName());
+    ParticipationResult result = participation.assign(
+        request.sessionId(),
+        evaluator.getEmail(),
+        auth.getName());
 
-      SessionEvaluator membership = find(result.sessionEvaluatorId());
+    SessionEvaluator membership = find(result.sessionEvaluatorId());
 
-      return ResponseEntity
-          .status(result.alreadyParticipating()
-              ? HttpStatus.OK
-              : HttpStatus.CREATED)
-          .body(membership);
-    }
-
-    // Preserve the existing event assignment behavior.
-    access.requireSessionOpen(request.sessionId());
-
-    SessionEvaluator item = new SessionEvaluator();
-    item.setSessionId(request.sessionId());
-    item.setUserId(request.userId());
-    item.setJoinedAt(request.joinedAt());
-
-    item = repo.saveAndFlush(item);
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(item);
+    return ResponseEntity
+        .status(result.alreadyParticipating()
+            ? HttpStatus.OK
+            : HttpStatus.CREATED)
+        .body(membership);
   }
 
   @PutMapping("/{id}")

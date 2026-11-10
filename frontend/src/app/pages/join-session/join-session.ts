@@ -2,9 +2,9 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
-  IndividualSessionService,
+  CuppingSessionService,
   JoinPreview
-} from '../../services/individual-session.service';
+} from '../../services/cupping-session.service';
 
 @Component({
   selector: 'app-join-session',
@@ -14,7 +14,7 @@ import {
   styleUrl: './join-session.css'
 })
 export class JoinSession implements OnInit {
-  private service = inject(IndividualSessionService);
+  private service = inject(CuppingSessionService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -75,7 +75,7 @@ export class JoinSession implements OnInit {
     this.service.joinSession(this.token).subscribe({
       next: result => {
         this.joining.set(false);
-        void this.router.navigate(['/individual', result.sessionId]);
+        void this.router.navigate(['/sessions', result.sessionId]);
       },
       error: (error: HttpErrorResponse) => {
         this.joining.set(false);

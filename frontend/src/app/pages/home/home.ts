@@ -130,35 +130,4 @@ export class Home {
       }
     });
   }
-
-
-  // @ViewChild('cuppingModeDialog')
-  // cuppingModeDialog?: ElementRef<HTMLDialogElement>;
-
-  // openModeDialog() {
-  //   const dialog = this.cuppingModeDialog?.nativeElement;
-
-  //   if (dialog && !dialog.open) {
-  //     dialog.showModal();
-  //   }
-  // }
-
-  // closeModeDialog() {
-  //   this.cuppingModeDialog?.nativeElement.close();
-  // }
-
-  // selectIndividualMode() {
-  //   this.closeModeDialog();
-  //   this.router.navigateByUrl('/individual/new');
-  // }
-
-  // onModeDialogClick(event: MouseEvent) {
-  //   // Close when clicking outside the popup content.
-  //   if (
-  //     event.target ===
-  //     this.cuppingModeDialog?.nativeElement
-  //   ) {
-  //     this.closeModeDialog();
-  //   }
-  // }
 }

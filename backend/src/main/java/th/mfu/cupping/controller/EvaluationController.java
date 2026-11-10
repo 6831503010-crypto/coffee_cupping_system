@@ -80,7 +80,7 @@ public class EvaluationController {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Defect type not found");
     if ("FINALIZED".equals(request.status()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Finalize through /api/individual-sessions/{id}/my-evaluations to save all child data atomically");
+          "Finalize through /api/cupping-sessions/{id}/my-evaluations to save all child data atomically");
     if (request.status() != null && !"DRAFT".equals(request.status()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid evaluation status");
     Evaluation item = new Evaluation();
@@ -157,7 +157,7 @@ public class EvaluationController {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Defect type not found");
     if ("FINALIZED".equals(request.status()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Finalize through /api/individual-sessions/{id}/my-evaluations to save all child data atomically");
+          "Finalize through /api/cupping-sessions/{id}/my-evaluations to save all child data atomically");
     if (request.status() != null && !"DRAFT".equals(request.status()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid evaluation status");
     item.setDryAroma(request.dryAroma());

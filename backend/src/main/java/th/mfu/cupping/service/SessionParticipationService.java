@@ -9,19 +9,19 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import th.mfu.cupping.dto.IndividualSessionDtos.ParticipationResult;
+import th.mfu.cupping.dto.CuppingSessionDtos.ParticipationResult;
 import th.mfu.cupping.model.User;
 import th.mfu.cupping.repository.UserRepository;
 
 import java.security.SecureRandom;
 import java.util.Base64;
 
-import th.mfu.cupping.dto.IndividualSessionDtos.ParticipationLink;
+import th.mfu.cupping.dto.CuppingSessionDtos.ParticipationLink;
 
-import th.mfu.cupping.dto.IndividualSessionDtos.JoinPreview;
-import th.mfu.cupping.dto.IndividualSessionDtos.EvaluatorView;
+import th.mfu.cupping.dto.CuppingSessionDtos.JoinPreview;
+import th.mfu.cupping.dto.CuppingSessionDtos.EvaluatorView;
 
-import th.mfu.cupping.dto.IndividualSessionDtos.EvaluatorCandidate;
+import th.mfu.cupping.dto.CuppingSessionDtos.EvaluatorCandidate;
 
 @Service
 public class SessionParticipationService {
@@ -52,20 +52,25 @@ public class SessionParticipationService {
       int creatorId,
       int capacity,
       boolean creatorParticipates,
-      boolean closed) {
+      boolean closed,
+      String mode) {
+
+    boolean creatorCanEvaluate() {
+      return "INDIVIDUAL".equals(mode) && creatorParticipates;
+    }
   }
 
   // Hold this lock until the surrounding transaction finishes.
   private LockedSession lockSession(Integer sessionId) {
     List<LockedSession> rows = jdbc.query("""
         SELECT session_id, created_by, evaluator_capacity,
-               creator_participates,
+               creator_participates, mode,
                (
                  finalized_at IS NOT NULL
                  OR status IN ('FINALIZED', 'CANCELLED')
                ) AS closed
         FROM cupping_sessions
-        WHERE session_id = ? AND mode = 'INDIVIDUAL'
+        WHERE session_id = ? AND mode IN ('INDIVIDUAL', 'EVENT')
         FOR UPDATE
         """,
         (rs, row) -> new LockedSession(
@@ -73,7 +78,8 @@ public class SessionParticipationService {
             rs.getInt("created_by"),
             rs.getInt("evaluator_capacity"),
             rs.getBoolean("creator_participates"),
-            rs.getBoolean("closed")),
+            rs.getBoolean("closed"),
+            rs.getString("mode")),
         sessionId);
 
     if (rows.isEmpty()) {
@@ -131,10 +137,12 @@ public class SessionParticipationService {
       int userId) {
 
     if (userId == session.creatorId()
-        && !session.creatorParticipates()) {
+        && !session.creatorCanEvaluate()) {
       throw new ResponseStatusException(
           HttpStatus.FORBIDDEN,
-          "The creator chose not to participate in this session");
+          "EVENT".equals(session.mode())
+              ? "The organizer cannot participate as an evaluator in Organizational Mode"
+              : "The creator chose not to participate in this session");
     }
 
     List<Integer> existing = jdbc.query("""
@@ -254,7 +262,7 @@ public class SessionParticipationService {
         SELECT session_id
         FROM cupping_sessions
         WHERE participation_token = ?
-          AND mode = 'INDIVIDUAL'
+          AND mode IN ('INDIVIDUAL', 'EVENT')
         """,
         (rs, row) -> rs.getInt("session_id"),
         token);
@@ -310,6 +318,7 @@ public class SessionParticipationService {
                cs.created_by,
                cs.evaluator_capacity,
                cs.creator_participates,
+               cs.mode,
                (
                  cs.finalized_at IS NOT NULL
                  OR cs.status IN ('FINALIZED', 'CANCELLED')
@@ -328,21 +337,25 @@ public class SessionParticipationService {
         FROM cupping_sessions cs
         WHERE cs.session_id = ?
           AND cs.participation_token = ?
-          AND cs.mode = 'INDIVIDUAL'
+          AND cs.mode IN ('INDIVIDUAL', 'EVENT')
         """,
         (rs, row) -> {
           int capacity = rs.getInt("evaluator_capacity");
           int joined = rs.getInt("joined_count");
           boolean alreadyParticipating = rs.getBoolean("already_participating");
 
+          boolean organizational = "EVENT".equals(rs.getString("mode"));
+
           boolean excludedCreator = rs.getInt("created_by") == user.getUserId()
-              && !rs.getBoolean("creator_participates");
+              && (organizational || !rs.getBoolean("creator_participates"));
 
           boolean canJoin = false;
           String message;
 
           if (excludedCreator) {
-            message = "You chose not to participate in this session.";
+            message = organizational
+                ? "You are the organizer and cannot join as an evaluator."
+                : "You chose not to participate in this session.";
           } else if (alreadyParticipating) {
             message = "You already participate in this session.";
           } else if (rs.getBoolean("closed")) {
@@ -384,7 +397,7 @@ public class SessionParticipationService {
         SELECT created_by
         FROM cupping_sessions
         WHERE session_id = ?
-          AND mode = 'INDIVIDUAL'
+          AND mode IN ('INDIVIDUAL', 'EVENT')
         """,
         (rs, row) -> rs.getInt("created_by"),
         sessionId);
@@ -433,20 +446,21 @@ public class SessionParticipationService {
     // Read session rules without locking the session for every search.
     List<LockedSession> sessions = jdbc.query("""
         SELECT session_id, created_by, evaluator_capacity,
-               creator_participates,
+               creator_participates, mode,
                (
                  finalized_at IS NOT NULL
                  OR status IN ('FINALIZED', 'CANCELLED')
                ) AS closed
         FROM cupping_sessions
-        WHERE session_id = ? AND mode = 'INDIVIDUAL'
+        WHERE session_id = ? AND mode IN ('INDIVIDUAL', 'EVENT')
         """,
         (rs, row) -> new LockedSession(
             rs.getInt("session_id"),
             rs.getInt("created_by"),
             rs.getInt("evaluator_capacity"),
             rs.getBoolean("creator_participates"),
-            rs.getBoolean("closed")),
+            rs.getBoolean("closed"),
+            rs.getString("mode")),
         sessionId);
 
     if (sessions.isEmpty()) {
@@ -526,7 +540,7 @@ public class SessionParticipationService {
         search,
         sessionId,
         session.creatorId(),
-        session.creatorParticipates());
+        session.creatorCanEvaluate());
   }
 
   @Transactional(isolation = Isolation.READ_COMMITTED)

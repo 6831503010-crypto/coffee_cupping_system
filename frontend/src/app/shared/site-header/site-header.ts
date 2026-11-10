@@ -313,7 +313,7 @@ export class SiteHeader {
 
       if (target.sessionAccessible && target.sessionId !== null) {
         this.notificationsOpen.set(false);
-        await this.router.navigate(['/individual', target.sessionId]);
+        await this.router.navigate(['/sessions', target.sessionId]);
       } else {
         this.notificationsError.set(
           'Marked as read. This session is no longer available to your account.'

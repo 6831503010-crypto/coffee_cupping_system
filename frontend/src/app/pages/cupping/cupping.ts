@@ -23,9 +23,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom,forkJoin } from 'rxjs';
 import { EvaluationSubmissionService, EvaluationSamplePayload, SavedEvaluation,EvaluationTiming } from '../../services/evaluation-submission.service';
 import {
-  IndividualSessionService,
+  CuppingSessionService,
   SessionView
-} from '../../services/individual-session.service';
+} from '../../services/cupping-session.service';
 
 
 @Component({
@@ -43,7 +43,7 @@ export class Cupping implements OnInit {
   private readonly router = inject(Router);
 
   private readonly route = inject(ActivatedRoute);
-  private readonly individualSessions = inject(IndividualSessionService);
+  private readonly individualSessions = inject(CuppingSessionService);
   private readonly evaluations = inject(EvaluationSubmissionService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -289,7 +289,7 @@ private startTimingUpdates(): void {
     if (!this.isSavedSession) {
       // A cupping evaluation must belong to a saved database session.
       // Direct legacy /cupping links now open the normal session-creation flow.
-      void this.router.navigate(['/individual/new'], { replaceUrl: true });
+      void this.router.navigate(['/sessions/new'], { replaceUrl: true });
       return;
     }
 
@@ -1836,7 +1836,7 @@ goToReview() {
       }
       this.evaluationReadOnly.set(true);
       if (session.isCreator) {
-        await this.router.navigate(['/individual', session.sessionId]);
+        await this.router.navigate(['/sessions', session.sessionId]);
       } else {
         await this.router.navigate(['/history']);
       }
@@ -1929,7 +1929,7 @@ goToReview() {
         );
       }
 
-      await this.router.navigate(['/individual', session.sessionId]);
+      await this.router.navigate(['/sessions', session.sessionId]);
     } catch {
       this.returnToSessionError.set(
         'Could not save and return. Your form remains here. Retry, or refresh the session status before leaving.'

@@ -69,7 +69,7 @@
         @if (!loading()) {
         @if (preview(); as info) {
         @if (info.alreadyParticipating) {
-        <a class="btn primary btn-link" [routerLink]="['/individual', info.sessionId]">
+        <a class="btn primary btn-link" [routerLink]="['/sessions', info.sessionId]">
           Open session
         </a>
         } @else if (info.canJoin) {

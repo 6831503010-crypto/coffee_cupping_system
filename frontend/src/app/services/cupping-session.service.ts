@@ -49,14 +49,16 @@ export interface SessionView {
   sampleDetailsVisible: boolean;
   sessionEvaluatorId: number | null;
   closed: boolean;
+  mode: CuppingMode;
 }
 
-export interface CreateIndividualSessionRequest {
+export interface CreateCuppingSessionRequest {
   sessionName: string;
   description: string | null;
   evaluatorLimit: number;
   creatorParticipates: boolean;
   samples: SampleChoice[];
+  mode?: CuppingMode;
 }
 
 export interface ParticipationLink {
@@ -124,6 +126,8 @@ export interface SessionTimingView {
   evaluators: EvaluatorTimingView[];
 }
 
+export type CuppingMode = 'INDIVIDUAL' | 'EVENT';
+
 interface SessionUpdateSource {
   sessionName: string;
   mode: string;
@@ -131,7 +135,7 @@ interface SessionUpdateSource {
   cuppingDate: string | null;
 }
 @Injectable({ providedIn: 'root' })
-export class IndividualSessionService {
+export class CuppingSessionService {
 
   private http = inject(HttpClient);
 
@@ -140,14 +144,14 @@ export class IndividualSessionService {
 
   library() {
     return this.http.get<LibrarySample[]>(
-      `${this.baseUrl}/individual-sessions/library`,
+      `${this.baseUrl}/cupping-sessions/library`,
       { withCredentials: true }
     );
   }
 
   get(id: number) {
     return this.http.get<SessionView>(
-      `${this.baseUrl}/individual-sessions/${id}`,
+      `${this.baseUrl}/cupping-sessions/${id}`,
       { withCredentials: true }
     );
   }
@@ -203,14 +207,14 @@ export class IndividualSessionService {
     );
   }
 
-  create(request: CreateIndividualSessionRequest) {
+  create(request: CreateCuppingSessionRequest) {
     return this.http.get<CsrfResponse>(
       `${this.baseUrl}/csrf`,
       { withCredentials: true }
     ).pipe(
       switchMap(csrf =>
         this.http.post<SessionView>(
-          `${this.baseUrl}/individual-sessions`,
+          `${this.baseUrl}/cupping-sessions`,
           request,
           {
             withCredentials: true,
@@ -225,14 +229,14 @@ export class IndividualSessionService {
 
   listEvaluators(sessionId: number) {
     return this.http.get<EvaluatorView[]>(
-      `${this.baseUrl}/individual-sessions/${sessionId}/evaluators`,
+      `${this.baseUrl}/cupping-sessions/${sessionId}/evaluators`,
       { withCredentials: true }
     );
   }
 
   searchEvaluatorCandidates(sessionId: number, query: string) {
     return this.http.get<EvaluatorCandidate[]>(
-      `${this.baseUrl}/individual-sessions/${sessionId}/evaluator-candidates`,
+      `${this.baseUrl}/cupping-sessions/${sessionId}/evaluator-candidates`,
       {
         withCredentials: true,
         params: {
@@ -244,7 +248,7 @@ export class IndividualSessionService {
 
   assignEvaluator(sessionId: number, email: string) {
     return this.postWithCsrf<ParticipationResult>(
-      `/individual-sessions/${sessionId}/evaluators`,
+      `/cupping-sessions/${sessionId}/evaluators`,
       { email: email.trim() }
     );
   }
@@ -270,21 +274,21 @@ export class IndividualSessionService {
 
   getParticipationLink(sessionId: number) {
     return this.postWithCsrf<ParticipationLink>(
-      `/individual-sessions/${sessionId}/participation-link`,
+      `/cupping-sessions/${sessionId}/participation-link`,
       {}
     );
   }
 
   previewJoin(token: string) {
     return this.http.get<JoinPreview>(
-      `${this.baseUrl}/individual-sessions/join/${encodeURIComponent(token)}`,
+      `${this.baseUrl}/cupping-sessions/join/${encodeURIComponent(token)}`,
       { withCredentials: true }
     );
   }
 
   joinSession(token: string) {
     return this.postWithCsrf<ParticipationResult>(
-      `/individual-sessions/join/${encodeURIComponent(token)}`,
+      `/cupping-sessions/join/${encodeURIComponent(token)}`,
       {}
     );
   }

@@ -70,6 +70,7 @@ export interface EvaluationHistoryGroup {
   judges: EvaluationHistoryJudge[];
   evaluatorCount: number;
   verifiedAtFinalization: boolean;
+  mode: 'INDIVIDUAL' | 'EVENT';
 }
 
 export interface EvaluationTimer {
@@ -100,7 +101,7 @@ export interface EvaluationProgress {
 @Injectable({ providedIn: 'root' })
 export class EvaluationSubmissionService {
   private readonly http = inject(HttpClient);
-  private readonly base = 'http://localhost:8080/api/individual-sessions';
+  private readonly base = 'http://localhost:8080/api/cupping-sessions';
 
   load(sessionId: number) {
     return this.http.get<SavedEvaluation[]>(

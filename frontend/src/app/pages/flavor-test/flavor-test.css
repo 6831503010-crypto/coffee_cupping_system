@@ -78,6 +78,8 @@
   cursor: zoom-in;
 }
 
+
+
 @media (max-width: 768px) {
   .guide-row {
     flex-direction: column;
@@ -118,7 +120,7 @@
   text-decoration: none;
 }
 
-/* Ensure Return Home button matches Aroma Test size */
+/* Ensures Return Home button matches Aroma Test size */
 .button-container .click-button {
   font-size: 16px !important;
   padding: 12px 24px !important;

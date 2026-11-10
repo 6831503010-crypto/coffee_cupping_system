@@ -86,3 +86,42 @@
   flex-shrink: 0;
   color: var(--mocha, #795548);
 }
+
+.feed-session-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  line-height: 24px;
+}
+
+.feed-session-title>span {
+  min-width: 0;
+}
+
+.feed-mode-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: #8b5e3c;
+}
+
+/* Align the three primary values, with the date below the title. */
+@media (min-width: 751px) {
+  .feed-row {
+    align-items: start;
+  }
+
+  .feed-coffee {
+    line-height: 24px;
+  }
+
+  .feed-score {
+    min-height: 24px;
+    line-height: 24px;
+  }
+
+  .feed-session>small {
+    padding-left: 26px;
+  }
+}

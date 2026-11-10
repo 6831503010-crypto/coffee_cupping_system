@@ -2,10 +2,10 @@ import { Component, OnInit, computed, effect, inject, signal } from '@angular/co
 import { EvaluationSubmissionService, EvaluationHistoryGroup, SavedEvaluation } from '../../services/evaluation-submission.service';
 import { RouterLink } from '@angular/router';
 import { CuppingModeModal } from '../../shared/cupping-mode-modal/cupping-mode-modal';
-import { IndividualSessionService } from '../../services/individual-session.service';
+import { CuppingSessionService } from '../../services/cupping-session.service';
 import { ToastService } from '../../shared/toast-notification/toast.service';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { solarVerifiedCheckBold } from '@ng-icons/solar-icons/bold';
+import { solarVerifiedCheckBold, solarUserBold, solarUsersGroupRoundedBold } from '@ng-icons/solar-icons/bold';
 
 interface AromaEvaluation {
   qualityScore?: string | number;
@@ -64,12 +64,19 @@ interface HistoryRecord {
   judges: HistoryJudge[];
   evaluatorCount: number;
   verifiedAtFinalization: boolean;
+  mode: EvaluationHistoryGroup['mode'];
 }
 
 @Component({
   selector: 'app-history',
   imports: [RouterLink, CuppingModeModal, NgIcon],
-  providers: [provideIcons({ solarVerifiedCheckBold })],
+  providers: [
+    provideIcons({
+      solarVerifiedCheckBold,
+      solarUserBold,
+      solarUsersGroupRoundedBold
+    })
+  ],
   templateUrl: './history.html',
   styleUrls: [
     './history.css',
@@ -78,7 +85,7 @@ interface HistoryRecord {
 })
 export class History implements OnInit {
   private readonly submissions = inject(EvaluationSubmissionService);
-  private readonly sessions = inject(IndividualSessionService);
+  private readonly sessions = inject(CuppingSessionService);
   private readonly toast = inject(ToastService);
   readonly visibilityUpdating = signal<number | null>(null);
   private readonly loadingEvaluatorCounts = new Set<number>();
@@ -162,6 +169,7 @@ export class History implements OnInit {
     ).filter(sample => sample.id > 0).sort((a, b) => a.id - b.id);
     return {
       id: group.sessionId,
+      mode: group.mode,
       verifiedAtFinalization: group.verifiedAtFinalization === true,
       sessionName: group.sessionName,
       completedAt: group.completedAt,
