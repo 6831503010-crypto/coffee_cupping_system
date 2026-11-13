@@ -179,7 +179,7 @@
                 <span class="timing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10M7 21h10M8 3c0 4 4 4 4 9s-4 5-4 9m8-18c0 4-4 4-4 9s4 5 4 9"/></svg></span>
                 <div class="timing-copy"><span>Session elapsed time</span><strong>{{ sessionDurationLabel(record) }}</strong></div>
               </div>
-              @if (record.creator && !singleJudgeCreatorView()) {
+              @if (record.sessionClosed && record.creator && !singleJudgeCreatorView()) {
                 <div class="evaluator-picker" title="View judges' score sheets">
                   <button type="button" class="evaluator-picker-trigger"
                           [class.is-open]="evaluatorDropdownOpen()"
@@ -223,7 +223,13 @@
               }
             </div>
 
+
           <div class="sample-results-section">
+            @if (!record.sessionClosed) {
+            <div class="no-sample-results" role="status">
+              Results will be available after the session is finalized.
+            </div>
+            } @else {
             @if (record.creator) {
               <div class="results-view-heading">
                 <div>
@@ -315,7 +321,7 @@
                 }
               </div>
             }
-
+          }
           </div>
 
         } @else {

@@ -710,6 +710,9 @@ public class EvaluationSubmissionService {
           || "FINALIZED".equals(session.status())
           || "CANCELLED".equals(session.status());
 
+      boolean resultsAvailable = closed
+          && "FINALIZED".equals(session.status());
+
       List<Integer> sampleIds = jdbc.query("""
           SELECT session_sample_id FROM session_samples
           WHERE session_id = ? ORDER BY display_order, session_sample_id
@@ -787,15 +790,20 @@ public class EvaluationSubmissionService {
               member.name(),
               effectiveOutcome,
               memberTimer,
-              completed ? finalizedSamples : List.of(),
-              completed && member.verifiedAtFinalization()));
+              resultsAvailable && completed ? finalizedSamples : List.of(),
+              resultsAvailable && completed && member.verifiedAtFinalization()));
         }
 
         if (isOwn) {
           ownOutcome = effectiveOutcome;
           ownTimer = memberTimer;
-          ownSamples = completed ? finalizedSamples : List.of();
-          ownVerifiedAtFinalization = completed && member.verifiedAtFinalization();
+          ownSamples = resultsAvailable && completed
+              ? finalizedSamples
+              : List.of();
+
+          ownVerifiedAtFinalization = resultsAvailable
+              && completed
+              && member.verifiedAtFinalization();
         }
       }
 

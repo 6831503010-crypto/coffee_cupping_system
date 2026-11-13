@@ -77,12 +77,24 @@ public class CuppingSessionController {
 
     boolean individual = "INDIVIDUAL".equals(request.mode());
 
-    if (individual
-        && (request.evaluatorLimit() == null
-            || request.creatorParticipates() == null)) {
+    if (request.evaluatorLimit() == null
+        || request.creatorParticipates() == null) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST,
-          "Individual sessions require evaluatorLimit and creatorParticipates");
+          "Sessions require evaluatorLimit and creatorParticipates");
+    }
+
+    if (request.evaluatorLimit() < 1
+        || request.evaluatorLimit() > 10) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST,
+          "Evaluator capacity must be between 1 and 10");
+    }
+
+    if (!individual && Boolean.TRUE.equals(request.creatorParticipates())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST,
+          "Organizational session creators cannot participate as evaluators");
     }
 
     CuppingSession item = new CuppingSession();
@@ -94,10 +106,8 @@ public class CuppingSessionController {
     item.setStatus("DRAFT");
     item.setResultVisibility(request.resultVisibility() == null ? "PRIVATE" : request.resultVisibility());
 
-    if (individual) {
-      item.setEvaluatorCapacity(request.evaluatorLimit());
-      item.setCreatorParticipates(request.creatorParticipates());
-    }
+    item.setEvaluatorCapacity(request.evaluatorLimit());
+    item.setCreatorParticipates(request.creatorParticipates());
 
     item = repo.saveAndFlush(item);
     if (individual && Boolean.TRUE.equals(request.creatorParticipates())) {
@@ -167,8 +177,11 @@ public class CuppingSessionController {
     return repo.saveAndFlush(item);
   }
 
-  /** Publication can be changed after closure; only the session creator may do so. */
-  public record VisibilityUpdate(String resultVisibility) {}
+  /**
+   * Publication can be changed after closure; only the session creator may do so.
+   */
+  public record VisibilityUpdate(String resultVisibility) {
+  }
 
   @PatchMapping("/{id}/visibility")
   @Transactional

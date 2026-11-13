@@ -82,7 +82,7 @@ public class SessionSampleController {
   public ResponseEntity<SessionSample> create(@Valid @RequestBody SessionSampleRequest request, Authentication auth) {
     User user = access.current(auth);
     access.requireSessionOwner(request.sessionId(), user);
-    access.requireSessionOpen(request.sessionId());
+    access.requireSessionSamplesEditable(request.sessionId());
     access.requireSampleOwner(request.sampleId(), user);
 
     SessionSample item = new SessionSample();
@@ -103,7 +103,7 @@ public class SessionSampleController {
     User user = access.current(auth);
     SessionSample item = find(id);
     access.requireSessionOwner(item.getSessionId(), user);
-    access.requireSessionOpen(item.getSessionId());
+    access.requireSessionSamplesEditable(item.getSessionId());
     if (!item.getSessionId().equals(request.sessionId()))
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sessionId cannot be changed");
     access.requireSampleOwner(request.sampleId(), user);
@@ -122,7 +122,7 @@ public class SessionSampleController {
     User user = access.current(auth);
     SessionSample item = find(id);
     access.requireSessionOwner(item.getSessionId(), user);
-    access.requireSessionOpen(item.getSessionId());
+    access.requireSessionSamplesEditable(item.getSessionId());
     repo.delete(item);
     repo.flush();
   }

@@ -92,6 +92,46 @@ public class CuppingAccessService {
     }
   }
 
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void requireSessionSamplesEditable(Integer sessionId) {
+    var states = jdbc.query("""
+        SELECT status,
+               finalized_at,
+               session_started_at,
+               session_ended_at
+        FROM cupping_sessions
+        WHERE session_id = ?
+        FOR UPDATE
+        """,
+        (rs, row) -> {
+          boolean closed = rs.getTimestamp("finalized_at") != null
+              || rs.getTimestamp("session_ended_at") != null
+              || "FINALIZED".equals(rs.getString("status"))
+              || "CANCELLED".equals(rs.getString("status"));
+
+          boolean started = rs.getTimestamp("session_started_at") != null;
+
+          return new boolean[] { closed, started };
+        },
+        sessionId);
+
+    if (states.isEmpty()) {
+      throw new ResponseStatusException(
+          HttpStatus.NOT_FOUND, "Session not found");
+    }
+
+    if (states.get(0)[0]) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Session is closed");
+    }
+
+    if (states.get(0)[1]) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Session samples are locked because evaluation has started");
+    }
+  }
+
   public boolean canReadSample(CoffeeSample sample, User user) {
     // The sample owner already knows its details.
     if (sample.getCreatedBy().equals(user.getUserId())) {
@@ -126,13 +166,24 @@ public class CuppingAccessService {
   }
 
   public boolean canReadEvaluation(Evaluation evaluation, User user) {
-    SessionEvaluator evaluator = evaluator(evaluation.getSessionEvaluatorId());
-    CuppingSession session = session(evaluator.getSessionId());
-    return evaluator.getUserId().equals(user.getUserId())
-        || session.getCreatedBy().equals(user.getUserId())
-        || ("PUBLIC".equals(session.getResultVisibility())
-            && "FINALIZED".equals(session.getStatus())
-            && "FINALIZED".equals(evaluation.getStatus()));
+    SessionEvaluator member = evaluator(
+        evaluation.getSessionEvaluatorId());
+
+    CuppingSession session = session(member.getSessionId());
+
+    // Preserve the evaluator's access to their own evaluation,
+    // including drafts inside the evaluation workspace.
+    if (member.getUserId().equals(user.getUserId())) {
+      return true;
+    }
+
+    // The creator may read another evaluator's completed sheet
+    // only after the whole session has been finalized.
+    return session.getCreatedBy().equals(user.getUserId())
+        && "FINALIZED".equals(session.getStatus())
+        && session.getFinalizedAt() != null
+        && "FINALIZED".equals(evaluation.getStatus())
+        && evaluation.getTotalScore() != null;
   }
 
   public void requireEvaluationRead(Integer id, User user) {
