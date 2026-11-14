@@ -847,7 +847,25 @@ button.back-link.session-return-button:focus-visible {
 }
 
 @media (max-width: 680px) {
-  :host .aroma-quality-groups { grid-template-columns: 1fr; }
+  /* Two descriptor group cards per row on small screens, for both Aroma and Flavor. */
+  :host .aroma-quality-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  :host .aroma-quality-group {
+    min-width: 0;
+    padding: 8px;
+  }
+
+  :host .aroma-quality-group .aroma-quality-option {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  :host .aroma-quality-group .aroma-quality-children {
+    padding-left: 8px;
+  }
 }
 
 
@@ -880,6 +898,7 @@ button.back-link.session-return-button:focus-visible {
 @media (max-width: 600px) {
   :host .cupping-session-header { padding: 14px 13px 12px; margin-bottom: 13px; }
   :host .cupping-header-top { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+  :host .cupping-header-top h1 { flex: none; } /* Cancel the desktop 240px flex-basis on a vertical mobile layout. */
   :host .cupping-header-timer { justify-content: flex-start; flex-wrap: wrap; }
   :host .cupping-progress-inline .steps { gap: 6px; }
   :host .cupping-progress-inline .step { min-width: 0; padding: 7px 2px 9px; }
@@ -889,8 +908,172 @@ button.back-link.session-return-button:focus-visible {
   :host .grid, :host .score-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   :host .section { padding: 12px; }
   :host .score-grid .score-evaluation-card { padding: 12px; }
-  :host .aroma-quality-groups { grid-template-columns: minmax(0,1fr); }
+  :host .aroma-quality-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   :host .cup-section-actions { gap: 8px; }
   :host .cup-section-actions button { min-height: 40px; }
   :host .sample-title { flex-wrap: wrap; }
+}
+
+
+/* Compact cup-check cards on phones. Preserve desktop heading and controls. */
+:host .cup-score-range::before {
+  content: " — ";
+}
+
+@media (max-width: 600px) {
+  :host .section-score-header {
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  :host .section-score-header h4 {
+    min-width: 0;
+    flex: 1 1 auto;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  :host .cup-score-range {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--mocha);
+  }
+
+  :host .cup-score-range::before {
+    content: none;
+  }
+
+  :host .cup-section-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 4px;
+    text-align: right;
+  }
+
+  :host .cup-section-actions .check-all-btn {
+    min-height: 32px;
+    padding: 5px 9px;
+    font-size: 11px;
+  }
+
+  :host .cup-section-actions .section-score {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  :host .cupchecks {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  :host .cup {
+    min-width: 0;
+    padding: 7px 2px 6px;
+    border-radius: 10px;
+  }
+
+  :host .coffee-cup-control {
+    width: 32px;
+    height: 32px;
+    border-width: 1.5px;
+    border-radius: 10px 10px 12px 12px;
+  }
+
+  :host .coffee-cup-control svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  :host .cup-label {
+    margin-top: 5px;
+    font-size: 10px;
+  }
+}
+
+
+/* Review & Finalize: compact mobile controls and horizontal score rows. */
+@media (max-width: 600px) {
+  /* Keep Aroma locked and Edit Flavor side by side. */
+  :host .review-summary-heading {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  :host .review-summary-title {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  :host .review-lock-badge {
+    padding: 5px 9px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  :host .review-summary-heading > .btn {
+    width: auto;
+    min-width: 0;
+    min-height: 34px;
+    flex: 0 0 auto;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  /* Retain the 2-column score grid, but show each label beside its value. */
+  :host .review-score-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  :host .review-score-tile {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 3px 6px;
+    min-height: 43px;
+    padding: 8px;
+    text-align: left;
+  }
+
+  :host .review-score-tile > span {
+    min-width: 0;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  :host .review-score-value {
+    margin-top: 0;
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 2px;
+  }
+
+  :host .review-score-value strong {
+    font-size: 17px;
+    line-height: 1.1;
+  }
+
+  :host .review-score-value span {
+    margin-left: 0;
+    font-size: 10px;
+  }
+
+  /* Keep optional cup pass details without stretching every score tile. */
+  :host .review-score-tile small {
+    grid-column: 1 / -1;
+    margin-top: 0;
+    font-size: 10px;
+    line-height: 1.25;
+  }
 }

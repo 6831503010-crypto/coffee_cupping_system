@@ -499,3 +499,250 @@
   .creation-sample-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; }
   .creation-page input:not([type='checkbox']), .creation-page textarea, .creation-page select { max-width: 100%; }
 }
+
+/* Individual Session creation: phone-first form, 390px design target.
+   These rules are intentionally scoped to the creation screen and have no effect
+   on tablet/desktop, the session management view, or evaluation behavior. */
+@media (max-width: 600px) {
+  .individual-container:has(.creation-page) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0 auto;
+    padding: 18px var(--page-gutter, 16px) 38px;
+    overflow-x: clip;
+  }
+
+  .creation-page,
+  .creation-grid,
+  .creation-main,
+  .creation-aside,
+  .creation-page .creation-step-card,
+  .creation-page .creation-summary-card,
+  .creation-field,
+  .creation-sample-search,
+  .creation-sample-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .individual-container:has(.creation-page) > .back-link {
+    margin: 0 0 16px;
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 700;
+  }
+
+  .creation-page-heading { margin: 0 0 14px; }
+  .creation-page-heading h1 {
+    margin: 0;
+    font-size: clamp(20px, 5.7vw, 23px);
+    line-height: 1.2;
+    letter-spacing: -.025em;
+  }
+
+  .creation-grid,
+  .creation-main { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+
+  .creation-page .creation-step-card { padding: 16px 14px; gap: 14px; }
+  .creation-step-heading { min-width: 0; align-items: flex-start; gap: 9px; }
+  .creation-step-heading > div { min-width: 0; }
+  .creation-step-number { width: 26px; height: 26px; flex-basis: 26px; font-size: 12px; }
+  .creation-step-heading h2,
+  .creation-summary-heading h2 { font-size: 16px; margin: 2px 0 2px; }
+  .creation-section-note { font-size: 12px; line-height: 1.45; }
+
+  .creation-page .creation-field input:not([type='checkbox']),
+  .creation-page .creation-field textarea,
+  .creation-page .creation-sample-search input {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  /* Paired compact steppers: no clipping and sufficiently large touch targets. */
+  .creation-settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .creation-settings-grid .creation-field { gap: 7px; }
+  .creation-settings-grid .creation-field > label {
+    min-height: 34px;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .creation-page .number-stepper {
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    width: 100%;
+    max-width: 100%;
+    height: 44px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .creation-page .number-stepper > button {
+    width: 36px;
+    min-width: 0;
+    min-height: 42px;
+    padding: 0;
+    font-size: 20px;
+  }
+  .creation-page .creation-field .number-stepper > input {
+    width: 100%;
+    min-width: 0;
+    padding: 0 2px;
+    font-size: 16px;
+  }
+
+  .creation-page .creation-participation {
+    margin-top: 2px;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .creation-page .creation-participation input { flex: 0 0 18px; width: 18px; height: 18px; margin: 1px 0 0; }
+  .creation-page .creation-participation-note {
+    margin: -6px 0 0 28px;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .creation-samples-heading { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 9px; }
+  .creation-samples-heading .creation-heading-grow { min-width: 0; }
+  .creation-page .creation-secondary-action {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin: 2px 0 0;
+    padding: 10px 12px;
+    min-height: 42px;
+  }
+
+  /* Convert the wide desktop selection table into readable sample cards on phones. */
+  .creation-sample-table-wrap { max-height: none; overflow: visible; border: 0; border-radius: 0; }
+  .creation-sample-table { display: block; width: 100%; min-width: 0; border-collapse: separate; }
+  .creation-sample-table thead {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .creation-sample-table thead tr {
+    display: block;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .creation-sample-table tbody { display: grid; gap: 9px; }
+  .creation-sample-table tbody tr {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    column-gap: 8px;
+    row-gap: 5px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--ui-control-radius, 10px);
+    background: #fff;
+  }
+  .creation-sample-table tbody tr.creation-sample-selected {
+    border-color: var(--mocha);
+    background: var(--ui-surface-muted);
+  }
+  .creation-sample-table td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    overflow-wrap: anywhere;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .creation-sample-table td:first-child { grid-column: 1; grid-row: 1; align-self: start; padding-top: 2px; }
+  .creation-sample-table td:nth-child(2) { grid-column: 2; grid-row: 1; font-size: 14px; }
+  .creation-sample-table td:nth-child(n + 3) { grid-column: 2; color: var(--mocha); }
+  .creation-sample-table td:nth-child(3)::before { content: 'Origin: '; font-weight: 700; }
+  .creation-sample-table td:nth-child(4)::before { content: 'Process: '; font-weight: 700; }
+  .creation-sample-table td:nth-child(5)::before { content: 'Harvest: '; font-weight: 700; }
+  .creation-sample-table td:nth-child(6)::before { content: 'Sample code: '; display: block; margin-bottom: 4px; font-weight: 700; }
+  .creation-sample-table td.creation-no-samples { grid-column: 1 / -1; text-align: center; }
+  .creation-page .creation-sample-table input[type='checkbox'] { width: 19px; height: 19px; }
+  .creation-page .session-sample-code-input { width: 100%; max-width: 100%; min-width: 0; height: 40px; }
+
+  .creation-page .creation-summary-card { padding: 0; overflow: hidden; }
+  .creation-summary-heading { padding: 14px; }
+  .creation-summary-list { padding: 5px 14px; }
+  .creation-summary-list > div { padding: 11px 0; }
+  .creation-summary-actions { padding: 12px 14px 14px; }
+  .creation-page .creation-submit,
+  .creation-page .creation-cancel { min-height: 44px; }
+}
+
+@media (max-width: 350px) {
+  .creation-settings-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .creation-settings-grid .creation-field > label { min-height: 0; font-size: 13px; }
+  .creation-page .number-stepper { grid-template-columns: 44px minmax(0, 1fr) 44px; }
+  .creation-page .number-stepper > button { width: 44px; }
+}
+
+/* Compact phone-only form and sample choices. Desktop/tablet unchanged. */
+@media (max-width: 600px) {
+  /* Keep the counter labels close to the stepper controls. */
+  .creation-settings-grid .creation-field {
+    gap: 4px;
+  }
+  .creation-settings-grid .creation-field > label {
+    min-height: 0;
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  /* Two-line description instead of the large desktop text area. */
+  .creation-page .creation-field #sessionDescription {
+    min-height: 68px;
+    height: 68px;
+    resize: vertical;
+  }
+
+  /* Only the checkbox and coffee name are shown until selected. */
+  .creation-sample-table tbody tr {
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: center;
+    gap: 7px 10px;
+    padding: 11px 12px;
+  }
+  .creation-sample-table tbody tr td:nth-child(3),
+  .creation-sample-table tbody tr td:nth-child(4),
+  .creation-sample-table tbody tr td:nth-child(5),
+  .creation-sample-table tbody tr td:nth-child(6) {
+    display: none;
+  }
+  .creation-sample-table tbody tr td:nth-child(2) {
+    align-self: center;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .creation-sample-table tbody tr.creation-sample-selected td:nth-child(6) {
+    display: block;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding-top: 9px;
+    border-top: 1px solid var(--line);
+    color: var(--espresso);
+  }
+  .creation-sample-table tbody tr.creation-sample-selected td:nth-child(6)::before {
+    content: 'Enter sample code';
+    display: block;
+    margin-bottom: 6px;
+    color: var(--espresso);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .creation-page .session-sample-code-input {
+    display: block;
+    width: 100%;
+    height: 42px;
+  }
+}

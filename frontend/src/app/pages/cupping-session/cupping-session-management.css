@@ -579,3 +579,119 @@
   .session-details-view .session-actions-card .finalize-session-button,
   .session-details-view .session-actions-card .history-session-button { min-height: 46px; }
 }
+
+/* Mobile session header: title over type, with Evaluation and timer side by side. */
+@media (max-width: 600px) {
+  .session-details-view .session-dashboard-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 10px;
+  }
+
+  /* Expose the header's existing children to the mobile grid without changing DOM logic. */
+  .session-details-view .session-header-details {
+    display: contents;
+  }
+
+  .session-details-view .session-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 8px;
+    row-gap: 2px;
+    grid-column: 1 / -1;
+    order: 0;
+  }
+
+  .session-details-view .session-heading h1 {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .session-details-view .session-heading .session-mode {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .session-details-view .session-heading .session-status {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .session-details-view .session-description {
+    grid-column: 1 / -1;
+    order: 1;
+    margin: 0;
+  }
+
+  .session-details-view .session-header-meta {
+    grid-column: 1 / -1;
+    order: 2;
+    margin-top: 0;
+  }
+
+  .session-details-view .session-evaluation-action {
+    grid-column: 1;
+    order: 3;
+    display: flex;
+    align-self: stretch;
+    align-items: stretch;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .session-details-view .session-evaluation-action .action-link {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 6px;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .session-details-view .session-timing {
+    grid-column: 2;
+    order: 4;
+    min-width: 0;
+    align-self: center;
+    align-items: flex-end;
+    justify-self: stretch;
+    gap: 2px;
+    text-align: right;
+  }
+
+  .session-details-view .session-timing-label {
+    gap: 3px;
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .session-details-view .session-timing-label svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .session-details-view .session-timing-value {
+    font-size: clamp(16px, 4.5vw, 20px);
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  /* Single-action / creator-only sessions continue to use the full header width. */
+  .session-details-view .session-dashboard-header:not(:has(.session-timing)) .session-evaluation-action,
+  .session-details-view .session-dashboard-header:not(:has(.session-evaluation-action)) .session-timing {
+    grid-column: 1 / -1;
+  }
+}
