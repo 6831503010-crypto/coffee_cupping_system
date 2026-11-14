@@ -81,6 +81,10 @@ export class SiteHeader {
     !this.isAuthPage() && !!this.currentUser()
   );
 
+  readonly showGuestNavigation = computed(() =>
+    !this.isAuthPage() && !this.currentUser()
+  );
+
   readonly userInitial = computed(() => {
     const name = this.currentUser()?.name?.trim() || '';
     return Array.from(name)[0]?.toLocaleUpperCase() || '?';
@@ -269,12 +273,12 @@ export class SiteHeader {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: () => {
-        this.router.navigateByUrl('/login');
+        this.router.navigateByUrl('/feed');
       },
       error: () => {
         // Preserve the existing logout behavior.
         this.authService.clearUser();
-        this.router.navigateByUrl('/login');
+        this.router.navigateByUrl('/feed');
       }
     });
   }

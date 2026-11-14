@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { FeedJudgeNote, PublicFeedResult, PublicFeedService } from '../../services/public-feed.service';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { solarVerifiedCheckBold, solarUserBold, solarUsersGroupRoundedBold } from '@ng-icons/solar-icons/bold';
@@ -28,6 +29,7 @@ interface CombinedFeedNotes {
 })
 export class Feed implements OnInit {
   private readonly api = inject(PublicFeedService);
+  readonly currentUser = inject(AuthService).currentUser;
   readonly results = signal<PublicFeedResult[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');

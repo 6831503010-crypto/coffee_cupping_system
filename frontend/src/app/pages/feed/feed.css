@@ -289,3 +289,17 @@
   .feed-sort-label { flex-basis: 94px; width: 94px; }
   .feed-score-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* Mobile sort uses the same compact typography as the Feed controls. */
+@media (max-width: 600px) {
+  .feed-sort-label select {
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+  .feed-sort-label select option {
+    font-size: 13px;
+    font-weight: 500;
+  }
+}

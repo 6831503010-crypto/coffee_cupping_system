@@ -7,7 +7,7 @@ import { Feed } from './pages/feed/feed';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 
-import { authGuard } from './guards/auth.guard';
+import { authGuard, landingGuard, publicFeedGuard } from './guards/auth.guard';
 
 import { Guide } from './pages/guide/guide';
 import { Form1 } from './pages/creating-sessions/form-1';
@@ -34,8 +34,9 @@ export const routes: Routes = [
   // Main pages
   {
     path: '',
+    pathMatch: 'full',
     component: Home,
-    canActivate: [authGuard]
+    canActivate: [landingGuard]
   },
   {
     path: 'inventory',
@@ -50,7 +51,7 @@ export const routes: Routes = [
   {
     path: 'feed',
     component: Feed,
-    canActivate: [authGuard]
+    canActivate: [publicFeedGuard]
   },
   {
     path: 'history',

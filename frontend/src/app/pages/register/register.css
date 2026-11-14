@@ -99,3 +99,20 @@
   color: var(--espresso);
   font-weight: 800;
 }
+
+/* Mobile-only authentication copy and link layout */
+@media (max-width: 600px) {
+  .auth-subtitle {
+    display: none;
+  }
+
+  .auth-card h1 {
+    margin-bottom: 22px;
+  }
+
+  .auth-switch a {
+    display: block;
+    width: fit-content;
+    margin: 6px auto 0;
+  }
+}

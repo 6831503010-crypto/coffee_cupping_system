@@ -1,14 +1,15 @@
-@if (currentPath() !== '/login' && currentPath() !== '/register') {
+@if (!isAuthPage()) {
 <header
   #headerArea
   class="site-header"
   [class.compact]="!showFullNavigation()"
+  [class.guest]="showGuestNavigation()"
 >
   <!-- Brand -->
   <a
     class="brand"
-    routerLink="/"
-    aria-label="Coffee Cupping System home"
+    [routerLink]="showGuestNavigation() ? '/feed' : '/'"
+    aria-label="Coffee Cupping System"
     (click)="closeMenu()"
   >
     <span class="bean" aria-hidden="true"></span>
@@ -27,6 +28,14 @@
         <a routerLink="/" (click)="closeMenu()">HOME</a>
         <a routerLink="/about" (click)="closeMenu()">ABOUT</a>
         <a routerLink="/guide/creating-sessions" (click)="closeMenu()">GUIDE</a>
+      </nav>
+    }
+
+    @if (showGuestNavigation()) {
+      <nav class="guest-nav" aria-label="Guest navigation">
+        <a routerLink="/feed" class="guest-feed-link">Feed</a>
+        <a routerLink="/login">Log in</a>
+        <a routerLink="/register" class="guest-register-link">Register</a>
       </nav>
     }
 

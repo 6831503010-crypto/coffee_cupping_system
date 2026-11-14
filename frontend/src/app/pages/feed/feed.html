@@ -1,5 +1,7 @@
 <main class="feed-shell">
-  <a class="back-link" routerLink="/">← Back to Home</a>
+  @if (currentUser()) {
+    <a class="back-link" routerLink="/">← Back to Home</a>
+  }
   <header class="feed-hero">
     <div>
       <h1>Public Cupping Feed</h1>
