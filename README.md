@@ -1,366 +1,145 @@
 # Coffee Cupping System
 
-A full-stack coffee cupping application developed using Angular, Spring Boot, MySQL, and Flyway.
+Coffee Cupping System is a web application for recording and managing coffee cupping evaluations. It supports Individual and Organizational sessions, coffee sample management, evaluator invitations and assignments, aroma and flavor scoring, evaluation timers, session history, and published results. Evaluators finalize their own evaluations, while the session creator separately finalizes the session. The application uses Angular, Spring Boot, MySQL, and Flyway to store and manage session and evaluation data.
 
-## 1. Technology Stack
+## GROUP MEMBERS
 
-| Technology  | Version          | Purpose                      |
-| ----------- | ---------------- | ---------------------------- |
-| Node.js     | 24.18.1          | Frontend runtime             |
-| npm         | 11.16.0          | Package manager              |
-| Angular     | 22.x             | Frontend                     |
-| Java        | 21               | Backend development standard |
-| Spring Boot | 4.1.1            | REST API                     |
-| MySQL       | 8.4.x            | Database                     |
-| Flyway      | Managed by Maven | Database migrations          |
+6831503004 Bhone Myat Paing  
+6831503010 Kyaw Min Khant  
+6831503013 Myo Satt Kyaw  
+6831503121 Shwe Yee Thein
 
-**Important:** Use the specified Node.js and npm versions to avoid dependency issues. The backend targets Java 21, even if a newer JDK works locally.
+## How to Run the Project
 
-## 2. Project Structure
+### 1. Install the prerequisites
 
-```text
-coffee_cupping_system/
-├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── guards/       # Authentication and route guards
-│   │   │   ├── models/       # TypeScript interfaces
-│   │   │   ├── pages/        # Home, Login, Register, Cupping, History
-│   │   │   ├── services/     # API communication
-│   │   │   └── app.routes.ts # Angular routes
-│   │   └── styles.css        # Shared UI theme
-│   ├── public/               # Images and static assets
-│   ├── package.json
-│   └── package-lock.json
-│
-├── backend/
-│   ├── src/main/
-│   │   ├── java/th/mfu/cupping/
-│   │   │   ├── config/       # Security and application configuration
-│   │   │   ├── controller/   # REST endpoints
-│   │   │   ├── dto/          # Request/response objects
-│   │   │   ├── model/        # JPA entities
-│   │   │   ├── repository/   # Database queries
-│   │   │   └── service/      # Business logic
-│   │   └── resources/
-│   │       ├── db/migration/ # Flyway SQL migrations
-│   │       └── application.properties
-│   ├── pom.xml
-│   └── mvnw.cmd
-│
-├── index.html                # Legacy prototype landing page
-├── cupping-form.html         # Legacy prototype cupping form
-├── history.html              # Legacy prototype history page
-├── css/                      # Legacy prototype styles
-├── js/                       # Legacy prototype scripts
-├── templates/                # Legacy prototype templates
-├── assets/
-├── images/
-├── docs/
-├── README.md
-├── CONTRIBUTING.md
-└── .gitignore
+- Git
+- Node.js 24.18.1
+- npm 11.16.0
+- Java Development Kit (JDK) 21
+- MySQL Server 8.4.x
+
+Verify your installed versions:
+
+```bash
+git --version
+node -v
+npm -v
+java --version
 ```
 
-The original HTML/CSS/JavaScript prototype remains the visual and behavioral reference. New development should take place in `frontend/` and `backend/`.
-
-## 3. First-Time Setup
-
-### Step 1 — Clone the repository
+### 2. Clone the repository
 
 ```bash
 git clone https://github.com/6831503010-crypto/coffee_cupping_system.git
 cd coffee_cupping_system
 ```
 
-### Step 2 — Verify required versions
+### 3. Create the database
 
-Open a terminal and run:
-
-```powershell
-node -v
-npm -v
-java --version
-```
-
-Expected versions:
-
-```text
-Node.js: v24.18.1
-npm:     11.16.0
-Java:    21
-```
-
-If using NVM on Windows:
-
-```powershell
-nvm install 24.18.1
-nvm use 24.18.1
-```
-
-Check `npm -v` afterward. If npm is not `11.16.0`, install the required version:
-
-```powershell
-npm install -g npm@11.16.0
-```
-
-Use Java 21 for backend development.
-
-### Step 3 — Configure MySQL
-
-Start MySQL Server and create the database:
+Start MySQL Server and execute:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS coffee_cupping_db;
 ```
 
-Then create this local configuration file:
+Flyway creates and updates the application tables when the backend starts. Do not create the application tables manually.
+
+### 4. Configure your local database connection
+
+Create this file:
 
 ```text
 backend/src/main/resources/application-local.properties
 ```
 
-Add your own local MySQL credentials:
+Add your own database connection settings:
 
 ```properties
-spring.datasource.username=root
+spring.datasource.url=jdbc:mysql://localhost:3306/coffee_cupping_db
+spring.datasource.username=YOUR_MYSQL_USERNAME
 spring.datasource.password=YOUR_MYSQL_PASSWORD
 ```
 
-The main `application.properties` already contains the database URL, Hibernate validation, Flyway configuration, and server port.
+Replace the placeholders with your local MySQL credentials.
 
-`application-local.properties` is ignored by Git, so each teammate can use their own local MySQL username and password without committing secrets.
+Keep this configuration file local and excluded from Git. Do not commit passwords, API keys, or tokens.
 
-**Do not commit `application-local.properties`.**
+### 5. Start the backend
 
-**Do not manually create application tables. Flyway handles that automatically.**
+Open a terminal in the project root.
 
-## 4. Running the Application
-
-Start services in this order:
-
-1. MySQL
-2. Spring Boot backend
-3. Angular frontend
-
-### Backend
-
-Open a terminal from the project root:
+**Windows PowerShell:**
 
 ```powershell
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-For macOS/Linux:
+**macOS/Linux:**
 
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
 
-Backend URL:
+The backend runs at:
 
-`http://localhost:8080`
-
-Health check:
-
-`http://localhost:8080/api/health`
-
-Expected response:
-
-```json
-{
-  "status": "OK",
-  "message": "Coffee Cupping API is running"
-}
+```text
+http://localhost:8080
 ```
 
-### Frontend
+Keep the terminal running. Check that startup and Flyway migrations complete successfully.
 
-Open a **second terminal** from the project root:
+### 6. Start the frontend
 
-```powershell
+Open a second terminal in the project root:
+
+```bash
 cd frontend
 npm ci
 npm start
 ```
 
-Frontend URL:
-
-`http://localhost:4200`
-
-Use `npm ci` for the initial installation and after pulling dependency changes. It installs dependencies according to the committed `package-lock.json`.
-
-Keep both terminals running during development.
-
-## 5. Database Migrations — Flyway
-
-Flyway manages the database schema automatically when Spring Boot starts.
-
-Migration files are stored in:
+Open the application at:
 
 ```text
-backend/src/main/resources/db/migration/
+http://localhost:4200
 ```
 
-Current migration:
+Keep both terminals and MySQL running while using the application.
 
-```text
-V1__create_users_table.sql
-```
+### 7. Register and use the application
 
-### How it works
+No shared test login is required. Register a new account through the application's registration page, then log in with that account.
 
-```text
-Start Spring Boot
-      ↓
-Flyway connects to MySQL
-      ↓
-Checks flyway_schema_history
-      ↓
-Executes pending SQL migrations
-      ↓
-Hibernate validates the schema
-      ↓
-Backend starts
-```
+To try the main workflow:
 
-Flyway tracks completed migrations in the `flyway_schema_history` table. A successfully applied migration is not executed again on subsequent startups.
+1. Select **Start Cupping** and choose a session mode.
+2. Enter session details, configure coffee samples, and set evaluator capacity.
+3. In Individual Mode, choose whether the creator will also evaluate. In Organizational Mode, the creator acts only as organizer.
+4. Invite or assign evaluators as needed.
+5. As an evaluator, select **Begin Evaluation**.
+6. Complete the aroma stage, confirm the aroma lock, and complete the flavor stage.
+7. Review and finalize the evaluation.
+8. As the creator, finalize the whole session.
+9. Open **Session History** to review the available results.
 
-### Adding a new migration
+To test multiple users, register separate accounts and use separate browser profiles or an incognito window.
 
-Use the format:
+### Application Ports
 
-```text
-V<version>__<description>.sql
-```
+| Component           | Default Port | Address               |
+| ------------------- | ------------ | --------------------- |
+| Angular frontend    | 4200         | http://localhost:4200 |
+| Spring Boot backend | 8080         | http://localhost:8080 |
+| MySQL               | 3306         | localhost:3306        |
 
-Example:
+## Member Responsibilities
 
-```text
-V1__create_users_table.sql
-V2__create_coffee_samples_table.sql
-V3__create_cupping_sessions_table.sql
-```
-
-**Team rules:**
-
-- Never modify a migration that has already been applied and shared.
-- Create a new migration for every database schema change.
-- Keep migration version numbers unique across branches.
-- Coordinate migration numbering before merging pull requests.
-- Do not manually modify application tables or use Hibernate `ddl-auto=update`.
-- Never delete existing database tables just to rerun migrations.
-
-For example, adding a column requires a new migration:
-
-```sql
-ALTER TABLE users
-ADD COLUMN role VARCHAR(30) NOT NULL DEFAULT 'USER';
-```
-
-The filename should use the next available migration version.
-
-## 6. Authentication
-
-The application supports user registration, login, logout, and authenticated sessions.
-
-Passwords are securely hashed using BCrypt.
-
-Spring Security manages sessions using the `JSESSIONID` cookie.
-
-| Route       | Access         |
-| ----------- | -------------- |
-| `/login`    | Public         |
-| `/register` | Public         |
-| `/`         | Login required |
-| `/cupping`  | Login required |
-| `/history`  | Login required |
-
-The Angular auth guard checks the current session through the Spring Boot API.
-
-**Current development status:** Authentication is connected to MySQL. The cupping evaluation and history workflow still uses browser localStorage until the corresponding REST APIs and database persistence are implemented.
-
-## 7. UI Development Rules
-
-Maintain the visual design established by the original prototype.
-
-Global styles:
-
-```text
-frontend/src/styles.css
-```
-
-Page-specific styles:
-
-```text
-frontend/src/app/pages/<page-name>/
-```
-
-Use shared CSS variables for colors, typography, buttons, cards, and form controls.
-
-Avoid duplicating global styles in individual components.
-
-## 8. Git Workflow
-
-1. Pull the latest `main` before starting.
-2. Create a separate branch for your task.
-3. Make and test your changes.
-4. Commit with a meaningful message.
-5. Push your branch.
-6. Open a pull request.
-7. Request review before merging into `main`.
-
-Example:
-
-```bash
-git checkout main
-git pull origin main
-git checkout -b feature/session-api
-```
-
-After development:
-
-```bash
-git add .
-git commit -m "Add session API"
-git push -u origin feature/session-api
-```
-
-See `CONTRIBUTING.md` for additional collaboration guidelines.
-
-## 9. Troubleshooting
-
-| Problem                          | What to check                                            |
-| -------------------------------- | -------------------------------------------------------- |
-| `npm ci` fails                   | Node/npm versions and `package-lock.json`                |
-| Angular command not found        | Run `npm ci` inside `frontend/`, then `npm start`        |
-| Backend fails to start           | Java version, MySQL service, datasource configuration    |
-| MySQL connection refused         | MySQL is running on port 3306                            |
-| Flyway migration fails           | Migration filename, SQL syntax, migration history        |
-| Hibernate reports missing tables | Check whether Flyway successfully ran                    |
-| Login fails                      | Backend running, account registered, correct credentials |
-| Frontend cannot reach backend    | Both servers running on ports 4200 and 8080              |
-
-## 10. Before Pushing
-
-Make sure:
-
-- The frontend starts successfully.
-- The backend starts successfully.
-- Database migrations complete without errors.
-- Existing authentication and cupping features still work.
-- No passwords or other secrets are committed.
-
-Check files before pushing:
-
-```bash
-git status
-```
-
-Do not commit `node_modules/`, build output, or local credentials.
-
----
-
-**Team reminder:** Follow this README for environment setup. Keep database changes in Flyway migrations and application development inside `frontend/` and `backend/`.
+| Student ID | Full Name        | Feature Responsibilities                                                                                                                                                                                                                                                           |
+| ---------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 6831503004 | Bhone Myat Paing | [To be completed]                                                                                                                                                                                                                                                                  |
+| 6831503010 | Kyaw Min Khant   | Individual and Organizational session setup and management; evaluator capacity, invitations, assignments, and participation rules; evaluation and session timers; Q Grader credential verification and badges; session history and result-access controls; session sample locking. |
+| 6831503013 | Myo Satt Kyaw    | [To be completed]                                                                                                                                                                                                                                                                  |
+| 6831503121 | Shwe Yee Thein   | [To be completed]                                                                                                                                                                                                                                                                  |
