@@ -3,7 +3,7 @@
 .history-shell {
   width: 100%;
   margin-inline: auto;
-  padding: 26px var(--page-gutter) 64px;
+  padding: var(--ui-page-top) var(--page-gutter) var(--ui-page-bottom);
 }
 .back-link {
   display: inline-flex;
@@ -11,8 +11,8 @@
   color: var(--mocha);
   text-decoration: none;
   font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 20px;
+  font-weight: 750;
+  margin-bottom: 22px;
 }
 .back-link:hover { color: var(--espresso); }
 .history-header {
@@ -25,7 +25,7 @@
 .history-header h1 {
   margin: 0;
   color: var(--espresso);
-  font-size: clamp(28px, 3vw, 38px);
+  font-size: var(--ui-page-heading);
   line-height: 1.15;
   letter-spacing: -0.035em;
 }
@@ -40,12 +40,12 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 .summary-card {
   background: #fff;
-  border: 1px solid #e4dbd2;
-  border-radius: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--ui-card-radius);
   padding: 15px 18px;
   display: flex;
   align-items: center;
@@ -86,15 +86,15 @@
 .history-panel {
   min-width: 0;
   background: #fff;
-  border: 1px solid #e4dbd2;
-  border-radius: 17px;
+  border: 1px solid var(--line);
+  border-radius: var(--ui-card-radius);
   overflow: hidden;
 }
 .list-panel-top { padding: 20px 20px 12px; }
 .list-panel-top h2, .session-detail-head h2 {
   color: var(--espresso);
   margin: 0;
-  font-size: 20px;
+  font-size: var(--ui-section-heading);
   line-height: 1.35;
   letter-spacing: -.02em;
 }
@@ -110,16 +110,16 @@
   padding: 0 12px;
   color: var(--mocha);
 }
-.history-search:focus-within { border-color: var(--mocha); box-shadow: 0 0 0 3px rgba(122,81,56,.1); }
+.history-search:focus-within { border-color: var(--ui-focus-border); box-shadow: var(--ui-focus-ring); }
 .history-search input[type="search"] {
-  padding: 11px 0;
+  padding: 12px 0;
   margin: 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--espresso);
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   flex: 1;
   min-width: 0;
   width: 100%;
@@ -127,14 +127,14 @@
 }
 .status-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
 .status-tabs button {
-  border: 1px solid transparent;
-  border-radius: 9px;
-  padding: 8px 12px;
-  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--ui-control-radius);
+  padding: 9px 14px;
+  background: #fff;
   color: var(--roast);
   font: inherit;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
 }
 .status-tabs button span { opacity: .8; }
@@ -252,8 +252,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid #e4dbd2;
-  border-radius: 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--ui-card-radius);
   background: #fff;
   min-width: 0;
   padding: 11px 12px;
@@ -274,11 +274,11 @@
 .timing-copy strong { display: block; color: var(--espresso); font-size: 14px; overflow-wrap: anywhere; }
 .sample-results-section { padding: 18px 20px 22px; }
 .section-heading { display: flex; justify-content: space-between; gap: 14px; align-items: center; margin-bottom: 12px; }
-.section-heading h3 { margin: 0; font-size: 16px; color: var(--espresso); }
+.section-heading h3 { margin: 0; font-size: var(--ui-card-heading); color: var(--espresso); }
 .sample-count { color: var(--mocha); font-size: 12px; white-space: nowrap; }
-.sample-result-card { background: white; border: 1px solid var(--line); border-radius: 13px; padding: 16px; }
+.sample-result-card { background: white; border: 1px solid var(--line); border-radius: var(--ui-card-radius); padding: 20px; }
 .sample-result-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
-.sample-result-head h4 { margin: 0 0 4px; color: var(--espresso); font-size: 15px; }
+.sample-result-head h4 { margin: 0 0 4px; color: var(--espresso); font-size: var(--ui-card-heading); }
 .sample-result-head span { color: var(--mocha); font-size: 11px; }
 .sample-score { text-align: right; white-space: nowrap; }
 .sample-score strong { display: block; color: var(--espresso); font-size: clamp(17px, 1.5vw, 22px); }
@@ -332,7 +332,7 @@
 .history-incomplete-note, .no-sample-results, .select-session-empty {
   background: #faf2e9;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--ui-card-radius);
   padding: 24px;
   color: var(--mocha);
   font-size: 13px;

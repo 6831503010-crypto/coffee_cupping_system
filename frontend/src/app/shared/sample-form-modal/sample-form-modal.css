@@ -7,7 +7,7 @@ dialog {
   overflow-y: auto;
   /* Fallback for very short viewports or validation messages. */
   border: 1px solid var(--line, #e7ddd5);
-  border-radius: 16px;
+  border-radius: var(--ui-dialog-radius);
   background: #fff;
   color: var(--espresso, #3e2723);
   box-shadow: 0 20px 60px rgb(35 20 12 / 25%);
@@ -29,7 +29,7 @@ dialog::backdrop {
 
 h2 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: var(--ui-section-heading);
 }
 
 button,
@@ -47,8 +47,8 @@ button {
   width: 38px;
   height: 38px;
   border: 0;
-  border-radius: 8px;
-  background: var(--foam, #f7f2ed);
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-surface-muted);
   color: inherit;
   font-size: 26px;
 }
@@ -85,9 +85,9 @@ fieldset {
 .field-label {
   display: block;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--ui-label-size);
   line-height: 1.35;
-  font-weight: 750;
+  font-weight: var(--ui-label-weight);
 }
 
 input,
@@ -95,17 +95,17 @@ select {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: 42px;
+  height: var(--ui-control-height);
   padding: 9px 12px;
-  border: 1px solid #d6c9c0;
-  border-radius: 8px;
+  border: 1px solid var(--ui-input-border);
+  border-radius: var(--ui-control-radius);
   background: #fff;
   color: inherit;
 }
 
 input.input-error,
 select.input-error {
-  border-color: #b42318;
+  border-color: var(--danger);
 }
 
 p {
@@ -113,13 +113,13 @@ p {
 }
 
 .help {
-  color: #795548;
+  color: var(--mocha);
   font-size: 0.9rem;
   line-height: 1.45;
 }
 
 .field-error {
-  color: #b42318;
+  color: var(--danger);
   font-size: 0.875rem;
 }
 
@@ -133,23 +133,23 @@ p {
   min-width: 0;
   min-height: 42px;
   padding: 8px;
-  border: 1px solid #d6c9c0;
-  border-radius: 8px;
+  border: 1px solid var(--ui-input-border);
+  border-radius: var(--ui-control-radius);
   background: #fff;
-  color: #5d4037;
+  color: var(--espresso);
   font-weight: 700;
 }
 
 .year-button.selected,
 .submit-button {
-  border: 1px solid #5d4037;
-  border-radius: 8px;
-  background: #5d4037;
+  border: 1px solid var(--espresso);
+  border-radius: var(--ui-control-radius);
+  background: var(--espresso);
   color: #fff;
 }
 
 .submit-button {
-  min-height: 44px;
+  min-height: var(--ui-control-height);
   padding: 10px 16px;
 }
 
@@ -158,24 +158,30 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--mocha);
+  outline-offset: 2px;
+}
+
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid #795548;
-  outline-offset: 3px;
+  outline: 0;
+  border-color: var(--ui-focus-border);
+  box-shadow: var(--ui-focus-ring);
 }
 
 .input-error:focus-visible {
-  outline-color: #b42318;
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(154,63,52,.14);
 }
 
 .year-options.input-error .year-button {
-  border-color: #b42318;
+  border-color: var(--danger);
 }
 
 .year-options.input-error:focus {
-  outline: 2px solid #b42318;
-  outline-offset: 4px;
+  outline: 2px solid var(--danger);
+  outline-offset: 2px;
   border-radius: 8px;
 }
 

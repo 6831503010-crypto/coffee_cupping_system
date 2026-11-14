@@ -15,7 +15,7 @@ dialog.cupping-mode-dialog {
   color: var(--espresso);
 
   border: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: var(--ui-dialog-radius);
   box-shadow: var(--shadow);
 
   font-family: inherit;
@@ -38,7 +38,7 @@ dialog.cupping-mode-dialog::backdrop {
 
 .mode-dialog-header h2 {
   margin: 0 0 10px;
-  font-size: 26px;
+  font-size: var(--ui-section-heading);
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--espresso);
@@ -52,16 +52,16 @@ dialog.cupping-mode-dialog::backdrop {
 }
 
 .mode-close-btn {
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
 
   display: grid;
   place-items: center;
 
   border: 1px solid var(--line);
-  border-radius: 50%;
-  background: #fff;
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-surface-muted);
 
   color: var(--espresso);
   font: inherit;
@@ -94,7 +94,7 @@ dialog.cupping-mode-dialog::backdrop {
 
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--ui-card-radius);
 
   color: var(--espresso);
   font-family: inherit;
@@ -160,7 +160,7 @@ dialog.cupping-mode-dialog::backdrop {
 
 /* Organizational Mode is not implemented yet */
 .mode-option:disabled {
-  background: var(--paper);
+  background: var(--ui-surface-muted);
   opacity: 0.65;
   cursor: not-allowed;
 }

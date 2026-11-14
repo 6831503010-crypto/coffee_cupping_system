@@ -11,9 +11,9 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 24px;
   align-items: center;
-  border: 1px solid #e7ddd5;
+  border: 1px solid var(--line);
   background: #fff;
-  border-radius: 12px;
+  border-radius: var(--ui-card-radius);
   padding: 22px 26px;
 }
 
@@ -29,7 +29,7 @@
 }
 
 .session-details-view .session-heading h1 {
-  font-size: clamp(1.45rem, 2vw, 1.85rem);
+  font-size: var(--ui-page-heading);
   line-height: 1.25;
   margin: 0;
   overflow-wrap: anywhere;
@@ -38,7 +38,7 @@
 .session-details-view .session-mode {
   font-size: .86rem;
   font-weight: 600;
-  color: #795548;
+  color: var(--mocha);
 }
 
 .session-details-view .session-status {
@@ -52,7 +52,7 @@
 
 .session-details-view .session-status-closed {
   background: #f7e9dd;
-  color: #79543b;
+  color: var(--mocha);
 }
 
 .session-details-view .session-status-finalized {
@@ -63,7 +63,7 @@
 .session-details-view .session-description {
   margin: 9px 0 0;
   max-width: 780px;
-  color: #795548;
+  color: var(--mocha);
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -86,7 +86,7 @@
 }
 
 .session-details-view .session-header-meta span {
-  color: #795548;
+  color: var(--mocha);
 }
 
 .session-details-view .session-evaluation-action {
@@ -122,11 +122,11 @@
   margin: 0;
   gap: 16px;
   min-width: 0;
-  padding: 20px 22px;
+  padding: 22px;
 }
 
 .session-details-view .setup-section h2 {
-  font-size: 1.2rem;
+  font-size: var(--ui-section-heading);
   margin: 0;
 }
 
@@ -138,7 +138,7 @@
 }
 
 .session-details-view .details-muted {
-  color: #795548;
+  color: var(--mocha);
 }
 
 .session-details-view .details-card-heading .details-muted {
@@ -149,12 +149,13 @@
 .session-details-view .refresh-evaluators-action,
 .session-details-view .link-retry {
   padding: 7px 10px;
-  color: #795548;
+  color: var(--mocha);
   background: #fff;
-  border: 1px solid #e7ddd5;
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--ui-control-radius);
   font: inherit;
-  font-size: .83rem;
+  font-size: 14px;
+  font-weight:700;
   cursor: pointer;
 }
 
@@ -182,8 +183,8 @@
   flex: none;
   width: 38px;
   height: 38px;
-  background: #f7f1e7;
-  color: #79543b;
+  background: var(--ui-surface-muted);
+  color: var(--mocha);
   border-radius: 50%;
   font-weight: 700;
 }
@@ -203,8 +204,8 @@
 .session-details-view .evaluator-creator-badge {
   padding: 3px 7px;
   border-radius: 99px;
-  color: #79543b;
-  background: #f7f1e7;
+  color: var(--mocha);
+  background: var(--ui-surface-muted);
   font-size: .72rem;
 }
 
@@ -214,7 +215,7 @@
 }
 
 .session-details-view .evaluator-card-details a {
-  color: #795548;
+  color: var(--mocha);
   overflow-wrap: anywhere;
 }
 
@@ -230,9 +231,9 @@
 .session-details-view .evaluator-status {
   display: inline-flex;
   padding: 3px 8px;
-  background: #f7f1e7;
+  background: var(--ui-surface-muted);
   border-radius: 99px;
-  color: #79543b;
+  color: var(--mocha);
 }
 
 .session-details-view .evaluator-status-finalized {
@@ -242,14 +243,14 @@
 
 .session-details-view .evaluator-status-incomplete {
   background: #f7e9dd;
-  color: #79543b;
+  color: var(--mocha);
 }
 
 .session-details-view .evaluator-duration {
   display: inline-flex;
   gap: 5px;
   align-items: center;
-  color: #795548;
+  color: var(--mocha);
 }
 
 .session-details-view .evaluator-duration svg {
@@ -269,13 +270,13 @@
 .session-details-view .empty-evaluators {
   margin: 0;
   padding: 14px;
-  background: #faf8f5;
+  background: var(--ui-surface-muted);
   border-radius: 8px;
 }
 
 .session-details-view .add-evaluator-section {
   padding-top: 16px;
-  border-top: 1px solid #e7ddd5;
+  border-top: 1px solid var(--line);
 }
 
 .session-details-view .add-evaluator-section h3 {
@@ -289,8 +290,8 @@
 }
 
 .session-details-view .add-evaluator-section label {
-  font-size: .85rem;
-  font-weight: 600;
+  font-size: var(--ui-label-size);
+  font-weight: var(--ui-label-weight);
 }
 
 .session-details-view .evaluator-add-row {
@@ -305,16 +306,16 @@
 }
 
 .session-details-view .evaluator-add-row input {
-  height: 42px;
+  height: var(--ui-control-height);
 }
 
 .session-details-view .setup-section .add-evaluator-submit {
   flex: none;
-  height: 42px;
+  height: var(--ui-control-height);
   min-width: 84px;
   padding: 0 14px;
   white-space: nowrap;
-  background: #392318;
+  background: var(--espresso);
 }
 
 .session-details-view .add-evaluator-section .help {
@@ -326,9 +327,9 @@
   margin: 0;
   padding: 10px 12px;
   font-size: .85rem;
-  background: #f7f1e7;
+  background: var(--ui-surface-muted);
   border-radius: 8px;
-  color: #79543b;
+  color: var(--mocha);
 }
 
 .session-details-view .evaluator-success {
@@ -342,8 +343,8 @@
   width: 100%;
   align-items: stretch;
   overflow: hidden;
-  border: 1px solid #d6c9c0;
-  border-radius: 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--ui-control-radius);
   background: #fff;
 }
 
@@ -359,7 +360,7 @@
   padding: 0 10px;
   background: transparent;
   font-size: .78rem;
-  color: #795548;
+  color: var(--mocha);
   text-overflow: ellipsis;
 }
 
@@ -378,10 +379,10 @@
   padding: 0 12px;
   border: 0;
   border-radius: 0 8px 8px 0;
-  background: #392318;
+  background: var(--espresso);
   color: #fff;
-  font-size: .8rem;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -400,7 +401,7 @@
   display: grid;
   gap: 6px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #e7ddd5;
+  border-bottom: 1px solid var(--line);
 }
 
 .session-details-view .session-invite-section h2 {
@@ -450,8 +451,8 @@
   flex: none;
   min-width: 42px;
   text-align: center;
-  background: #f7f1e7;
-  color: #392318;
+  background: var(--ui-surface-muted);
+  color: var(--espresso);
   border-radius: 8px;
   padding: 8px 9px;
   font-weight: 700;
@@ -469,7 +470,7 @@
 .session-details-view .session-sample-info p {
   margin: 4px 0 0;
   font-size: .83rem;
-  color: #795548;
+  color: var(--mocha);
   overflow-wrap: anywhere;
 }
 
@@ -486,7 +487,7 @@
   gap: 12px;
   padding-top: 17px;
   margin-top: 4px;
-  border-top: 1px solid #e7ddd5;
+  border-top: 1px solid var(--line);
 }
 
 .session-details-view .session-actions-copy h3 {
@@ -547,19 +548,20 @@
   justify-content: center;
   box-sizing: border-box;
   width: 100%;
-  min-height: 50px;
-  padding: 0.85rem 1rem;
+  min-height: var(--ui-control-height);
+  padding: 0.65rem 1rem;
   color: #fff;
-  background: #5d4037;
+  background: var(--espresso);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--ui-control-radius);
   font: inherit;
+  font-size:14px;
   font-weight: 700;
   text-align: center;
   text-decoration: none;
 }
 .session-details-view .session-actions-card .history-session-button:hover {
-  background: #392318;
+  background: var(--roast);
 }
 .session-details-view .session-actions-card .history-session-button:focus-visible {
   outline: 2px solid #9a6545;

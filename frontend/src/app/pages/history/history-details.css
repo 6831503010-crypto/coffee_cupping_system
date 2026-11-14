@@ -16,7 +16,7 @@
   overflow-y: auto;
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: var(--ui-dialog-radius);
   padding: 24px;
   box-shadow: 0 24px 70px rgba(43, 28, 20, .25);
 }
@@ -32,6 +32,7 @@
 .details-modal-head h2 {
   margin: 0;
   color: var(--espresso);
+  font-size:var(--ui-section-heading);
 }
 
 .details-close {
@@ -243,13 +244,14 @@
 .sample-tabs button {
   flex: 0 0 auto;
   min-width: 92px;
+  min-height:var(--ui-control-height);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--ui-control-radius);
   padding: 10px 15px;
   background: #fff;
   color: var(--roast);
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -331,7 +333,7 @@
   width: 100%;
   min-height: 60px;
   padding: 11px 12px;
-  border: 1px solid #e4dbd2;
+  border: 1px solid var(--line);
   border-radius: 11px;
   background: #fff;
   text-align: left;
@@ -454,7 +456,7 @@
   gap: 5px;
   padding: 8px 11px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--ui-control-radius);
   background: #fff;
   color: var(--espresso);
   text-decoration: none;
@@ -491,7 +493,7 @@
   border: 1px solid var(--line, #e4dbd2);
   border-radius: 8px;
   padding: 2px;
-  background: #faf8f5;
+  background: var(--ui-surface-muted);
 }
 
 .visibility-options button {
