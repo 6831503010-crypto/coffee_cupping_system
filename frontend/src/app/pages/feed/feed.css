@@ -160,3 +160,132 @@
   .feed-page-controls { width: 100%; justify-content: space-between; }
   .feed-page-controls button { min-height: 42px; }
 }
+
+
+/* Mobile Feed: compact search/sort, truncated session names, and
+   three horizontally swipeable detail cards. Desktop/tablet unchanged. */
+@media (max-width: 600px) {
+  .feed-toolbar {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .feed-search-label {
+    flex: 1 1 auto;
+    flex-basis: auto;
+    width: auto;
+    min-width: 0;
+    min-height: 44px;
+    padding-inline: 10px;
+  }
+
+  .feed-search-label input[type="search"] {
+    min-width: 0;
+    width: 100%;
+    /* At least 16px prevents iOS from zooming the viewport on focus. */
+    font-size: 16px;
+    text-overflow: ellipsis;
+  }
+
+  /* Retain an accessible "Sort by" label without wasting mobile width. */
+  .feed-sort-label {
+    flex: 0 0 110px;
+    width: 110px;
+    min-width: 0;
+    gap: 0;
+    font-size: 0;
+  }
+
+  .feed-sort-label select {
+    box-sizing: border-box;
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: 16px;
+  }
+
+  /* Truncate long session/organizer names instead of wrapping the row. */
+  .feed-session { min-width: 0; }
+  .feed-session-title { width: 100%; min-width: 0; }
+  .feed-session-title > span {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* The sample meta, score sheet and tasting notes each become one
+     horizontally scrollable card. No separate expand buttons are added. */
+  .feed-expanded {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 13px 12px 18px;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 12px;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .feed-expanded .feed-results-grid { display: contents; }
+
+  .feed-expanded > .feed-sample-details,
+  .feed-expanded > .feed-results-grid > .feed-scores-panel,
+  .feed-expanded > .feed-results-grid > .feed-notes-panel {
+    box-sizing: border-box;
+    flex: 0 0 calc(100% - 26px);
+    min-width: 0;
+    max-width: calc(100% - 26px);
+    height: 280px;
+    overflow-y: auto;
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--ui-card-radius);
+    background: #fff;
+    padding: 15px 14px;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .feed-expanded > .feed-results-grid > .feed-notes-panel {
+    background: #fdfaf7;
+  }
+
+  /* Help phone users discover that the remaining cards are swipeable. */
+  .feed-expanded > .feed-sample-details {
+    display: flex;
+    flex-direction: column;
+  }
+  .feed-expanded > .feed-sample-details::after {
+    content: "Swipe for scores and notes  →";
+    margin-top: auto;
+    padding-top: 18px;
+    color: var(--mocha);
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .feed-score-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 11px;
+  }
+  .feed-score-column > div { gap: 5px; font-size: 12px; }
+  .feed-score-column strong { flex-shrink: 0; }
+  .feed-sample-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* The 320px fallback keeps scores readable without squeezing labels. */
+@media (max-width: 360px) {
+  .feed-sort-label { flex-basis: 94px; width: 94px; }
+  .feed-score-grid { grid-template-columns: minmax(0, 1fr); }
+}

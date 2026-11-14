@@ -1219,8 +1219,9 @@ TEAM RULE:
    Desktop presentation (1440px target) is unchanged. */
 @media (max-width: 600px) {
   :root {
-    --ui-page-heading: clamp(26px, 7.4vw, 30px);
-    --ui-section-heading: 20px;
+    /* Smaller, consistent page headings for 390px mobile layouts. */
+    --ui-page-heading: clamp(21px, 6vw, 24px);
+    --ui-section-heading: 19px;
     --ui-card-heading: 17px;
     --ui-page-top: 20px;
     --ui-page-bottom: 44px;
