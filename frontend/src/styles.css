@@ -31,6 +31,7 @@ TEAM RULE:
     --ui-section-heading:22px;
     --ui-card-heading:18px;
     --ui-label-size:14px;
+    --ui-body-size:15px;
     --ui-label-weight:700;
     --ui-control-radius:10px;
     --ui-card-radius:16px;
@@ -1157,3 +1158,59 @@ TEAM RULE:
 /* Keep the same outer gutter across pages without forcing desktop spacing on phones. */
 @media (max-width:900px){:root{--page-gutter:24px}}
 @media (max-width:600px){:root{--page-gutter:16px}}
+
+/* Guide & About: shared design-system presentation.
+   Geometry/layout is intentionally owned by their existing component CSS. */
+.ui-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mocha);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.4;
+  text-decoration: none;
+  margin-bottom: 22px;
+}
+.ui-back-link:hover { color: var(--espresso); text-decoration: none; }
+.ui-back-link:focus-visible { outline: 2px solid var(--ui-focus-border); outline-offset: 3px; }
+
+/* Reuse the global typography, panel, and action-button tokens on Guide pages. */
+.ui-guide-step { color: var(--espresso); font-family: inherit; }
+.ui-guide-step .card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--ui-card-radius);
+  box-shadow: var(--shadow);
+}
+.ui-guide-step .card h2 {
+  color: var(--espresso);
+  font-size: var(--ui-section-heading);
+  font-weight: 700;
+}
+.ui-guide-step .card h3 {
+  color: var(--espresso);
+  font-size: var(--ui-card-heading);
+  font-weight: 700;
+}
+.ui-guide-step .card p,
+.ui-guide-step .card ol,
+.ui-guide-step .card ul,
+.ui-guide-step .review-list {
+  color: var(--mocha);
+  font-size: var(--ui-body-size);
+  line-height: 1.6;
+}
+.ui-guide-step .card li strong { color: var(--espresso); }
+.ui-guide-step .button-container .btn.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.ui-guide-step .button-container .btn.primary:focus-visible {
+  outline: 2px solid var(--ui-focus-border);
+  outline-offset: 3px;
+}
+.ui-guide-step hr { border-color: var(--line); }
