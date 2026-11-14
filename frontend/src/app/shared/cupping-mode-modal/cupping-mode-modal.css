@@ -189,3 +189,12 @@ dialog.cupping-mode-dialog::backdrop {
     min-height: 180px;
   }
 }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  dialog.cupping-mode-dialog { box-sizing: border-box; width: calc(100vw - 24px); max-height: 88dvh; overflow-y: auto; padding: 18px 16px; }
+  .mode-dialog-header { gap: 12px; margin-bottom: 15px; }
+  .mode-option { min-height: 0; padding: 16px; gap: 10px; }
+  .mode-options { grid-template-columns: minmax(0,1fr); }
+}

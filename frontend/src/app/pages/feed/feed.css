@@ -126,3 +126,37 @@
     padding-left: 26px;
   }
 }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  .feed-shell { padding-top: 18px; }
+  .feed-hero { margin-bottom: 15px; }
+  .feed-hero h1 { font-size: var(--ui-page-heading); line-height: 1.18; }
+  .feed-toolbar { display: grid; grid-template-columns: 1fr; padding: 13px; gap: 10px; }
+  .feed-search-label { box-sizing: border-box; width: 100%; max-width: none; min-height: 46px; padding-inline: 12px; }
+  .feed-search-label input { min-width: 0; width: 100%; }
+  .feed-sort-label { width: 100%; justify-content: flex-end; gap: 10px; }
+  .feed-sort-label select { min-height: 42px; max-width: 190px; flex: 0 1 190px; }
+  .feed-row { display: grid; grid-template-columns: minmax(0,1fr) auto; grid-template-areas: 'coffee score' 'session score'; align-items: center; gap: 6px 10px; padding: 15px 13px; }
+  .feed-coffee { grid-area: coffee; min-width: 0; font-size: 14px; line-height: 1.35; }
+  .feed-session { grid-area: session; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+  .feed-session-title { gap: 5px; font-size: 12px; }
+  .feed-session-title > span { font-weight: 600; }
+  .feed-mode-icon { font-size: 14px; }
+  .feed-session small { font-size: 11px; }
+  .feed-score { grid-area: score; align-self: center; gap: 6px; }
+  .feed-score strong { font-size: 17px; }
+  .feed-score svg { width: 16px; }
+  .feed-expanded { padding: 12px; }
+  .feed-sample-details { padding: 14px; margin-bottom: 12px; }
+  .feed-sample-meta { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px 12px; }
+  .feed-sample-meta dd { font-size: 13px; line-height: 1.4; }
+  .feed-scores-panel, .feed-notes-panel { padding: 15px 14px; }
+  .feed-score-grid { grid-template-columns: minmax(0,1fr); }
+  .feed-score-column > div { padding-block: 9px; font-size: 13px; }
+  .feed-note-group { font-size: 13px; line-height: 1.5; }
+  .feed-pagination { padding: 13px; }
+  .feed-page-controls { width: 100%; justify-content: space-between; }
+  .feed-page-controls button { min-height: 42px; }
+}

@@ -557,3 +557,32 @@
   font-size: 13px;
   font-weight: 500;
 }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  .history-header { flex-wrap: wrap; gap: 12px; }
+  .history-header h1 { font-size: var(--ui-page-heading); }
+  .new-session-button { min-height: 42px; font-size: 13px; }
+  .history-summary { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+  .summary-card { min-height: 76px; padding: 11px; gap: 9px; }
+  .summary-icon { width: 36px; height: 36px; font-size: 18px; }
+  .summary-card strong { font-size: 21px; }
+  .summary-card:last-child { grid-column: 1 / -1; }
+  .status-tabs { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; gap: 7px; padding-bottom: 7px; scrollbar-width: none; }
+  .status-tabs::-webkit-scrollbar { display: none; }
+  .status-tabs button { white-space: nowrap; flex: 0 0 auto; padding: 9px 11px; font-size: 12px; min-height: 41px; }
+  .list-panel-top { padding: 16px 14px 11px; }
+  .session-items { padding-inline: 6px; }
+  .session-detail-head { flex-wrap: wrap; gap: 10px; padding: 16px; }
+  .session-timing { grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 14px 14px; }
+  .timing-stat { padding: 10px; gap: 7px; }
+  .timing-stat:last-child { grid-column: 1 / -1; }
+  .timing-icon { width: 30px; height: 30px; }
+  .sample-results-section { padding: 14px; }
+  .sample-result-card { padding: 14px; }
+  .scores-two-columns { grid-template-columns: 1fr; }
+  .sample-tabs { padding-bottom: 9px; scroll-snap-type: x proximity; }
+  .sample-tabs button { scroll-snap-align: start; min-height: 42px; }
+  .details-modal { padding: 16px; }
+}

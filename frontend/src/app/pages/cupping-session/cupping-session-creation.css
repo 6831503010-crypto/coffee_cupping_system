@@ -482,3 +482,20 @@
     max-width: 100%;
   }
 }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  .creation-page-heading { margin-bottom: 15px; }
+  .creation-page-heading h1 { font-size: var(--ui-page-heading); }
+  .creation-grid, .creation-main { gap: 13px; }
+  .creation-page .creation-step-card, .creation-page .creation-summary-card { padding: 16px 14px; }
+  .creation-page .creation-step-card { gap: 13px; }
+  .creation-step-heading { gap: 9px; }
+  .creation-step-heading h2, .creation-summary-heading h2 { font-size: 17px; }
+  .creation-page .creation-secondary-action { margin-left: 0; }
+  .creation-settings-grid { grid-template-columns: 1fr; }
+  .creation-samples-heading { gap: 10px; }
+  .creation-sample-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; }
+  .creation-page input:not([type='checkbox']), .creation-page textarea, .creation-page select { max-width: 100%; }
+}

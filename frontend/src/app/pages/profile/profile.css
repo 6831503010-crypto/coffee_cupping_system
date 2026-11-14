@@ -513,3 +513,12 @@
   outline: 2px solid #b08b70;
   outline-offset: 2px;
 }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  .profile-hero { padding: 17px 15px; gap: 12px; }
+  .details-grid { padding: 5px 15px 15px; }
+  .edit-form { padding: 16px 15px; }
+  .edit-button { min-height: 44px; }
+}

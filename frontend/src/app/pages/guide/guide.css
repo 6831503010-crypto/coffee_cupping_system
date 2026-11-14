@@ -107,3 +107,14 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  .guide-container { padding-top: 20px; padding-bottom: 42px; }
+  .guide-header h1 { font-size: var(--ui-page-heading); }
+  .feature-card { padding: 18px 16px; }
+  .features-grid { gap: 12px; }
+  .mission-section { padding: 20px 16px; }
+  .quote-box { padding: 14px; }
+}

@@ -152,9 +152,9 @@
                   : ''
               )
             "
-            (click)="accountOpen.set(true)"
+            (click)="toggleAccount()"
             (keydown.arrowdown)="
-              accountOpen.set(true);
+              openAccount();
               $event.preventDefault()
             "
           >

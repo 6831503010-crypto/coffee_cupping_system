@@ -188,10 +188,22 @@ export class SiteHeader {
     this.notificationsOpen.set(false);
   }
 
+  toggleAccount(): void {
+    const shouldOpen = !this.accountOpen();
+    this.menuOpen.set(false);
+    this.notificationsOpen.set(false);
+    this.accountOpen.set(shouldOpen);
+  }
+
+  openAccount(): void {
+    this.menuOpen.set(false);
+    this.notificationsOpen.set(false);
+    this.accountOpen.set(true);
+  }
+
   openAccountOnHover(event: PointerEvent): void {
     if (event.pointerType === 'mouse') {
-      this.accountOpen.set(true);
-      this.notificationsOpen.set(false);
+      this.openAccount();
     }
   }
 

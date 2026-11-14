@@ -564,3 +564,39 @@
     gap: 12px;
   }
 }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  :host { position: sticky; top: 0; z-index: 100; }
+  .site-header, .site-header.compact {
+    flex-wrap: nowrap;
+    min-height: 66px;
+    padding: 10px var(--page-gutter);
+    gap: 8px;
+  }
+  .brand { min-width: 0; flex: 0 1 auto; gap: 9px; }
+  .bean { width: 38px; height: 38px; flex-basis: 38px; }
+  .bean::after { left: 18px; top: 6px; width: 4px; height: 27px; }
+  /* Keep only the brand icon on phones, giving controls more room. */
+  .brand-text { display: none; }
+  .header-actions { width: auto; min-width: 0; flex: 0 0 auto; margin-left: auto; justify-content: flex-end; gap: 4px; }
+  .header-navigation-group { gap: 4px; }
+  .notification-trigger, .menu-toggle { display: grid; place-items: center; width: 40px; height: 40px; min-width: 40px; padding: 0; border-radius: 10px; }
+  .menu-toggle { font-size: 26px; line-height: 1; }
+  .account-trigger { width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; }
+  .account-avatar { flex: 0 0 38px; width: 38px; height: 38px; font-size: 16px; }
+  .account-details, .account-chevron { display: none; }
+  .site-nav { top: calc(100% + 4px); left: var(--page-gutter); right: var(--page-gutter); padding: 8px; z-index: 8; box-shadow: 0 12px 28px rgba(57,35,24,.14); }
+  .site-nav a { min-height: 46px; display: flex; align-items: center; font-size: 14px; border-radius: 8px; padding: 12px 14px; }
+  .site-nav a:hover, .site-nav a:focus-visible { background: var(--ui-surface-muted); }
+  .notification-panel { top: calc(100% + 4px); right: var(--page-gutter); width: calc(100vw - 2 * var(--page-gutter)); max-height: min(75dvh, 620px); overflow-y: auto; }
+  .account-dropdown { position: fixed; top: 62px; right: var(--page-gutter); width: min(270px, calc(100vw - 32px)); max-width: calc(100vw - 32px); }
+}
+@media (max-width: 350px) {
+  .brand-text { font-size: 12px; }
+  .bean { width: 34px; height: 34px; flex-basis: 34px; }
+  .header-actions, .header-navigation-group { gap: 1px; }
+  .account-trigger, .notification-trigger, .menu-toggle { width: 36px; min-width: 36px; height: 40px; }
+  .account-avatar { width: 34px; height: 34px; flex-basis: 34px; }
+}

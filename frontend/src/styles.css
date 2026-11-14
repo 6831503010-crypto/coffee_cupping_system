@@ -1214,3 +1214,19 @@ TEAM RULE:
   outline-offset: 3px;
 }
 .ui-guide-step hr { border-color: var(--line); }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  :root {
+    --ui-page-heading: clamp(26px, 7.4vw, 30px);
+    --ui-section-heading: 20px;
+    --ui-card-heading: 17px;
+    --ui-page-top: 20px;
+    --ui-page-bottom: 44px;
+  }
+  /* Prevent browser text zoom when focusing editable fields on iOS. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select, textarea { font-size: max(16px, 1em); }
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+}

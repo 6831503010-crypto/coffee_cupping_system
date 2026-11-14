@@ -874,3 +874,23 @@ button.back-link.session-return-button:focus-visible {
 @media (max-width: 760px) {
   :host .score-grid .score-evaluation-card { padding: 12px; }
 }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  :host .cupping-session-header { padding: 14px 13px 12px; margin-bottom: 13px; }
+  :host .cupping-header-top { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+  :host .cupping-header-timer { justify-content: flex-start; flex-wrap: wrap; }
+  :host .cupping-progress-inline .steps { gap: 6px; }
+  :host .cupping-progress-inline .step { min-width: 0; padding: 7px 2px 9px; }
+  :host .cupping-progress-inline .step-label { font-size: 10px; }
+  :host .cupping-progress-inline .step-caption { font-size: 10px; line-height: 1.25; }
+  :host .content { padding: 13px 11px; }
+  :host .grid, :host .score-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  :host .section { padding: 12px; }
+  :host .score-grid .score-evaluation-card { padding: 12px; }
+  :host .aroma-quality-groups { grid-template-columns: minmax(0,1fr); }
+  :host .cup-section-actions { gap: 8px; }
+  :host .cup-section-actions button { min-height: 40px; }
+  :host .sample-title { flex-wrap: wrap; }
+}

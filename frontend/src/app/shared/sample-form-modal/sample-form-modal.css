@@ -199,3 +199,12 @@ select:focus-visible {
     gap: 12px;
   }
 }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  dialog { box-sizing: border-box; width: calc(100vw - 24px); max-width: calc(100vw - 24px); max-height: 90dvh; overflow-y: auto; }
+  .modal-heading { padding: 13px 15px; }
+  form { padding: 16px 15px 18px; }
+  .year-options { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
