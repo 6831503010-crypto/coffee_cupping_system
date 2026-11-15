@@ -9,7 +9,7 @@ Coffee Cupping System is a web application for recording and managing coffee cup
 | 6831503004 | Bhone Myat Paing | Added 'Guide' and 'About' pages to the system to introduce the platform and provide users with a step-by-step guide for filling out the coffee cupping form. |
 | 6831503010 | Kyaw Min Khant   | Individual and Organizational session setup and management; evaluator capacity, invitations, assignments, and participation rules; evaluation and session timers; Q Grader credential verification and badges; session history and result-access controls; session sample locking. |
 | 6831503013 | Myo Satt Kyaw    | Database design and development (MariaDB), Backend development (Spring Boot), Frontend UI design and development (Angular), Cupping session management and coffee evaluation, Score calculation and evaluation results, Session History and Public Feed pages, Coffee Inventory and sample management, Responsive UI design (Mobile, Tablet, Desktop), System testing, debugging, and usability improvements |
-| 6831503121 | Shwe Yee Thein   | Profile session set up and home page creation at the initial stge.|
+| 6831503121 | Shwe Yee Thein   | User Profile Setup and Management; Profile Information Management; Profile UI Design and Development; User Account Information Updates and Maintenance.|
 
 
 ## How to Run the Project
