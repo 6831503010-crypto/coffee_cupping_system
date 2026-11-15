@@ -2,12 +2,15 @@
 
 Coffee Cupping System is a web application for recording and managing coffee cupping evaluations. It supports Individual and Organizational sessions, coffee sample management, evaluator invitations and assignments, aroma and flavor scoring, evaluation timers, session history, and published results. Evaluators finalize their own evaluations, while the session creator separately finalizes the session. The application uses Angular, Spring Boot, MySQL, and Flyway to store and manage session and evaluation data.
 
-## GROUP MEMBERS
+## GROUP MEMBERS & Responsibilities
 
-6831503004 Bhone Myat Paing  
-6831503010 Kyaw Min Khant  
-6831503013 Myo Satt Kyaw  
-6831503121 Shwe Yee Thein
+| Student ID | Full Name        | Feature Responsibilities                                                                                                                                                                                                                                                           |
+| ---------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 6831503004 | Bhone Myat Paing | Added 'Guide' and 'About' pages to the system to introduce the platform and provide users with a step-by-step guide for filling out the coffee cupping form. |
+| 6831503010 | Kyaw Min Khant   | Individual and Organizational session setup and management; evaluator capacity, invitations, assignments, and participation rules; evaluation and session timers; Q Grader credential verification and badges; session history and result-access controls; session sample locking. |
+| 6831503013 | Myo Satt Kyaw    | Database design and development (MariaDB), Backend development (Spring Boot), Frontend UI design and development (Angular), Cupping session management and coffee evaluation, Score calculation and evaluation results, Session History and Public Feed pages, Coffee Inventory and sample management, Responsive UI design (Mobile, Tablet, Desktop), System testing, debugging, and usability improvements |
+| 6831503121 | Shwe Yee Thein   | Profile session set up and home page creation at the initial stge.|
+
 
 ## How to Run the Project
 
@@ -134,12 +137,3 @@ To test multiple users, register separate accounts and use separate browser prof
 | Angular frontend    | 4200         | http://localhost:4200 |
 | Spring Boot backend | 8080         | http://localhost:8080 |
 | MySQL               | 3306         | localhost:3306        |
-
-## Member Responsibilities
-
-| Student ID | Full Name        | Feature Responsibilities                                                                                                                                                                                                                                                           |
-| ---------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 6831503004 | Bhone Myat Paing | Added 'Guide' and 'About' pages to the system to introduce the platform and provide users with a step-by-step guide for filling out the coffee cupping form. |
-| 6831503010 | Kyaw Min Khant   | Individual and Organizational session setup and management; evaluator capacity, invitations, assignments, and participation rules; evaluation and session timers; Q Grader credential verification and badges; session history and result-access controls; session sample locking. |
-| 6831503013 | Myo Satt Kyaw    | [To be completed]                                                                                                                                                                                                                                                                  |
-| 6831503121 | Shwe Yee Thein   | Profile session set up and home page creation at the initial stge.|
