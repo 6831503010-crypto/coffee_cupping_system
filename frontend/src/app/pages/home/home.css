@@ -309,3 +309,121 @@
   .home-inventory-cards { grid-template-columns: 1fr; }
   .home-inventory-card { min-height: 140px; }
 }
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  /* Compact mobile hero: image is the card background; no gradient layer. */
+  .landing-hero {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    box-sizing: border-box;
+    width: auto;
+    height: clamp(205px, 54vw, 225px);
+    min-height: 0;
+    margin: 14px var(--page-gutter) 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #fcf6e9;
+  }
+  .hero-art {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .hero-art img {
+    position: absolute;
+    top: 58px;
+    left: 0;
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    margin: 0;
+    border-radius: 0;
+    object-fit: contain;
+    mix-blend-mode: normal;
+    opacity: 0.7;
+    filter: none;
+  }
+  /* The original heavy white gradient was obscuring the coffee photo. */
+  .landing-hero::before { display: none; }
+  .hero-copy {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 13px 12px 10px;
+    text-align: center;
+  }
+  .hero-eyebrow { margin-bottom: 6px; font-size: 9px; }
+  .hero-copy h1 {
+    font-size: clamp(20px, 6vw, 25px);
+    line-height: 1.05;
+    letter-spacing: -.045em;
+    white-space: nowrap;
+  }
+  /* Keep the desktop heading split, but show one line on phones. */
+  .hero-copy h1 br { display: none; }
+  .hero-description {
+  max-width: 33ch;
+    margin: 8px auto 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #392318;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.65);
+  }
+  .hero-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+  .hero-actions .landing-btn {
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    min-height: 38px;
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+  .hero-actions .landing-btn.secondary {
+    border-color: rgba(57, 35, 24, .22);
+    background: #fffaf3;
+  }
+  .home-inventory { margin-bottom: 24px; padding-top: 22px; padding-bottom: 25px; }
+  .home-inventory-header { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; }
+  .home-inventory h2 { margin: 0 0 5px; font-size: clamp(22px, 6.2vw, 25px); line-height: 1.15; }
+  /* The inventory subtitle is hidden on mobile, retained on tablet/desktop. */
+  .home-inventory-header p:not(.section-kicker) { display: none; }
+  .home-inventory-actions { align-self: start; }
+  .home-inventory-actions .landing-btn { min-width: 0; padding: 9px 13px; font-size: 12px; }
+  .home-inventory-summary { display: flex; gap: 9px 18px; margin: 15px 0 18px; font-size: 12px; }
+  .home-inventory-summary strong { font-size: 19px; margin-right: 3px; }
+  .home-inventory-cards { grid-template-columns: 1fr; gap: 10px; margin: 0; }
+  .home-inventory-card { display: grid; grid-template-columns: 36px minmax(0,1fr) 18px; grid-template-rows: auto auto; gap: 4px 11px; min-height: 0; padding: 14px; align-items: start; }
+  .inventory-card-heading { display: contents; }
+  .inventory-icon { grid-column: 1; grid-row: 1 / span 2; width: 35px; height: 35px; }
+  .inventory-card-arrow { grid-column: 3; grid-row: 1; justify-self: end; }
+  .home-inventory-card > strong { grid-column: 2; grid-row: 1; align-self: center; font-size: 14px; }
+  .inventory-card-details { grid-column: 2 / 4; grid-row: 2; margin-top: 1px; gap: 5px; font-size: 12px; }
+  .home-inventory-add { display: flex; flex-direction: row; min-height: 76px; align-items: center; justify-content: center; text-align: center; gap: 10px; }
+  .home-inventory-add .inventory-add-icon { flex: 0 0 38px; }
+  .home-inventory-add > strong { flex: 0 1 auto; }
+  .home-inventory-add .inventory-add-caption { display: none; }
+  .landing-cta { margin-bottom: 28px; padding: 23px 20px; gap: 16px; }
+  .landing-cta h2 { font-size: 29px; line-height: 1.05; }
+  .landing-cta .landing-btn { width: 100%; min-height: 44px; }
+  .site-footer { padding-top: 15px; padding-bottom: 24px; font-size: 11px; gap: 8px; }
+}

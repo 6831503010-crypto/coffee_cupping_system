@@ -53,3 +53,25 @@ export const authGuard: CanActivateFn =
 
     );
   };
+
+
+/** Keep Home as the landing page for signed-in users; guests see Feed. */
+export const landingGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.currentUser()) return true;
+  return auth.me().pipe(
+    map(() => true),
+    catchError(() => of(router.createUrlTree(['/feed'])))
+  );
+};
+
+/** Feed is public, but restore an existing login for the account navbar. */
+export const publicFeedGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  if (auth.currentUser()) return true;
+  return auth.me().pipe(
+    map(() => true),
+    catchError(() => of(true))
+  );
+};

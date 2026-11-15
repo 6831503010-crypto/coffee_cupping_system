@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { EvaluationSubmissionService, EvaluationHistoryGroup, SavedEvaluation } from '../../services/evaluation-submission.service';
 import { RouterLink } from '@angular/router';
 import { CuppingModeModal } from '../../shared/cupping-mode-modal/cupping-mode-modal';
@@ -100,6 +100,15 @@ export class History implements OnInit {
         this.loadEvaluatorCount(record.id);
       }
     });
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.selectedDetails()) {
+      this.closeSampleDetails();
+    } else if (this.sessionDetailsOpen()) {
+      this.closeHistoryDetails();
+    }
   }
 
   private loadEvaluatorCount(sessionId: number): void {
@@ -257,6 +266,8 @@ export class History implements OnInit {
   readonly searchQuery = signal('');
   readonly statusFilter = signal<'all' | 'own' | 'in-progress' | 'finalized' | 'incomplete'>('all');
   readonly selectedSessionId = signal<number | null>(null);
+  // On phones the details are an overlay; desktop retains its inline score sheet.
+  readonly sessionDetailsOpen = signal(false);
   readonly selectedSampleIndex = signal(0);
   // null means the creator's average sheet, otherwise a selected judge's sheet.
   readonly selectedJudgeUserId = signal<number | null>(null);
@@ -377,6 +388,7 @@ export class History implements OnInit {
   private resetViewSelection(): void {
     this.currentPage.set(1);
     this.selectedSessionId.set(null);
+    this.sessionDetailsOpen.set(false);
     this.selectedSampleIndex.set(0);
     this.selectedJudgeUserId.set(null);
     this.evaluatorDropdownOpen.set(false);
@@ -385,8 +397,15 @@ export class History implements OnInit {
 
   selectSession(id: number): void {
     this.selectedSessionId.set(id);
+    this.sessionDetailsOpen.set(true);
     this.selectedSampleIndex.set(0);
     this.selectedJudgeUserId.set(null);
+    this.evaluatorDropdownOpen.set(false);
+    this.closeSampleDetails();
+  }
+
+  closeHistoryDetails(): void {
+    this.sessionDetailsOpen.set(false);
     this.evaluatorDropdownOpen.set(false);
     this.closeSampleDetails();
   }
@@ -433,6 +452,7 @@ export class History implements OnInit {
     if (!Number.isInteger(page) || page < 1 || page > this.totalPages()) return;
     this.currentPage.set(page);
     this.selectedSessionId.set(null);
+    this.sessionDetailsOpen.set(false);
     this.selectedSampleIndex.set(0);
     this.selectedJudgeUserId.set(null);
     this.evaluatorDropdownOpen.set(false);
@@ -534,6 +554,14 @@ export class History implements OnInit {
       : '—';
   });
 
+
+  latestDateCompact = computed(() => {
+    const latest = this.sortedRecords()[0];
+    if (!latest) return '—';
+    const date = new Date(latest.completedAt);
+    return Number.isNaN(date.getTime()) ? '—' :
+      new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: '2-digit' }).format(date);
+  });
 
   formatDate(value: string): string {
     const date = new Date(value);

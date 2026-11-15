@@ -81,6 +81,10 @@ export class SiteHeader {
     !this.isAuthPage() && !!this.currentUser()
   );
 
+  readonly showGuestNavigation = computed(() =>
+    !this.isAuthPage() && !this.currentUser()
+  );
+
   readonly userInitial = computed(() => {
     const name = this.currentUser()?.name?.trim() || '';
     return Array.from(name)[0]?.toLocaleUpperCase() || '?';
@@ -188,10 +192,22 @@ export class SiteHeader {
     this.notificationsOpen.set(false);
   }
 
+  toggleAccount(): void {
+    const shouldOpen = !this.accountOpen();
+    this.menuOpen.set(false);
+    this.notificationsOpen.set(false);
+    this.accountOpen.set(shouldOpen);
+  }
+
+  openAccount(): void {
+    this.menuOpen.set(false);
+    this.notificationsOpen.set(false);
+    this.accountOpen.set(true);
+  }
+
   openAccountOnHover(event: PointerEvent): void {
     if (event.pointerType === 'mouse') {
-      this.accountOpen.set(true);
-      this.notificationsOpen.set(false);
+      this.openAccount();
     }
   }
 
@@ -257,12 +273,12 @@ export class SiteHeader {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: () => {
-        this.router.navigateByUrl('/login');
+        this.router.navigateByUrl('/feed');
       },
       error: () => {
         // Preserve the existing logout behavior.
         this.authService.clearUser();
-        this.router.navigateByUrl('/login');
+        this.router.navigateByUrl('/feed');
       }
     });
   }

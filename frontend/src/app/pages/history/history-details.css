@@ -16,7 +16,7 @@
   overflow-y: auto;
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: var(--ui-dialog-radius);
   padding: 24px;
   box-shadow: 0 24px 70px rgba(43, 28, 20, .25);
 }
@@ -32,6 +32,7 @@
 .details-modal-head h2 {
   margin: 0;
   color: var(--espresso);
+  font-size:var(--ui-section-heading);
 }
 
 .details-close {
@@ -243,13 +244,14 @@
 .sample-tabs button {
   flex: 0 0 auto;
   min-width: 92px;
+  min-height:var(--ui-control-height);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--ui-control-radius);
   padding: 10px 15px;
   background: #fff;
   color: var(--roast);
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -331,7 +333,7 @@
   width: 100%;
   min-height: 60px;
   padding: 11px 12px;
-  border: 1px solid #e4dbd2;
+  border: 1px solid var(--line);
   border-radius: 11px;
   background: #fff;
   text-align: left;
@@ -454,7 +456,7 @@
   gap: 5px;
   padding: 8px 11px;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--ui-control-radius);
   background: #fff;
   color: var(--espresso);
   text-decoration: none;
@@ -491,7 +493,7 @@
   border: 1px solid var(--line, #e4dbd2);
   border-radius: 8px;
   padding: 2px;
-  background: #faf8f5;
+  background: var(--ui-surface-muted);
 }
 
 .visibility-options button {
@@ -554,4 +556,276 @@
   color: #8b5e3c;
   font-size: 13px;
   font-weight: 500;
+}
+
+/* Mobile UX refinement — primary design target: 390px; tablet: 768px.
+   Desktop presentation (1440px target) is unchanged. */
+@media (max-width: 600px) {
+  .history-header { flex-wrap: wrap; gap: 12px; }
+  .history-header h1 { font-size: var(--ui-page-heading); }
+  .new-session-button { min-height: 42px; font-size: 13px; }
+  .history-summary { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+  .summary-card { min-height: 76px; padding: 11px; gap: 9px; }
+  .summary-icon { width: 36px; height: 36px; font-size: 18px; }
+  .summary-card strong { font-size: 21px; }
+  .summary-card:last-child { grid-column: 1 / -1; }
+  .status-tabs { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; gap: 7px; padding-bottom: 7px; scrollbar-width: none; }
+  .status-tabs::-webkit-scrollbar { display: none; }
+  .status-tabs button { white-space: nowrap; flex: 0 0 auto; padding: 9px 11px; font-size: 12px; min-height: 41px; }
+  .list-panel-top { padding: 16px 14px 11px; }
+  .session-items { padding-inline: 6px; }
+  .session-detail-head { flex-wrap: wrap; gap: 10px; padding: 16px; }
+  .session-timing { grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 14px 14px; }
+  .timing-stat { padding: 10px; gap: 7px; }
+  .timing-stat:last-child { grid-column: 1 / -1; }
+  .timing-icon { width: 30px; height: 30px; }
+  .sample-results-section { padding: 14px; }
+  .sample-result-card { padding: 14px; }
+  .scores-two-columns { grid-template-columns: 1fr; }
+  .sample-tabs { padding-bottom: 9px; scroll-snap-type: x proximity; }
+  .sample-tabs button { scroll-snap-align: start; min-height: 42px; }
+  .details-modal { padding: 16px; }
+}
+
+/* Mobile History: three compact summary cards and a session detail bottom sheet.
+   Tablet/desktop retain the existing two-panel presentation. */
+.latest-date-mobile,
+.history-mobile-overlay-head,
+.history-mobile-backdrop {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .history-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .history-summary .summary-card,
+  .history-summary .summary-card:last-child {
+    grid-column: auto;
+    min-width: 0;
+    min-height: 88px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px;
+    border-radius: 12px;
+  }
+
+  .history-summary .summary-icon {
+    width: 25px;
+    height: 25px;
+    font-size: 14px;
+  }
+
+  .history-summary .summary-card > div {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .history-summary .summary-card strong {
+    font-size: 18px;
+    line-height: 1.1;
+  }
+
+  .history-summary .summary-card .latest-date {
+    font-size: 12px;
+    white-space: nowrap;
+    letter-spacing: -.03em;
+  }
+
+  .history-summary .summary-card span:not(.summary-icon) {
+    font-size: 10px;
+    line-height: 1.25;
+    margin-top: 2px;
+  }
+
+  .latest-date-full {
+    display: none !important;
+  }
+
+  .latest-date-mobile {
+    display: inline !important;
+  }
+
+  /* The list is the default phone screen: scores open only after a row tap. */
+  .history-workspace .details-panel {
+    display: none;
+  }
+
+  .history-workspace .details-panel.is-mobile-open {
+    display: block;
+    position: fixed;
+    z-index: 901;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 24px);
+    height: max-content;
+    max-height: min(76dvh, 680px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    box-shadow: 0 -8px 36px rgba(43, 28, 20, .22);
+  }
+
+  .history-mobile-backdrop {
+    display: block;
+    position: fixed;
+    z-index: 900;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+    background: rgba(43, 28, 20, .52);
+    cursor: pointer;
+  }
+
+  /* Keep the judge picker inside the phone viewport rather than
+     right-aligning its wider menu off the left edge. */
+  .history-workspace .details-panel .evaluator-dropdown {
+    left: auto;
+    right: 0;
+    width: min(245px, calc(100vw - 56px));
+    max-width: calc(100vw - 56px);
+  }
+
+  /* Keep session heading and controls side by side. Put status under
+     the Public / Private buttons, not alongside them. */
+  .history-workspace .details-panel .session-detail-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 8px;
+    padding: 14px 12px 11px;
+  }
+
+  .history-workspace .details-panel .session-detail-head > div:first-child {
+    min-width: 0;
+  }
+
+  .history-workspace .details-panel .session-detail-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .history-workspace .details-panel .visibility-control { order: 1; }
+  .history-workspace .details-panel .session-detail-actions > .session-badge { order: 2; }
+  .history-workspace .details-panel .session-manage-link { order: 3; }
+
+  /* Three compact information cards: role, session time, evaluators. */
+  .history-workspace .details-panel .session-timing {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 0 12px 12px;
+  }
+
+  .history-workspace .details-panel .timing-stat,
+  .history-workspace .details-panel .timing-stat:last-child {
+    grid-column: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+    min-width: 0;
+    min-height: 88px;
+    padding: 8px 7px;
+    border-radius: 10px;
+  }
+
+  .history-workspace .details-panel .timing-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+  }
+
+  .history-workspace .details-panel .timing-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .history-workspace .details-panel .timing-copy {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .history-workspace .details-panel .timing-copy > span {
+    font-size: 10px;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  .history-workspace .details-panel .timing-copy strong {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .history-workspace .details-panel .evaluator-picker-trigger {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    min-height: 88px;
+    padding: 8px 7px;
+    border-radius: 10px;
+  }
+
+  .history-workspace .details-panel .evaluator-picker-chevron {
+    position: absolute;
+    right: 5px;
+    bottom: 11px;
+    width: 13px;
+    height: 13px;
+  }
+
+  .history-mobile-overlay-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--line);
+    background: #fff;
+    color: var(--espresso);
+    font-size: 14px;
+    font-weight: 750;
+  }
+
+  .history-mobile-overlay-close {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--espresso);
+    font: inherit;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .history-mobile-overlay-close:focus-visible,
+  .history-mobile-backdrop:focus-visible {
+    outline: 2px solid var(--espresso);
+    outline-offset: -3px;
+  }
 }

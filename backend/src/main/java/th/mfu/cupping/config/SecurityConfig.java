@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -71,6 +72,10 @@ public class SecurityConfig {
                 "/api/auth/csrf",
                 "/api/csrf",
                 "/api/health")
+            .permitAll()
+
+            // Public feed is read-only; keep all other API operations protected.
+            .requestMatchers(HttpMethod.GET, "/api/feed")
             .permitAll()
 
             .requestMatchers(
