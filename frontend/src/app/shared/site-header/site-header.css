@@ -665,3 +665,28 @@
   .guest-nav a { font-size: 12px; }
   .guest-nav .guest-register-link { min-height: 36px; padding: 0 10px; }
 }
+
+/* Active page indicator for desktop and mobile navigation. */
+.site-nav .nav-label,
+.guest-nav .nav-label {
+  position: relative;
+  display: inline-block;
+}
+
+.site-nav .nav-label::after,
+.guest-nav .nav-label::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -7px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--espresso, #3e2723);
+  opacity: 0;
+}
+
+.site-nav a.nav-active .nav-label::after,
+.guest-nav a.nav-active .nav-label::after {
+  opacity: 1;
+}
