@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Injector, ViewChild, afterNextRender, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -20,6 +21,7 @@ import {
 export class Inventory implements AfterViewInit {
   private readonly inventory = inject(CoffeeInventoryService);
   private readonly route = inject(ActivatedRoute);
+  private readonly injector = inject(Injector);
   private readonly toast = inject(ToastService);
 
   readonly samples = signal<InventorySample[]>([]);
@@ -124,13 +126,44 @@ export class Inventory implements AfterViewInit {
   }
 
 
+  @ViewChild('sampleDetailsPanel') private sampleDetailsPanel?: ElementRef<HTMLElement>;
   @ViewChild('deleteDialog') private deleteDialog?: ElementRef<HTMLDialogElement>;
 
   @ViewChild(SampleFormModal)
   private sampleFormModal?: SampleFormModal;
 
   constructor() {
+    // Update the selected sample when navigating to Inventory with a sampleId.
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      const requestedId = params.get('sampleId');
+      if (requestedId && /^\d+$/.test(requestedId)) {
+        this.selectLinkedSample(Number(requestedId));
+      }
+    });
     this.load();
+  }
+
+  private selectLinkedSample(sampleId: number): void {
+    if (!Number.isSafeInteger(sampleId) || sampleId <= 0) return;
+
+    const index = this.samples().findIndex(sample => sample.sampleId === sampleId);
+    if (index === -1) return;
+
+    // Ensure the linked sample is visible, even if filters or pagination were changed.
+    this.search.set('');
+    this.usageFilter.set('all');
+    this.sortOrder.set('newest');
+    this.page.set(Math.floor(index / this.pageSize) + 1);
+    this.selectedSampleId.set(sampleId);
+
+    // The details panel is rendered by an @if block. Scroll only after Angular
+    // has created it, including when inventory data arrives asynchronously.
+    afterNextRender(() => {
+      this.sampleDetailsPanel?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, { injector: this.injector });
   }
 
   ngAfterViewInit(): void {
@@ -145,7 +178,10 @@ export class Inventory implements AfterViewInit {
     this.inventory.mine().pipe(finalize(() => this.loading.set(false))).subscribe({
       next: data => {
         this.samples.set(data);
-        if (this.selectedSampleId() !== null && !data.some(sample => sample.sampleId === this.selectedSampleId())) {
+        const requestedId = this.route.snapshot.queryParamMap.get('sampleId');
+        if (requestedId && /^\d+$/.test(requestedId)) {
+          this.selectLinkedSample(Number(requestedId));
+        } else if (this.selectedSampleId() !== null && !data.some(sample => sample.sampleId === this.selectedSampleId())) {
           this.closeDetails();
         }
       },

@@ -142,7 +142,7 @@
     </section>
 
     @if (selectedSample(); as sample) {
-      <aside class="sample-details" aria-labelledby="detailsTitle">
+      <aside #sampleDetailsPanel class="sample-details" aria-labelledby="detailsTitle">
         <div class="details-heading">
           <div>
             <button type="button" class="mobile-back" (click)="closeDetails()">← Back to Samples</button>
