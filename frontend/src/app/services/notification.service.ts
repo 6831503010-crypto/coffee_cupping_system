@@ -22,7 +22,7 @@ export interface NotificationPage {
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private readonly http = inject(HttpClient);
-  private readonly base = 'http://localhost:8080/api';
+  private readonly base = '/api';
 
   list(beforeId?: number) {
     return this.http.get<NotificationPage>(

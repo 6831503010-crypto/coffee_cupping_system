@@ -83,7 +83,9 @@ public class SecurityConfig {
                 "/api/auth/logout")
             .authenticated()
 
-            .anyRequest().authenticated())
+            .requestMatchers("/api/**").authenticated()
+
+            .anyRequest().permitAll())
 
         .formLogin(form -> form.disable())
 

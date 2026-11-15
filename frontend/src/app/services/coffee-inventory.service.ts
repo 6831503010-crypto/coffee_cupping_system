@@ -43,7 +43,7 @@ export function coffeeSampleError(sample: CoffeeSampleDraft): string {
 @Injectable({ providedIn: 'root' })
 export class CoffeeInventoryService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080/api';
+  private readonly baseUrl = '/api';
 
   mine() {
     return this.http.get<InventorySample[]>(`${this.baseUrl}/samples/mine`, { withCredentials: true });

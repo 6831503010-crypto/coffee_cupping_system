@@ -60,7 +60,7 @@ export class Profile implements OnInit {
     }
 
     this.http.get<UserProfile>(
-      `http://localhost:8080/api/users/${user.userId}`,
+      `/api/users/${user.userId}`,
       {
         withCredentials: true
       }
@@ -129,12 +129,12 @@ export class Profile implements OnInit {
       headerName: string;
       token: string;
     }>(
-      'http://localhost:8080/api/csrf',
+      '/api/csrf',
       { withCredentials: true }
     ).pipe(
       switchMap(csrf =>
         this.http.put<UserProfile>(
-          `http://localhost:8080/api/users/${profile.userId}`,
+          `/api/users/${profile.userId}`,
           { name: trimmedName },
           {
             withCredentials: true,
@@ -287,12 +287,12 @@ export class Profile implements OnInit {
       headerName: string;
       token: string;
     }>(
-      'http://localhost:8080/api/csrf',
+      '/api/csrf',
       { withCredentials: true }
     ).pipe(
       switchMap(csrf =>
         this.http.post<UserProfile>(
-          'http://localhost:8080/api/users/me/qualification/verify',
+          '/api/users/me/qualification/verify',
           {
             certificateName,
             licenseCode: this.licenseCode

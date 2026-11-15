@@ -67,7 +67,7 @@ export interface PublicFeedResult {
 export class PublicFeedService {
   private readonly http = inject(HttpClient);
   list() {
-    return this.http.get<PublicFeedResult[]>('http://localhost:8080/api/feed',
+    return this.http.get<PublicFeedResult[]>('/api/feed',
       { withCredentials: true });
   }
 }

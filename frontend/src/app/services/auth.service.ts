@@ -36,7 +36,7 @@ export interface LoginRequest {
 export class AuthService {
 
   private readonly API_URL =
-    'http://localhost:8080/api/auth';
+    '/api/auth';
 
   private readonly userSignal =
     signal<AuthUser | null>(null);

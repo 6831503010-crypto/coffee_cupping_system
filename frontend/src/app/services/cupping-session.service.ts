@@ -140,7 +140,7 @@ export class CuppingSessionService {
   private http = inject(HttpClient);
 
   private baseUrl =
-    'http://localhost:8080/api';
+    '/api';
 
   library() {
     return this.http.get<LibrarySample[]>(
@@ -165,7 +165,7 @@ export class CuppingSessionService {
 
   getSessionTiming(sessionId: number) {
     return this.http.get<SessionTimingView>(
-      `http://localhost:8080/api/sessions/${sessionId}/timing`,
+      `/api/sessions/${sessionId}/timing`,
       { withCredentials: true }
     );
   }

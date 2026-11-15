@@ -101,7 +101,7 @@ export interface EvaluationProgress {
 @Injectable({ providedIn: 'root' })
 export class EvaluationSubmissionService {
   private readonly http = inject(HttpClient);
-  private readonly base = 'http://localhost:8080/api/cupping-sessions';
+  private readonly base = '/api/cupping-sessions';
 
   load(sessionId: number) {
     return this.http.get<SavedEvaluation[]>(
@@ -111,7 +111,7 @@ export class EvaluationSubmissionService {
 
   save(sessionId: number, samples: EvaluationSamplePayload[], finalize: boolean) {
     return this.http.get<{ token: string; headerName: string }>(
-      'http://localhost:8080/api/csrf', { withCredentials: true }
+      '/api/csrf', { withCredentials: true }
     ).pipe(switchMap(csrf =>
       this.http.put<SavedEvaluation[]>(
         `${this.base}/${sessionId}/my-evaluations`, { finalize, samples },
@@ -122,19 +122,19 @@ export class EvaluationSubmissionService {
 
   timing(sessionId: number) {
     return this.http.get<EvaluationTiming>(
-      `http://localhost:8080/api/sessions/${sessionId}/my-timing`,
+      `/api/sessions/${sessionId}/my-timing`,
       { withCredentials: true }
     );
   }
 
   begin(sessionId: number) {
     return this.http.get<{ token: string; headerName: string }>(
-      'http://localhost:8080/api/csrf',
+      '/api/csrf',
       { withCredentials: true }
     ).pipe(
       switchMap(csrf =>
         this.http.post<EvaluationTiming>(
-          `http://localhost:8080/api/sessions/${sessionId}/begin-evaluation`,
+          `/api/sessions/${sessionId}/begin-evaluation`,
           {},
           {
             withCredentials: true,
@@ -155,9 +155,9 @@ export class EvaluationSubmissionService {
 
   updateVisibility(sessionId: number, resultVisibility: 'PUBLIC' | 'PRIVATE') {
     return this.http.get<{ token: string; headerName: string }>(
-      'http://localhost:8080/api/csrf', { withCredentials: true }
+      '/api/csrf', { withCredentials: true }
     ).pipe(switchMap(csrf => this.http.patch<{ resultVisibility: 'PUBLIC' | 'PRIVATE' }>(
-      `http://localhost:8080/api/sessions/${sessionId}/visibility`,
+      `/api/sessions/${sessionId}/visibility`,
       { resultVisibility },
       { withCredentials: true, headers: { [csrf.headerName]: csrf.token } }
     )));
@@ -175,7 +175,7 @@ export class EvaluationSubmissionService {
     samples: EvaluationSamplePayload[]
   ) {
     return this.http.get<{ token: string; headerName: string }>(
-      'http://localhost:8080/api/csrf',
+      '/api/csrf',
       { withCredentials: true }
     ).pipe(
       switchMap(csrf =>
