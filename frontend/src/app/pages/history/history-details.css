@@ -589,7 +589,7 @@
 
 /* Mobile History: three compact summary cards and a session detail bottom sheet.
    Tablet/desktop retain the existing two-panel presentation. */
-.latest-date-mobile,
+.history-summary .summary-card .latest-date-mobile,
 .history-mobile-overlay-head,
 .history-mobile-backdrop {
   display: none;
